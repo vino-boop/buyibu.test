@@ -1,11 +1,28 @@
 
 import { GoogleGenAI } from "@google/genai";
-import { BaZiResponse, HexagramLine, LiuYaoResponse, ChatMessage } from "../types";
+import { BaZiResponse, HexagramLine, LiuYaoResponse, ChatMessage, BaZiChart } from "../types";
 import { calculateLocalBaZi } from "./geminiService";
 
 // 默认配置
 const DEFAULT_GEMINI_MODEL = 'gemini-3-flash-preview';
 const DEFAULT_DEEPSEEK_MODEL = 'deepseek-reasoner';
+
+/**
+ * 将命盘数据转化为 AI 可读的高度结构化文本描述
+ */
+function formatBaZiToText(chart: BaZiChart): string {
+  const p = chart;
+  return `
+【核心命盘数据 - 必须以此为准】
+年柱：${p.year.stem}${p.year.branch} (纳音：${p.year.naYin})
+月柱：${p.month.stem}${p.month.branch} (纳音：${p.month.naYin})
+日柱：${p.day.stem}${p.day.branch} (此为阁下日主，纳音：${p.day.naYin})
+时柱：${p.hour.stem}${p.hour.branch} (纳音：${p.hour.naYin})
+当前大运：${p.daYun[0]?.ganZhi || '起步'} 运
+五行神煞：${[p.year, p.month, p.day, p.hour].map(pillar => pillar.shenSha.join('/')).filter(Boolean).join(', ')}
+农历：${p.lunarDate}
+`;
+}
 
 /**
  * 获取当前的 AI 配置并进行净化
@@ -94,7 +111,7 @@ async function callAI(prompt: string, systemInstruction?: string, isJson = false
             { role: 'user', content: prompt }
           ],
           response_format: responseFormat,
-          temperature: isReasoner ? undefined : 0.7,
+          temperature: isReasoner ? undefined : 0.6,
         })
       });
 
@@ -127,13 +144,10 @@ async function callAI(prompt: string, systemInstruction?: string, isJson = false
 
 // 统一的系统人设指令
 const SHARED_SYSTEM_INSTRUCTION = `你是一位渊博古雅、不亢不卑的命理学者。
-1. 自称为“吾”，绝对禁止自称为“大师”、“我”或“AI”。
-2. 称呼对方为“缘主”，绝对禁止使用“用户”、“你”等现代称谓。
-3. 严禁频繁使用 Emoji，保持古朴禅意。
-4. 严禁在回答中机械重复天干地支（如“年柱为甲子”），直接论述格局、五行气象。
-5. 必须结合缘主当前的岁数阶段（如弱冠、而立、不惑、知天命等）给出针对性的趋避建议。
-6. 【显示规范】：请在每一段回答中，针对核心断语、关键时间点或核心趋避建议使用 **加粗语法**（如 **重点内容**），这是缘主关注的重点。
-7. 【内容禁忌】：严禁在回答开头或结尾提及你是由什么 AI 模型驱动的。`;
+1. 自称为“吾”，称呼对方为“阁下”。禁止使用任何 Emoji。
+2. 【克制高亮】：严格限制 **加粗语法** 的使用，每篇回复中【仅允许 1-3 处】最核心的结论加粗，严禁大面积标黄。
+3. 【直白推演】：严禁虚华比喻，直接论述五行气象与结论。结论必须先行。
+4. 【内容禁忌】：禁止提及 AI 模型出处。`;
 
 /**
  * 核心：八字分析
@@ -142,12 +156,14 @@ export async function analyzeBaZi(name: string, date: string, time: string, gend
   const chart = calculateLocalBaZi(name, date, time, gender);
   const birthY = parseInt(date.split('-')[0]);
   const currentAge = new Date().getFullYear() - birthY;
+  const baZiText = formatBaZiToText(chart);
 
-  const prompt = `缘主${name && name !== '用户' ? name : ''}，${currentAge}岁，${gender === 'Male' ? '乾造' : '坤造'}。
-  命盘信息已在图中给出。请以此为据，深究其气象格局：
-  - 核心要求：针对缘主${currentAge}岁所属的人生阶段给出深度推演与行事告诫。
-  - 文辞要求：言简意赅，古雅凝练，禁忌冗长。
-  - 结尾：附带一句启发性的因果追问。`;
+  const prompt = `
+${baZiText}
+阁下${name && name !== '用户' ? name : ''}，${currentAge}岁，${gender === 'Male' ? '乾造' : '坤造'}。
+- 要求：请以此命盘给出【简介直观】的分析。
+- 高亮限制：全篇仅针对【最关键的一个断语】加粗。
+- 结尾：附带一句启发性的追问。`;
 
   try {
     const analysis = await callAI(prompt, SHARED_SYSTEM_INSTRUCTION);
@@ -164,12 +180,15 @@ export async function chatWithContext(messages: ChatMessage[], context: string):
   const lastUserMessage = messages[messages.length - 1];
   const isProfessional = lastUserMessage?.isProfessional;
   
-  const systemInstruction = `${SHARED_SYSTEM_INSTRUCTION}\n当前背景：${context}。
-  请以${isProfessional ? '博学严谨' : '简洁直白'}的口吻回应缘主。`;
+  const modeInstruction = isProfessional 
+    ? "当前为专业模式：请使用严谨的命理术语，逻辑深奥。全篇仅允许 2 处核心加粗。" 
+    : "当前为直白模式：严禁比喻，直接回复结论。全篇仅允许 1 处核心加粗。";
+
+  const systemInstruction = `${SHARED_SYSTEM_INSTRUCTION}\n当前背景：${context}。\n${modeInstruction}`;
 
   try {
-    const historyPrompt = messages.map(m => `${m.role === 'assistant' ? '吾' : '缘主'}: ${m.content}`).join('\n');
-    const prompt = `${historyPrompt}\n缘主: ${lastUserMessage.content}`;
+    const historyPrompt = messages.map(m => `${m.role === 'assistant' ? '吾' : '阁下'}: ${m.content}`).join('\n');
+    const prompt = `${historyPrompt}\n阁下: ${lastUserMessage.content}`;
     
     const res = await callAI(prompt, systemInstruction);
     return res;
@@ -188,15 +207,21 @@ export async function interpretLiuYao(lines: HexagramLine[], question: string, u
   if (userProfile?.birthDate) {
       const birthY = parseInt(userProfile.birthDate.split('-')[0]);
       const currentAge = new Date().getFullYear() - birthY;
-      ageStr = `缘主当前${currentAge}岁。`;
+      ageStr = `阁下当前${currentAge}岁。`;
   }
 
-  const prompt = `问题：${question}。${ageStr}卦象序列：${lineStr}。
-  请严格以纯 JSON 格式输出：hexagramName, hexagramSymbol, analysis, judgment。
-  要求：分析中自称为“吾”，对核心重点断语加粗，结合缘主岁数论述该阶段的趋避建议，禁止 Emoji。`;
+  const prompt = `问题：${question}。${ageStr}卦象序列（由初爻至上爻）：${lineStr}。
+  请严格以纯 JSON 格式输出：
+  {
+    "hexagramName": "卦名",
+    "hexagramSymbol": "符号",
+    "judgment": "一句话极简断语（限20字内，作为顶部卡片结论）",
+    "analysis": "详细推演内容（作为对话主体的深度解析，仅允许核心处 1-2 次加粗）"
+  }
+  要求：自称为“吾”，严禁比喻。`;
 
   try {
-    const response = await callAI(prompt, SHARED_SYSTEM_INSTRUCTION + "\n请只返回 JSON 数据。", true);
+    const response = await callAI(prompt, SHARED_SYSTEM_INSTRUCTION + "\n必须返回 JSON。", true);
     const cleanJson = extractJson(response);
     
     try {
@@ -209,6 +234,7 @@ export async function interpretLiuYao(lines: HexagramLine[], question: string, u
     return { 
       hexagramName: "起卦成功", 
       hexagramSymbol: "☯", 
+      judgment: "机缘受阻。",
       analysis: `### 机缘受阻\n${error.message}` 
     };
   }

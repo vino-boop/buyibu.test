@@ -74,11 +74,10 @@ export const BaZiProvider: React.FC<{ userProfile: UserProfile; children: ReactN
         setViewMode('VIEW');
       } else {
         setChartData({ chart, analysis: "" });
-        const displayName = (name === '用户' || !name) ? '缘主' : name;
         setMessages([{ 
           id: Date.now().toString(), 
           role: 'assistant', 
-          content: `命盘已现。${displayName}若需窥探乾坤造化，请点选下方 **“专业详盘”**，由吾为你彻查因果。` 
+          content: `命盘已现。阁下若需窥探乾坤造化，请点选下方 **“专业详盘”**，由吾为你彻查因果。` 
         }]);
       }
     } catch (e) {

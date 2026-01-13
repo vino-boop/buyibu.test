@@ -55,6 +55,7 @@ const HEXAGRAM_DATA: Record<string, { name: string; symbol: string; judgment: st
   "000110": { name: "泽地萃", symbol: "䷬", judgment: "亨. 王假有庙，利见大人，亨，利贞。" },
   "011000": { name: "地风升", symbol: "䷭", judgment: "元亨，用见大人，勿恤，南征吉。" },
   "010110": { name: "泽水困", symbol: "䷮", judgment: "亨，贞，大人吉，无咎. 有言不信。" },
+  // Fix: Replaced "综合评价：" with "judgment:" and wrapped value in quotes for correct syntax
   "011010": { name: "水风井", symbol: "䷯", judgment: "改邑不改井，无丧无得. 往来井井。" },
   "101110": { name: "泽火革", symbol: "䷰", judgment: "巳日乃孚，元亨利贞，悔亡。" },
   "011101": { name: "火风鼎", symbol: "䷱", judgment: "元吉，亨。" },
@@ -66,6 +67,7 @@ const HEXAGRAM_DATA: Record<string, { name: string; symbol: string; judgment: st
   "001101": { name: "火山旅", symbol: "䷷", judgment: "小亨，旅贞吉。" },
   "011011": { name: "巽为风", symbol: "䷸", judgment: "小亨，利攸往，利见大人。" },
   "110110": { name: "兑为泽", symbol: "䷹", judgment: "亨，利贞。" },
+  // Fix: Replaced "综合评价：" with "judgment:" and wrapped value in quotes for correct syntax
   "010011": { name: "风水涣", symbol: "䷺", judgment: "亨. 王假有庙，利涉大川，利贞。" },
   "110010": { name: "水泽节", symbol: "䷻", judgment: "亨. 苦节，不可贞。" },
   "110011": { name: "风泽中孚", symbol: "䷼", judgment: "豚鱼吉，利涉大川，利贞。" },
@@ -336,7 +338,7 @@ export const LiuYaoView: React.FC<{ isDayMode?: boolean }> = ({ isDayMode = fals
       {!isRitualActive && (
         <div className="contents animate-fade-in-down">
           <div className="mt-6 mb-6 flex flex-col items-center shrink-0"><div className="w-20 h-20 rounded-2xl bg-cover bg-center shadow-lg border border-mystic-gold/30 mb-4" style={{ backgroundImage: `url(${assets.sage_avatar})` }}></div><h2 className={`text-xl font-serif tracking-widest ${isDayMode ? 'text-gray-800' : 'text-gray-200'}`}>敢问欲询何事？</h2></div>
-          <div className="w-full max-w-sm mb-6 flex flex-col gap-2 px-4 shrink-0">{['我应不应该辞职？', '近期财运如何？', '这段感情有结果吗？'].map((q) => <button key={q} onClick={() => {setQuestion(q); setShakeError(false);}} className={`w-full border rounded-lg py-3 px-4 text-sm transition-all text-left bg-mystic-paper/50 border border-white/5 text-gray-400 hover:text-white`}>{q}</button>)}</div>
+          <div className="w-full max-w-sm mb-6 flex flex-col gap-2 px-4 shrink-0">{['阁下辞职可顺？', '近期财运如何？', '这段感情有结果吗？'].map((q) => <button key={q} onClick={() => {setQuestion(q); setShakeError(false);}} className={`w-full border rounded-lg py-3 px-4 text-sm transition-all text-left bg-mystic-paper/50 border border-white/5 text-gray-400 hover:text-white`}>{q}</button>)}</div>
           <div className="w-full max-w-sm px-4 mb-8 relative shrink-0"><input type="text" value={question} onChange={(e) => {setQuestion(e.target.value); setShakeError(false);}} placeholder="为您解惑 (输入具体问题)" className={`w-full border rounded-xl py-3 pl-4 pr-12 outline-none shadow-sm transition-all duration-300 ${shakeError ? 'border-red-500/50 shadow-[0_0_15px_rgba(239,68,68,0.2)] animate-pulse' : 'bg-mystic-paper border-mystic-gold/20 text-white focus:border-mystic-gold'}`} /><div className="absolute right-6 top-1/2 -translate-y-1/2 w-6 h-6 flex items-center justify-center opacity-40"><IconEdit className="w-full h-full" /></div></div>
           <div className="w-full max-w-sm px-4 mb-6 shrink-0"><div className={`w-full rounded-full p-1 flex border transition-colors bg-mystic-paper border-white/5`}>{(['MANUAL', 'SHAKE', 'TIME', 'NUMBER'] as InputMode[]).map((m) => <button key={m} onClick={() => {setMode(m); setShakeLines([]); setShakeStep(0); setNumberStep(0); setNumberResults([]); setIsNumberRitualStarted(false);}} className={`flex-1 py-2 rounded-full text-[10px] font-medium transition-all ${mode === m ? 'bg-mystic-gold text-black shadow-lg font-bold' : 'text-gray-500 hover:text-gray-300'}`}>{m === 'MANUAL' ? '手动' : m === 'SHAKE' ? '摇卦' : m === 'TIME' ? '时间' : '数字'}</button>)}</div></div>
         </div>
@@ -364,7 +366,7 @@ export const LiuYaoView: React.FC<{ isDayMode?: boolean }> = ({ isDayMode = fals
                     )}
                     {numberStep >= 3 && (
                         <div className="mt-auto w-full pt-4">
-                            <button onClick={handleAnalyze} className="w-full font-bold py-4 rounded-xl shadow-xl transition-all active:scale-95 bg-gradient-to-r from-[#c5b078] to-[#a08d55] text-black">开始解卦</button>
+                            <button onClick={handleAnalyze} className="w-full font-bold py-4 rounded-xl shadow-xl transition-all active:scale-95 bg-gradient-to-r from-mystic-gold to-amber-600 text-black">开始解卦</button>
                             <button onClick={() => reset()} className="w-full text-[10px] py-3 text-gray-500 tracking-widest hover:text-gray-300">重新起卦</button>
                         </div>
                     )}
