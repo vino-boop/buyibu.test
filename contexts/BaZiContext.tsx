@@ -102,7 +102,11 @@ export const BaZiProvider: React.FC<{ userProfile: UserProfile; children: ReactN
     setChatLoading(true);
 
     try {
-      const baZiData = formatBaZiToText(chartData.chart);
+      // 核心修改：在对话时注入当前选中的大运和流年
+      const baZiData = formatBaZiToText(chartData.chart, { 
+          dy: selectedDaYunIndex, 
+          ln: selectedLiuNianIndex 
+      });
       const context = messages.length > 0 ? messages[0].content : chartData.analysis;
       const res = await chatWithContext([...messages, userMsg], context, baZiData);
       setMessages(prev => [...prev, { id: (Date.now() + 1).toString(), role: 'assistant', content: res, isProfessional: isPro }]);
