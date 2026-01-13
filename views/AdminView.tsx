@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useAssets, AppAssets, isImageUrl } from '../contexts/AssetContext';
 import { Article } from '../types';
@@ -178,7 +179,7 @@ export const AdminView: React.FC = () => {
                         onClick={() => {
                             updateAsset('apiProvider', 'GEMINI');
                             // Reset model for Gemini
-                            updateAsset('apiModel', 'gemini-2.5-flash');
+                            updateAsset('apiModel', 'gemini-3-flash-preview');
                         }}
                         className={`flex-1 py-3 px-4 rounded-lg border text-sm transition-all ${assets.apiProvider !== 'DEEPSEEK' ? 'bg-mystic-gold text-black border-mystic-gold font-bold' : 'bg-black/20 border-white/10 text-gray-400'}`}
                     >
@@ -189,7 +190,7 @@ export const AdminView: React.FC = () => {
                             updateAsset('apiProvider', 'DEEPSEEK');
                             // Set defaults for DeepSeek
                             updateAsset('apiBaseUrl', 'https://api.deepseek.com');
-                            updateAsset('apiModel', 'deepseek-chat');
+                            updateAsset('apiModel', 'deepseek-reasoner');
                         }}
                         className={`flex-1 py-3 px-4 rounded-lg border text-sm transition-all ${assets.apiProvider === 'DEEPSEEK' ? 'bg-mystic-gold text-black border-mystic-gold font-bold' : 'bg-black/20 border-white/10 text-gray-400'}`}
                     >
@@ -219,12 +220,12 @@ export const AdminView: React.FC = () => {
                     <label className="text-gray-400 text-xs block">Model Name</label>
                     <input 
                         type="text"
-                        value={assets.apiModel || (assets.apiProvider === 'DEEPSEEK' ? 'deepseek-chat' : 'gemini-2.5-flash')}
+                        value={assets.apiModel || (assets.apiProvider === 'DEEPSEEK' ? 'deepseek-reasoner' : 'gemini-3-flash-preview')}
                         onChange={(e) => updateAsset('apiModel', e.target.value)}
                         className="w-full bg-black/20 border border-white/10 rounded px-4 py-3 text-sm text-white focus:border-mystic-gold outline-none font-mono"
                     />
                     <p className="text-[10px] text-gray-500">
-                        {assets.apiProvider === 'DEEPSEEK' ? '推荐: deepseek-chat 或 deepseek-reasoner' : '推荐: gemini-2.5-flash'}
+                        {assets.apiProvider === 'DEEPSEEK' ? '推荐: deepseek-reasoner (R1) 或 deepseek-chat' : '推荐: gemini-3-flash-preview'}
                     </p>
                 </div>
 

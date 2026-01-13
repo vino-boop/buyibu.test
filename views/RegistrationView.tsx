@@ -62,7 +62,7 @@ export const RegistrationView: React.FC<RegistrationViewProps> = ({ onComplete, 
                         <button 
                            onClick={() => {
                               updateAsset('apiProvider', 'DEEPSEEK');
-                              updateAsset('apiModel', 'deepseek-chat');
+                              updateAsset('apiModel', 'deepseek-reasoner');
                            }}
                            className={`flex-1 py-2 text-[10px] rounded-lg transition-all ${assets.apiProvider === 'DEEPSEEK' ? 'bg-mystic-gold text-black font-bold' : 'text-gray-500 hover:text-gray-300'}`}
                         >DeepSeek</button>
@@ -75,7 +75,7 @@ export const RegistrationView: React.FC<RegistrationViewProps> = ({ onComplete, 
                         type="text" 
                         value={assets.apiModel || ''} 
                         onChange={(e) => updateAsset('apiModel', e.target.value)}
-                        placeholder={assets.apiProvider === 'DEEPSEEK' ? 'deepseek-chat' : 'gemini-3-flash-preview'}
+                        placeholder={assets.apiProvider === 'DEEPSEEK' ? 'deepseek-reasoner' : 'gemini-3-flash-preview'}
                         className="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:border-mystic-gold/50 outline-none font-mono"
                      />
                   </div>
