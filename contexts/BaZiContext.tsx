@@ -1,5 +1,4 @@
-
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { BaZiResponse, Gender, ChatMessage, UserProfile } from '../types';
 import { analyzeBaZi, chatWithContext, formatBaZiToText } from '../services/aiService';
 import { calculateLocalBaZi } from '../services/geminiService';
@@ -38,6 +37,7 @@ interface BaZiContextType {
 
 const BaZiContext = createContext<BaZiContextType | undefined>(undefined);
 
+// Fix: Import React to resolve "Cannot find namespace 'React'" when using React.FC
 export const BaZiProvider: React.FC<{ userProfile: UserProfile; children: ReactNode }> = ({ userProfile, children }) => {
   const [name, setName] = useState(userProfile.name);
   const [gender, setGender] = useState(userProfile.gender);

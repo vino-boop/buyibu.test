@@ -101,14 +101,6 @@ const renderMessageContent = (msg: ChatMessage, isDay: boolean) => {
         {parts.map((part, partIdx) => {
           if (part.startsWith('**') && part.endsWith('**')) {
             const text = part.slice(2, -2);
-            const isHeader = /^([一二三四五六七八九十]|第).*?$/.test(text);
-            if (isHeader) {
-               return (
-                  <strong key={partIdx} className="text-mystic-gold font-bold block mt-4 mb-2 text-base border-l-2 border-mystic-gold/50 pl-2 py-0.5">
-                      {text}
-                  </strong>
-               );
-            }
             return (
               <strong key={partIdx} className="text-mystic-gold font-bold underline underline-offset-4 decoration-mystic-gold/30">
                   {text}
@@ -155,6 +147,9 @@ export const BaZiView: React.FC<BaZiViewProps> = ({ defaultQuestion, isDayMode =
   }, [selectedLiuYueIndex]);
 
   const currentAge = birthDate ? new Date().getFullYear() - parseInt(birthDate.split('-')[0]) : 0;
+
+  // 判断是否已经有过深度对话（用户提问或已生成详盘）
+  const hasAskedQuestion = messages.some(m => m.role === 'user' || (m.role === 'assistant' && m.content.includes('###')));
 
   if (loading) {
      return (
@@ -362,9 +357,9 @@ export const BaZiView: React.FC<BaZiViewProps> = ({ defaultQuestion, isDayMode =
       <div className={`shrink-0 w-full px-4 pt-4 pb-4 z-20 border-t shadow-[0_-10px_20px_rgba(0,0,0,0.03)] transition-colors ${isDayMode ? 'bg-white border-gray-100' : 'bg-mystic-dark border-white/5'}`}>
             {!chatLoading && (
                 <div className="flex gap-2 mb-3 animate-fade-in-up">
-                    {(messages.length <= 1) ? (
+                    {!hasAskedQuestion ? (
                         <button 
-                          onClick={() => handleSendMessage("请为我进行专业详盘分析，包含大局综述、神煞深度分析、六亲关系推演及诗意结尾。", true, true)} 
+                          onClick={() => handleSendMessage("请为我进行专业详盘分析，包含格局判定、六亲缘分、岁运关键节点推演及诗意结尾。", true, true)} 
                           className={`flex-1 py-3 px-4 rounded-xl font-bold transition-all shadow-lg active:scale-95 flex items-center justify-center gap-2 ${isDayMode ? 'bg-mystic-gold text-white border border-mystic-gold' : 'bg-gradient-to-r from-[#c5b078] to-[#a08d55] text-black'}`}
                         >
                           <IconMagic className={`w-4 h-4 ${isDayMode ? 'brightness-200' : ''}`} />
@@ -373,14 +368,14 @@ export const BaZiView: React.FC<BaZiViewProps> = ({ defaultQuestion, isDayMode =
                     ) : (
                         <>
                           <button 
-                            onClick={() => handleSendMessage("请专业一点，用专业命理术语深入剖析上一个回答。", true, true)} 
+                            onClick={() => handleSendMessage("请从专业的角度，进一步剖析我的命理特征和岁运交互细节。", true, true)} 
                             className={`flex-1 py-3 px-4 rounded-xl font-bold transition-all shadow-sm active:scale-95 flex items-center justify-center gap-2 ${secondaryBtnStyle}`}
                           >
                             <IconScroll className="w-4 h-4" />
                             <span>专业一点</span>
                           </button>
                           <button 
-                            onClick={() => handleSendMessage("请直白一点，彻底去掉术语，用最通俗干练的话重述。", true, false)} 
+                            onClick={() => handleSendMessage("请用最通俗直白的白话，帮我总结命理中的核心建议和未来节点，不要用术语。", true, false)} 
                             className={`flex-1 py-3 px-4 rounded-xl font-bold transition-all shadow-sm active:scale-95 flex items-center justify-center gap-2 ${secondaryBtnStyle}`}
                           >
                             <IconChat className="w-4 h-4" />

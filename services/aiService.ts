@@ -7,41 +7,45 @@ const DEFAULT_GEMINI_MODEL = 'gemini-3-flash-preview';
 const DEFAULT_DEEPSEEK_MODEL = 'deepseek-reasoner';
 
 /**
- * 将命盘数据转化为 AI 可读的“命理全维度报告”
- * 包含：年龄、干支、十神、藏干、神煞、纳音、运势阶段
+ * 将命盘数据转化为 AI 可读的“全生命周期数据流”
  */
 export function formatBaZiToText(chart: BaZiChart, selectedIndices?: { dy: number, ln: number }): string {
   const formatPillar = (p: BaZiPillar, label: string) => {
     return `${label}柱：【${p.stem}${p.branch}】
-- 十神：${p.mainStar || '日主'}
-- 纳音：${p.naYin}
-- 藏干：${p.hiddenStems.join('/')} (${p.hiddenStemStars.join('/')})
+- 十神主星：${p.mainStar || '日主'}
+- 纳音五行：${p.naYin}
+- 地支藏干：${p.hiddenStems.join('/')} (对应十神：${p.hiddenStemStars.join('/')})
 - 神煞：${p.shenSha.join('/') || '无'}
-- 运势：${p.xingYun}`;
+- 运势阶段：${p.xingYun}`;
   };
 
   const birthYear = parseInt(chart.solarDate.split('年')[0]);
   const currentYear = new Date().getFullYear();
   const age = currentYear - birthYear;
 
+  const daYunSequence = chart.daYun.map(dy => 
+    `${dy.startYear}年-${dy.endYear}年(${dy.startAge}岁-${dy.endAge}岁)[${dy.ganZhi}运]`
+  ).join(' -> ');
+
   let selectedContext = "";
   if (selectedIndices) {
       const dy = chart.daYun[selectedIndices.dy];
       const ln = dy?.liuNian[selectedIndices.ln];
       if (dy && ln) {
-          selectedContext = `\n【当前关注时空】\n- 关注大运：${dy.ganZhi} (${dy.startAge}岁-${dy.endAge}岁)\n- 关注流年：${ln.year}年 (${ln.ganZhi})`;
+          selectedContext = `\n【当前聚焦坐标】\n- 关注大运：${dy.ganZhi}\n- 关注流年：${ln.year}年 (${ln.ganZhi})`;
       }
   }
 
   return `
-【缘主天机密报 - 绝对推演依据】
-缘主当前：${age}岁
+【缘主命理底层数据】
+缘主当前实岁：${age}
 ${formatPillar(chart.year, '年')}
 ${formatPillar(chart.month, '月')}
 ${formatPillar(chart.day, '日')}
 ${formatPillar(chart.hour, '时')}
-初始大运：${chart.daYun[0]?.ganZhi || '未起'} (${chart.daYun[0]?.startAge}岁起)${selectedContext}
-历法：公历 ${chart.solarDate} / 农历 ${chart.lunarDate}
+大运全序列：${daYunSequence}${selectedContext}
+公历生辰：${chart.solarDate}
+农历日期：${chart.lunarDate}
 `;
 }
 
@@ -94,7 +98,7 @@ async function callAI(prompt: string, systemInstruction?: string, isJson = false
       if (!response.ok) throw new Error(`API 异常: ${response.status}`);
       const data = await response.json();
       return data.choices[0].message.content;
-    } catch (e: any) { throw new Error(`DeepSeek 节点通信受阻: ${e.message}`); }
+    } catch (e: any) { throw new Error(`DeepSeek 推演中断: ${e.message}`); }
   } else {
     try {
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
@@ -108,28 +112,37 @@ async function callAI(prompt: string, systemInstruction?: string, isJson = false
   }
 }
 
-const getBaseInstruction = (baZiData?: string) => `你是一位渊博古雅、不亢不卑的命理学者。
+const getBaseInstruction = (baZiData?: string) => `你是一位渊博古雅、洞察天机的周易命理大师。
 1. 自称为“吾”，称呼对方为“阁下”。严禁 Emoji。
-2. 【严格控制标黄】：全篇加粗语法（**内容**）严禁超过 3 处。
-3. 【数据绝对化】：你必须深度读取并核对提供的每一个干支、十神、神煞和年龄。${baZiData ? `以下是阁下的命盘天机，不得造假：${baZiData}` : ""}
-4. 【内容禁忌】：严禁提到你是 AI 或任何现代科技。`;
+2. 【核心排版规则】：为了确保阁下获得清晰的指引，每一段独立的推演分析必须冠以以 ### 开头的古风标题（例如 ### 【格神气象】）。
+3. 【推演基石】：深度结合阁下的八字原局、神煞、以及完整的大运流年序列。${baZiData ? `阁下命盘数据：${baZiData}` : ""}
+4. 【文风】：辞藻清雅，论断果敢。全篇加粗语法（**内容**）严禁超过 3 处。
+5. 【职业操守】：不要提及你是 AI，保持命理师的专业感与神秘感。`;
 
 export async function analyzeBaZi(name: string, date: string, time: string, gender: string, place: string): Promise<BaZiResponse> {
   const chart = calculateLocalBaZi(name, date, time, gender);
   const baZiData = formatBaZiToText(chart);
 
   const prompt = `阁下：${name}，${gender === 'Male' ? '乾造' : '坤造'}。
-请执行【专业详盘】深度分析：
-1. **五行格局**：判定月令气象与全局意向（如：建禄格、食神生财等）。
-2. **六亲十神**：推演命局中父母、配偶、子女之缘分交互。
-3. **神煞意向**：解析命盘中最突出的 1-2 个神煞之功过。
-4. **诗性总结**：以一句古雅的七言或五言律诗总结阁下命底。
-5. **天机追问**：针对阁下命理特征，提出一个深刻的引导性问题。
-要求：文辞干练，结论先行。**加粗严禁超过3处**。`;
+请执行【最高级别专业详盘】深度推演，严格按以下带有 ### 子标题的结构输出：
+
+### 【格局判定】
+识别月令气象，判定格神（如建禄格、食神生财、伤官佩印等），定下命局的高低气势基调。
+
+### 【六亲全析】
+分析印比食伤财官在原局的状态，深度映射父母助力、同辈缘分、伴侣契合度及子女福荫。
+
+### 【岁运关键】
+扫描提供的大运序列，指出 2-3 个关键转折年份。必须包含**财运财富增减**与**感情正缘节点**的精准推算。
+
+### 【天机总结】
+包含一句古雅的诗总结和引导性追问（诗与追问之间不设标题）。
+
+要求：文辞干练，每一部分都必须带标题。**加粗严禁超过 3 处**。`;
 
   try {
     const analysis = await callAI(prompt, getBaseInstruction(baZiData));
-    return { chart, analysis: analysis || "机缘未至。" };
+    return { chart, analysis: analysis || "天机深邃，暂无所获。" };
   } catch (error: any) {
     return { chart, analysis: `### 推演受阻\n${error.message}` };
   }
@@ -140,8 +153,8 @@ export async function chatWithContext(messages: ChatMessage[], context: string, 
   const isProfessional = lastUserMessage?.isProfessional;
   
   const modeInstruction = isProfessional 
-    ? "【专业模式】：深入五行格局与神煞细节。必须包含：命局推演、六亲缘分、诗性总结及一个引导追问。" 
-    : "【直白模式】：全面涵盖（事业、财运、情感、健康）四个维度，用最直接、干练、无术语的话语回复。";
+    ? "【专业详盘模式】：保持专业深度。必须使用 ### 子标题划分段落。指出具体年份节点。结尾附追问。" 
+    : "【直白详述模式】：将晦涩术语翻译为阁下能听懂的白话。要求：信息密度必须与专业模式持平，严禁删减逻辑！必须使用 ### 子标题划分段落，将每个术语背后的生活逻辑详细阐述。";
 
   const systemInstruction = `${getBaseInstruction(baZiData)}\n${modeInstruction}\n对话背景：${context}`;
 
@@ -150,7 +163,7 @@ export async function chatWithContext(messages: ChatMessage[], context: string, 
     const prompt = `${historyPrompt}\n阁下: ${lastUserMessage.content}`;
     const res = await callAI(prompt, systemInstruction);
     return res;
-  } catch (e) { return "吾正在闭关。"; }
+  } catch (e) { return "吾正在闭关参悟天机。"; }
 }
 
 export async function interpretLiuYao(lines: HexagramLine[], question: string, userProfile?: any): Promise<LiuYaoResponse> {
@@ -163,9 +176,9 @@ export async function interpretLiuYao(lines: HexagramLine[], question: string, u
     "hexagramName": "卦名",
     "hexagramSymbol": "符号",
     "judgment": "极简断语（限12字内，严禁加粗）",
-    "analysis": "深度推演（详细解析卦义爻辞，结合缘主背景。包含诗性总结。全篇加粗严禁超过 3 处。）"
+    "analysis": "请严格按照以下结构输出内容，每一项前均需 ### 子标题：\\n\\n### 【卦辞解析】\\n解析本卦核心大义。\\n\\n### 【动变机锋】\\n解析爻位变动及吉凶趋势。\\n\\n### 【事态指引】\\n针对问题的具体建议。\\n\\n### 【诗以咏志】\\n包含诗句及结尾引导追问。"
   }
-  要求：自称为“吾”，直面吉凶。`;
+  要求：自称为“吾”，直批吉凶。每一段都必须带标题。全篇加粗严禁超过 3 处。`;
 
   try {
     const response = await callAI(prompt, getBaseInstruction(baZiData) + "\n必须返回纯 JSON。", true);
