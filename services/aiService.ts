@@ -19,16 +19,20 @@ function getActiveConfig() {
       let baseUrl = config.apiBaseUrl || 'https://api.deepseek.com';
       baseUrl = baseUrl.replace(/\/v1\/?$/, '').replace(/\/$/, '');
 
+      // 强制转为大写以便后续严格比较
+      const rawProvider = (config.apiProvider || 'GEMINI').toUpperCase();
+
       return {
-        provider: config.apiProvider || 'GEMINI',
+        provider: rawProvider as 'GEMINI' | 'DEEPSEEK',
         model: config.apiModel,
         deepseekKey: config.customApiKey || '',
         deepseekBase: baseUrl
       };
     }
   } catch (e) {}
+  
   return { 
-    provider: 'GEMINI', 
+    provider: 'GEMINI' as const, 
     model: undefined, 
     deepseekKey: '', 
     deepseekBase: 'https://api.deepseek.com' 
@@ -43,7 +47,10 @@ function getEffectiveModelName(): string {
   if (config.provider === 'DEEPSEEK') {
     return config.model || DEFAULT_DEEPSEEK_MODEL;
   } else {
-    return (config.model && !config.model.includes('deepseek')) ? config.model : DEFAULT_GEMINI_MODEL;
+    // 保护：如果选了 Gemini 但模型名包含 deepseek，强制回退，防止 API 调用冲突
+    return (config.model && !config.model.toLowerCase().includes('deepseek')) 
+      ? config.model 
+      : DEFAULT_GEMINI_MODEL;
   }
 }
 
@@ -51,7 +58,9 @@ function getEffectiveModelName(): string {
  * 辅助函数：从杂乱的字符串中提取纯净且合法的 JSON
  */
 function extractJson(text: string): string {
+  // 1. 移除 Markdown 块
   let cleaned = text.replace(/```json/g, '').replace(/```/g, '');
+  // 2. 匹配第一个 { 和最后一个 } 之间的内容
   const match = cleaned.match(/\{[\s\S]*\}/);
   if (match) {
     cleaned = match[0];
@@ -66,15 +75,18 @@ async function callAI(prompt: string, systemInstruction?: string, isJson = false
   const config = getActiveConfig();
   const modelName = getEffectiveModelName();
 
-  console.log(`[AI-Service] Target Provider: ${config.provider}, Model: ${modelName}`);
+  // 关键调试日志：确认到底选择了哪个 Provider
+  console.log(`[AI-Service] Current Active Provider: ${config.provider}, Using Model: ${modelName}`);
 
   if (config.provider === 'DEEPSEEK') {
     if (!config.deepseekKey) {
-      throw new Error("DeepSeek API Key 未配置。请进入开发者模式填入 Key。");
+      throw new Error("DeepSeek API Key 未配置。请进入开发者模式填入 Key 并保存。");
     }
 
     const apiUrl = `${config.deepseekBase}/chat/completions`;
     const isReasoner = modelName.includes('reasoner');
+    
+    // R1 系列通常不支持 json_object 参数
     const responseFormat = (isJson && !isReasoner) ? { type: 'json_object' } : undefined;
 
     try {
@@ -97,15 +109,18 @@ async function callAI(prompt: string, systemInstruction?: string, isJson = false
 
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(`API 响应错误 (${response.status})`);
+        console.error(`[DeepSeek-API-Error] Status: ${response.status}`, errorText);
+        throw new Error(`DeepSeek API 响应异常 (${response.status})`);
       }
 
       const data = await response.json();
       return data.choices[0].message.content;
     } catch (fetchError: any) {
-      throw new Error(`无法连接到 DeepSeek 节点: ${fetchError.message}`);
+      console.error("[DeepSeek-Network-Error]", fetchError);
+      throw new Error(`无法连接至 DeepSeek 节点: ${fetchError.message}`);
     }
   } else {
+    // Gemini 严格路径
     try {
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const response = await ai.models.generateContent({
@@ -118,6 +133,7 @@ async function callAI(prompt: string, systemInstruction?: string, isJson = false
       });
       return response.text;
     } catch (geminiError: any) {
+      console.error("[Gemini-API-Error]", geminiError);
       throw new Error(`Gemini 推演受阻: ${geminiError.message}`);
     }
   }
@@ -163,7 +179,7 @@ export async function chatWithContext(messages: ChatMessage[], context: string):
     
     let res = await callAI(prompt, systemInstruction);
     // 测试用：添加模型标注
-    res += `\n\n> *[${modelName}]*`;
+    res += `\n\n> *[驱动模型: ${modelName}]*`;
     return res;
   } catch (error: any) {
     return `大师正在闭关（${error.message}）。`;
@@ -178,7 +194,7 @@ export async function interpretLiuYao(lines: HexagramLine[], question: string, u
   const modelName = getEffectiveModelName();
   const prompt = `问题：${question}。卦象序列：${lineStr}。
   请严格以纯 JSON 格式输出如下字段：hexagramName, hexagramSymbol, analysis, judgment。
-  注意：禁止输出 Markdown 代码块标签（如 \`\`\`json），禁止输出任何解释性文字或思考过程。`;
+  注意：禁止输出 Markdown 代码块标签，禁止输出任何解释性文字或思考过程。`;
 
   try {
     const response = await callAI(prompt, "你是一个专业的六爻解卦师。只返回 JSON 数据。", true);
@@ -192,13 +208,14 @@ export async function interpretLiuYao(lines: HexagramLine[], question: string, u
       }
       return resObj;
     } catch (parseError) {
-      throw new Error("模型返回数据格式有误，无法解析 JSON。");
+      console.error("[JSON-Parse-Error] Raw Output:", response);
+      throw new Error("模型返回数据格式有误，解析 JSON 失败。");
     }
   } catch (error: any) {
     return { 
       hexagramName: "起卦成功", 
       hexagramSymbol: "☯", 
-      analysis: `### 推演受阻\n${error.message}\n\n*请确保 API 配置正确。当前模型: ${modelName}*` 
+      analysis: `### 推演受阻\n${error.message}\n\n*请检查 API Key 配置。当前尝试模型: ${modelName}*` 
     };
   }
 }

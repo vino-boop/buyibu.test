@@ -56,15 +56,13 @@ const DEFAULT_ARTICLES: Article[] = [
   }
 ];
 
-// --- 阁下可在此处替换自定义素材 ---
 const DEFAULT_ASSETS: AppAssets = {
-  // TODO: 阁下可以提供 Base64 字符串替换此处
   logo: null, 
   appName: '运何',
   appSubtitle: '天机推演',
   sage_avatar: 'https://api.dicebear.com/9.x/notionists/svg?seed=Sage&backgroundColor=1e293b',
   home_banner: '', 
-  icon_marriage: '🎎', // 或者替换为图片 URL
+  icon_marriage: '🎎',
   icon_career: '📜',
   icon_health: '🍵',
   icon_exam: '🎓',
@@ -96,7 +94,8 @@ export const AssetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const saved = localStorage.getItem('dao_assets');
     if (saved) {
       try {
-        setAssets({ ...DEFAULT_ASSETS, ...JSON.parse(saved) });
+        const parsed = JSON.parse(saved);
+        setAssets(prev => ({ ...prev, ...parsed }));
       } catch (e) {
         console.error("Failed to parse assets", e);
       }
@@ -104,9 +103,12 @@ export const AssetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, []);
 
   const updateAsset = (key: keyof AppAssets, value: any) => {
-    const newAssets = { ...assets, [key]: value };
-    setAssets(newAssets);
-    localStorage.setItem('dao_assets', JSON.stringify(newAssets));
+    setAssets(prev => {
+      const next = { ...prev, [key]: value };
+      // 立即同步到本地存储，确保非组件逻辑（如 aiService）能实时读取
+      localStorage.setItem('dao_assets', JSON.stringify(next));
+      return next;
+    });
   };
 
   const resetAssets = () => {
