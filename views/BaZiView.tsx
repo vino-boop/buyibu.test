@@ -24,10 +24,6 @@ const getElementColor = (text: string, isDay: boolean) => {
   return isDay ? 'text-gray-900' : 'text-gray-200';
 };
 
-/**
- * 极简流光滑轨 (Zen Style Slider)
- * 采用 0.5px 丝线与微缩滑块，降低视觉干扰。
- */
 const CycleSlider: React.FC<{
   current: number;
   total: number;
@@ -39,15 +35,11 @@ const CycleSlider: React.FC<{
 
   return (
     <div className="px-6 mt-1 mb-2 relative h-4 flex items-center group">
-      {/* 极细底线 */}
       <div className={`absolute left-6 right-6 h-[0.5px] transition-colors ${isDay ? 'bg-gray-100' : 'bg-white/5'}`}></div>
-      
-      {/* 进度丝线 */}
       <div 
         className="absolute left-6 h-[0.5px] bg-mystic-gold/40 transition-all duration-500 ease-out"
-        style={{ width: `calc(${progress}% - ${progress === 100 ? '0px' : '0px'})` }}
+        style={{ width: `calc(${progress}% - 0px)` }}
       ></div>
-
       <input
         type="range"
         min="0"
@@ -72,18 +64,7 @@ const CycleSlider: React.FC<{
           transform: scale(1.8);
           box-shadow: 0 0 15px rgba(197, 176, 120, 0.6);
         }
-        /* Firefox */
-        input[type='range']::-moz-range-thumb {
-          height: 6px;
-          width: 6px;
-          border-radius: 50%;
-          background: #c5b078;
-          border: none;
-          box-shadow: 0 0 10px rgba(197, 176, 120, 0.4);
-        }
       `}</style>
-      
-      {/* 极简刻度点 */}
       <div className="absolute left-6 right-6 flex justify-between pointer-events-none px-0.5">
         {Array.from({ length: total }).map((_, i) => (
           <div 
@@ -98,7 +79,6 @@ const CycleSlider: React.FC<{
 
 const renderMessageContent = (msg: ChatMessage, isDay: boolean) => {
   const content = msg.content;
-  const isProfessional = msg.isProfessional;
   if (!content) return null;
   const lines = content.split('\n');
   
@@ -109,7 +89,7 @@ const renderMessageContent = (msg: ChatMessage, isDay: boolean) => {
     if (trimmedLine.startsWith('###')) {
       const headerText = trimmedLine.replace(/^###\s*/, '');
       return (
-        <h3 key={lineIdx} className={`font-bold block mt-6 mb-2 text-base border-l-[3px] border-mystic-gold pl-3 text-mystic-gold`}>
+        <h3 key={lineIdx} className="font-bold block mt-6 mb-2 text-base border-l-[3px] border-mystic-gold pl-3 text-mystic-gold">
           {headerText}
         </h3>
       );
@@ -130,7 +110,7 @@ const renderMessageContent = (msg: ChatMessage, isDay: boolean) => {
                );
             }
             return (
-              <strong key={partIdx} className={`font-bold ${isProfessional ? 'underline underline-offset-4 decoration-1 text-mystic-gold decoration-mystic-gold/40' : (isDay ? 'text-gray-950' : 'text-white')}`}>
+              <strong key={partIdx} className="text-mystic-gold font-bold underline underline-offset-4 decoration-mystic-gold/30">
                   {text}
               </strong>
             );

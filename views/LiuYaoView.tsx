@@ -101,7 +101,11 @@ const renderMessageContent = (content: string, isDay: boolean) => {
       <div key={lineIdx} className="mb-1.5">
         {parts.map((part, partIdx) => {
           if (part.startsWith('**') && part.endsWith('**')) {
-            return <strong key={partIdx} className="text-mystic-gold font-bold underline decoration-mystic-gold/20 underline-offset-2">{part.slice(2, -2)}</strong>;
+            return (
+              <strong key={partIdx} className="text-mystic-gold font-bold underline underline-offset-4 decoration-mystic-gold/30">
+                {part.slice(2, -2)}
+              </strong>
+            );
           }
           return <span key={partIdx}>{part}</span>;
         })}
@@ -110,9 +114,6 @@ const renderMessageContent = (content: string, isDay: boolean) => {
   });
 };
 
-/**
- * 核心交互组件：滑动扇形蓍草 (极简紧凑版)
- */
 const InteractiveStalksFan: React.FC<{ 
     splitIndex: number; 
     setSplitIndex: (i: number) => void;
@@ -146,14 +147,12 @@ const InteractiveStalksFan: React.FC<{
         setStartX(null);
     };
 
-    // 只渲染中心区域的 8 根蓍草
     const visibleRange = 4; 
     const startIndex = Math.max(0, splitIndex - visibleRange);
     const endIndex = Math.min(total - 1, splitIndex + visibleRange);
 
     return (
         <div className="relative w-full h-[380px] flex flex-col items-center justify-start mt-2 select-none touch-none overflow-hidden">
-            {/* 滑动感应区 */}
             <div 
                 className="relative w-full h-[260px] flex items-center justify-center cursor-grab active:cursor-grabbing"
                 onMouseDown={(e) => handleStart(e.clientX)}
@@ -164,32 +163,20 @@ const InteractiveStalksFan: React.FC<{
                 onTouchMove={(e) => handleMove(e.touches[0].clientX)}
                 onTouchEnd={handleEnd}
             >
-                {/* 装饰线：背景微弱扇形 */}
                 <div className="absolute w-[360px] h-[360px] border border-mystic-gold/5 rounded-full bottom-[-180px] pointer-events-none opacity-10"></div>
-
-                {/* 蓍草渲染 */}
                 {Array.from({ length: total }).map((_, i) => {
                     const isVisible = i >= startIndex && i <= endIndex;
                     if (!isVisible) return null;
-
                     const relativePos = i - splitIndex; 
                     const baseAngle = relativePos * 4.5; 
-                    
-                    let splitOffset = 0;
-                    // 重要：仅在 isSplitting 状态下显示分裂效果，确认完成后应闭合
-                    if (isSplitting) {
-                        splitOffset = relativePos < 0 ? -15 : 15;
-                    }
-
+                    let splitOffset = isSplitting ? (relativePos < 0 ? -15 : 15) : 0;
                     const angle = baseAngle + splitOffset;
                     const rad = (angle * Math.PI) / 180;
                     const x = Math.sin(rad) * radius;
                     const y = radius - Math.cos(rad) * radius;
-
                     const isCenterGap = relativePos === 0 || relativePos === -1;
                     const opacity = 1 - Math.abs(relativePos) * 0.18;
                     const scale = 1 - Math.abs(relativePos) * 0.04;
-
                     return (
                         <div 
                             key={i}
@@ -204,19 +191,13 @@ const InteractiveStalksFan: React.FC<{
                         </div>
                     );
                 })}
-
-                {/* 核心光束 */}
                 <div className="absolute bottom-6 w-[1px] h-60 bg-gradient-to-t from-transparent via-mystic-gold/25 to-transparent pointer-events-none"></div>
-                
-                {/* 交互提示文案 */}
                 {!isSplitting && step < 3 && (
                     <div className="absolute bottom-20 text-[10px] text-mystic-gold/20 tracking-[0.5em] animate-pulse uppercase font-serif">
                         拨草觅机
                     </div>
                 )}
             </div>
-
-            {/* 操作按钮区 */}
             <div className="w-full max-w-[260px] mt-8 flex flex-col items-center">
                 {!isSplitting && step < 3 && (
                     <button 
@@ -233,57 +214,24 @@ const InteractiveStalksFan: React.FC<{
 
 export const LiuYaoView: React.FC<{ isDayMode?: boolean }> = ({ isDayMode = false }) => {
   const {
-      mode, setMode,
-      question, setQuestion,
-      shakeError, setShakeError,
-      shakeLines, setShakeLines,
-      shakeStep, setShakeStep,
-      coins,
-      isFlipping,
-      manualLines,
-      numberStep, setNumberStep,
-      numberResults, setNumberResults,
-      isSplitting, setIsSplitting,
-      messages, 
-      result,
-      showChat,
-      isAnalyzing,
-      inputMessage, setInputMessage,
-      history, showHistoryModal, setShowHistoryModal,
-      handleToss,
-      handleTimeStart,
-      handleAnalyze,
-      handleSendMessage,
-      reset: baseReset,
-      updateManualLine,
-      restoreRecord,
-      clearHistory
+      mode, setMode, question, setQuestion, shakeError, setShakeError, shakeLines, setShakeLines, shakeStep, setShakeStep, coins, isFlipping, manualLines, numberStep, setNumberStep, numberResults, setNumberResults, isSplitting, setIsSplitting, messages, result, showChat, isAnalyzing, inputMessage, setInputMessage, history, showHistoryModal, setShowHistoryModal, handleToss, handleTimeStart, handleAnalyze, handleSendMessage, reset: baseReset, updateManualLine, restoreRecord, clearHistory
   } = useLiuYao();
   
   const chatEndRef = useRef<HTMLDivElement>(null);
   const { assets } = useAssets();
-  
   const [currentTimeStr, setCurrentTimeStr] = useState('');
   const [lunarInfo, setLunarInfo] = useState({ year: '', month: '', day: '', time: '' });
   const [isNumberRitualStarted, setIsNumberRitualStarted] = useState(false);
   const [tempSplitIndex, setTempSplitIndex] = useState(24);
 
-  useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages.length]);
-
+  useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages.length]);
   useEffect(() => {
       if (mode === 'TIME') {
           const updateTime = () => {
               const now = new Date();
               setCurrentTimeStr(now.toLocaleString('zh-CN'));
               const d = Lunar.fromDate(now);
-              setLunarInfo({
-                  year: d.getYearInGanZhi() + '年',
-                  month: d.getMonthInGanZhi() + '月',
-                  day: d.getDayInGanZhi() + '日',
-                  time: d.getTimeZhi() + '时'
-              });
+              setLunarInfo({ year: d.getYearInGanZhi() + '年', month: d.getMonthInGanZhi() + '月', day: d.getDayInGanZhi() + '日', time: d.getTimeZhi() + '时' });
           };
           updateTime();
           const timer = setInterval(updateTime, 1000);
@@ -304,40 +252,23 @@ export const LiuYaoView: React.FC<{ isDayMode?: boolean }> = ({ isDayMode = fals
      return info ? { ...info, binaryStr } : { name: '未知卦', symbol: '?', judgment: '', binaryStr };
   }, [shakeLines, manualLines, mode]);
 
-  const reset = () => {
-      setIsNumberRitualStarted(false);
-      setTempSplitIndex(24);
-      baseReset();
-  };
-
+  const reset = () => { setIsNumberRitualStarted(false); setTempSplitIndex(24); baseReset(); };
   const confirmNumberSplit = () => {
       if (isSplitting || numberStep >= 3) return;
       setIsSplitting(true);
-      
       const currentPos = tempSplitIndex;
-
       setTimeout(() => {
           const stepValue = (numberStep < 2) ? (currentPos % 8 || 8) : (currentPos % 6 || 6);
           const newResults = [...numberResults, stepValue];
           setNumberResults(newResults);
-          
           setShakeLines(prev => {
               const nextLines = [...prev];
-              if (numberStep === 0) {
-                  TRIGRAMS[stepValue].forEach((val, i) => nextLines.push({ value: val === 1 ? 7 : 8, position: i + 4 }));
-              } else if (numberStep === 1) {
-                  TRIGRAMS[stepValue].forEach((val, i) => nextLines.push({ value: val === 1 ? 7 : 8, position: i + 1 }));
-              } else if (numberStep === 2) {
-                  const targetLine = nextLines.find(l => l.position === stepValue);
-                  if (targetLine) targetLine.value = targetLine.value === 7 ? 9 : 6;
-              }
+              if (numberStep === 0) { TRIGRAMS[stepValue].forEach((val, i) => nextLines.push({ value: val === 1 ? 7 : 8, position: i + 4 })); } 
+              else if (numberStep === 1) { TRIGRAMS[stepValue].forEach((val, i) => nextLines.push({ value: val === 1 ? 7 : 8, position: i + 1 })); } 
+              else if (numberStep === 2) { const targetLine = nextLines.find(l => l.position === stepValue); if (targetLine) targetLine.value = targetLine.value === 7 ? 9 : 6; }
               return nextLines;
           });
-
-          setTempSplitIndex(24); 
-          setNumberStep(prev => prev + 1);
-          setIsSplitting(false);
-          
+          setTempSplitIndex(24); setNumberStep(prev => prev + 1); setIsSplitting(false);
           if (newResults.length === 3) setShakeStep(6);
       }, 1200);
   };
@@ -345,7 +276,6 @@ export const LiuYaoView: React.FC<{ isDayMode?: boolean }> = ({ isDayMode = fals
   if (showChat) {
     const currentLines = mode === 'MANUAL' ? manualLines : shakeLines;
     const activeHexagram = result || (currentHexagramInfo ? { hexagramName: currentHexagramInfo.name, hexagramSymbol: currentHexagramInfo.symbol, analysis: '', judgment: currentHexagramInfo.judgment } : null);
-
     return (
       <div className={`w-full h-full flex flex-col relative transition-colors duration-300 ${isDayMode ? 'bg-[#fcfcfc]' : 'bg-mystic-dark'}`}>
         <div className="shrink-0 p-4 pb-0 z-10">
@@ -380,20 +310,8 @@ export const LiuYaoView: React.FC<{ isDayMode?: boolean }> = ({ isDayMode = fals
         <div className={`absolute bottom-0 left-0 w-full px-4 pt-4 pb-4 z-20 border-t shadow-[0_-10px_20px_rgba(0,0,0,0.03)] ${isDayMode ? 'bg-white border-gray-100' : 'bg-mystic-dark border-white/5'}`}>
             {messages.length >= 1 && !isAnalyzing && (
               <div className="flex gap-2 mb-3 animate-fade-in-up">
-                  <button 
-                    onClick={() => handleSendMessage("请专业一点，用专业周易命理术语深入剖析卦象和爻辞。")} 
-                    className="flex-1 py-2.5 px-4 rounded-xl font-bold transition-all shadow-sm active:scale-95 flex items-center justify-center gap-2 bg-mystic-gold/10 text-mystic-gold border border-mystic-gold/40 hover:bg-mystic-gold/20"
-                  >
-                    <IconScroll className="w-4 h-4" />
-                    <span className="text-xs">专业一点</span>
-                  </button>
-                  <button 
-                    onClick={() => handleSendMessage("请直白一点，彻底去掉术语，用最通俗易懂的话告诉我怎么做。")} 
-                    className="flex-1 py-2.5 px-4 rounded-xl font-bold transition-all shadow-sm active:scale-95 flex items-center justify-center gap-2 bg-mystic-gold/10 text-mystic-gold border border-mystic-gold/40 hover:bg-mystic-gold/20"
-                  >
-                    <IconChat className="w-4 h-4" />
-                    <span className="text-xs">直白一点</span>
-                  </button>
+                  <button onClick={() => handleSendMessage("请专业一点，用专业周易命理术语深入剖析卦象和爻辞。")} className="flex-1 py-2.5 px-4 rounded-xl font-bold transition-all shadow-sm active:scale-95 flex items-center justify-center gap-2 bg-mystic-gold/10 text-mystic-gold border border-mystic-gold/40 hover:bg-mystic-gold/20"><IconScroll className="w-4 h-4" /><span className="text-xs">专业一点</span></button>
+                  <button onClick={() => handleSendMessage("请直白一点，彻底去掉术语，用最通俗易懂的话告诉我怎么做。")} className="flex-1 py-2.5 px-4 rounded-xl font-bold transition-all shadow-sm active:scale-95 flex items-center justify-center gap-2 bg-mystic-gold/10 text-mystic-gold border border-mystic-gold/40 hover:bg-mystic-gold/20"><IconChat className="w-4 h-4" /><span className="text-xs">直白一点</span></button>
               </div>
             )}
             <div className="relative">
@@ -406,7 +324,6 @@ export const LiuYaoView: React.FC<{ isDayMode?: boolean }> = ({ isDayMode = fals
   }
 
   const isRitualActive = (mode === 'SHAKE' && (shakeStep > 0 || isFlipping)) || (mode === 'TIME' && shakeLines.length > 0) || (mode === 'NUMBER' && isNumberRitualStarted);
-
   return (
     <div className={`w-full h-full flex flex-col items-center pb-20 px-2 overflow-y-auto relative transition-colors duration-300 ${isDayMode ? 'bg-[#fcfcfc]' : 'bg-mystic-dark'}`}>
       {!isRitualActive && <button onClick={() => setShowHistoryModal(true)} className={`absolute top-4 right-4 z-10 w-10 h-10 flex items-center justify-center rounded-full border transition-colors shadow-lg p-2.5 ${isDayMode ? 'bg-white border-gray-200 text-mystic-gold' : 'bg-mystic-paper border-white/10 text-mystic-gold'}`}><IconHistory className="w-full h-full" /></button>}
@@ -416,7 +333,6 @@ export const LiuYaoView: React.FC<{ isDayMode?: boolean }> = ({ isDayMode = fals
               <div className="flex-1 overflow-y-auto p-4 space-y-3">{history.length === 0 ? <div className="text-center text-gray-600 mt-20">暂无历史记录</div> : history.map((record) => <div key={record.id} onClick={() => restoreRecord(record)} className={`p-4 rounded-xl border transition-colors cursor-pointer bg-mystic-paper/50 border-white/5 active:bg-white/5`}><div className="flex justify-between items-start mb-2"><span className="text-mystic-gold font-serif text-lg">{record.result.hexagramName}</span><span className="text-xs text-gray-500">{record.dateStr}</span></div><p className={`text-sm line-clamp-2 text-gray-300`}>{record.question}</p></div>)}</div>
           </div>
       )}
-
       {!isRitualActive && (
         <div className="contents animate-fade-in-down">
           <div className="mt-6 mb-6 flex flex-col items-center shrink-0"><div className="w-20 h-20 rounded-2xl bg-cover bg-center shadow-lg border border-mystic-gold/30 mb-4" style={{ backgroundImage: `url(${assets.sage_avatar})` }}></div><h2 className={`text-xl font-serif tracking-widest ${isDayMode ? 'text-gray-800' : 'text-gray-200'}`}>敢问欲询何事？</h2></div>
@@ -425,7 +341,6 @@ export const LiuYaoView: React.FC<{ isDayMode?: boolean }> = ({ isDayMode = fals
           <div className="w-full max-w-sm px-4 mb-6 shrink-0"><div className={`w-full rounded-full p-1 flex border transition-colors bg-mystic-paper border-white/5`}>{(['MANUAL', 'SHAKE', 'TIME', 'NUMBER'] as InputMode[]).map((m) => <button key={m} onClick={() => {setMode(m); setShakeLines([]); setShakeStep(0); setNumberStep(0); setNumberResults([]); setIsNumberRitualStarted(false);}} className={`flex-1 py-2 rounded-full text-[10px] font-medium transition-all ${mode === m ? 'bg-mystic-gold text-black shadow-lg font-bold' : 'text-gray-500 hover:text-gray-300'}`}>{m === 'MANUAL' ? '手动' : m === 'SHAKE' ? '摇卦' : m === 'TIME' ? '时间' : '数字'}</button>)}</div></div>
         </div>
       )}
-
       <div className="w-full max-w-sm px-4 flex-1 flex flex-col pb-8">
          {mode === 'SHAKE' && (
             <div className="flex-1 flex flex-col items-center animate-fade-in-up mt-24">
@@ -440,25 +355,13 @@ export const LiuYaoView: React.FC<{ isDayMode?: boolean }> = ({ isDayMode = fals
                {isNumberRitualStarted ? (
                   <div className="w-full flex flex-col items-center flex-1">
                     <div className="text-gray-500 text-[10px] mb-6 tracking-widest opacity-60 uppercase font-serif">第 {numberStep + 1} 阶段推演</div>
-                    
-                    <InteractiveStalksFan 
-                        splitIndex={tempSplitIndex}
-                        setSplitIndex={setTempSplitIndex}
-                        isSplitting={isSplitting}
-                        isDay={isDayMode}
-                        onConfirm={confirmNumberSplit}
-                        step={numberStep}
-                    />
-
+                    <InteractiveStalksFan splitIndex={tempSplitIndex} setSplitIndex={setTempSplitIndex} isSplitting={isSplitting} isDay={isDayMode} onConfirm={confirmNumberSplit} step={numberStep} />
                     {shakeLines.length > 0 && (
                         <div className="mt-2 animate-fade-in-up flex flex-col items-center">
                             <div className="w-20 mb-2"><HexagramVisual lines={shakeLines} activeStep={6} variant="compact" /></div>
-                            <div className="text-[9px] text-mystic-gold/50 font-serif tracking-[0.2em]">
-                                {numberStep < 3 ? '已成卦象' : '卦象已全 (含动爻)'}
-                            </div>
+                            <div className="text-[9px] text-mystic-gold/50 font-serif tracking-[0.2em]">{numberStep < 3 ? '已成卦象' : '卦象已全 (含动爻)'}</div>
                         </div>
                     )}
-
                     {numberStep >= 3 && (
                         <div className="mt-auto w-full pt-4">
                             <button onClick={handleAnalyze} className="w-full font-bold py-4 rounded-xl shadow-xl transition-all active:scale-95 bg-gradient-to-r from-[#c5b078] to-[#a08d55] text-black">开始解卦</button>
@@ -468,9 +371,7 @@ export const LiuYaoView: React.FC<{ isDayMode?: boolean }> = ({ isDayMode = fals
                   </div>
                ) : (
                   <div className="flex-1 flex flex-col items-center justify-center py-10 animate-fade-in w-full h-full">
-                     <p className="text-sm font-serif italic text-gray-500 tracking-widest text-center px-8 leading-loose opacity-60">
-                        大衍之数五十，其用四十有九。<br/>分而为二以象两，挂一以象三。
-                     </p>
+                     <p className="text-sm font-serif italic text-gray-500 tracking-widest text-center px-8 leading-loose opacity-60">大衍之数五十，其用四十有九。<br/>分而为二以象两，挂一以象三。</p>
                      <button onClick={() => { if (!question.trim()) { setShakeError(true); return; } setIsNumberRitualStarted(true); }} className="w-full mt-12 font-bold py-4 rounded-xl shadow-lg transition-all active:scale-95 bg-gradient-to-r from-[#c5b078] to-[#a08d55] text-black">开始分蓍</button>
                   </div>
                )}
