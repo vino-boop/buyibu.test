@@ -25,7 +25,8 @@ const getElementColor = (text: string, isDay: boolean) => {
 };
 
 /**
- * 优化后的自定义周期滑轨组件：金弦灵珠
+ * 极简流光滑轨 (Zen Style Slider)
+ * 采用 0.5px 丝线与微缩滑块，降低视觉干扰。
  */
 const CycleSlider: React.FC<{
   current: number;
@@ -37,13 +38,13 @@ const CycleSlider: React.FC<{
   const progress = (current / (total - 1)) * 100;
 
   return (
-    <div className="px-5 mt-1 mb-4 relative h-6 flex items-center group">
-      {/* 轨道背景：极细弦线 */}
-      <div className={`absolute left-5 right-5 h-[0.5px] transition-colors ${isDay ? 'bg-gray-200' : 'bg-white/10'}`}></div>
+    <div className="px-6 mt-1 mb-2 relative h-4 flex items-center group">
+      {/* 极细底线 */}
+      <div className={`absolute left-6 right-6 h-[0.5px] transition-colors ${isDay ? 'bg-gray-100' : 'bg-white/5'}`}></div>
       
-      {/* 已选进度：发光金弦 */}
+      {/* 进度丝线 */}
       <div 
-        className="absolute left-5 h-[1px] bg-gradient-to-r from-mystic-gold/40 to-mystic-gold shadow-[0_0_8px_rgba(197,176,120,0.5)] transition-all duration-300"
+        className="absolute left-6 h-[0.5px] bg-mystic-gold/40 transition-all duration-500 ease-out"
         style={{ width: `calc(${progress}% - ${progress === 100 ? '0px' : '0px'})` }}
       ></div>
 
@@ -54,44 +55,40 @@ const CycleSlider: React.FC<{
         step="1"
         value={current}
         onChange={(e) => onChange(parseInt(e.target.value))}
-        className="absolute left-5 right-5 w-[calc(100%-40px)] appearance-none bg-transparent outline-none cursor-pointer z-10"
+        className="absolute left-6 right-6 w-[calc(100%-48px)] appearance-none bg-transparent outline-none cursor-pointer z-10 h-full"
       />
-
       <style>{`
         input[type='range']::-webkit-slider-thumb {
           -webkit-appearance: none;
-          height: 14px;
-          width: 14px;
+          height: 6px;
+          width: 6px;
           border-radius: 50%;
           background: #c5b078;
-          border: 2px solid ${isDay ? '#fff' : '#1a1b1e'};
-          box-shadow: 0 0 15px rgba(197, 176, 120, 0.6), 0 2px 4px rgba(0,0,0,0.3);
+          box-shadow: 0 0 10px rgba(197, 176, 120, 0.4);
           cursor: grab;
-          transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+          transition: all 0.3s ease;
         }
         input[type='range']::-webkit-slider-thumb:active {
-          cursor: grabbing;
-          transform: scale(1.4);
-          box-shadow: 0 0 20px rgba(197, 176, 120, 0.8), 0 4px 8px rgba(0,0,0,0.4);
+          transform: scale(1.8);
+          box-shadow: 0 0 15px rgba(197, 176, 120, 0.6);
         }
-        /* 兼容火狐 */
+        /* Firefox */
         input[type='range']::-moz-range-thumb {
-          height: 14px;
-          width: 14px;
+          height: 6px;
+          width: 6px;
           border-radius: 50%;
           background: #c5b078;
-          border: 2px solid ${isDay ? '#fff' : '#1a1b1e'};
-          box-shadow: 0 0 15px rgba(197, 176, 120, 0.6);
-          cursor: pointer;
+          border: none;
+          box-shadow: 0 0 10px rgba(197, 176, 120, 0.4);
         }
       `}</style>
       
-      {/* 刻度微点：仅在非滑动状态下隐约可见 */}
-      <div className="absolute left-5 right-5 flex justify-between pointer-events-none px-[6px]">
+      {/* 极简刻度点 */}
+      <div className="absolute left-6 right-6 flex justify-between pointer-events-none px-0.5">
         {Array.from({ length: total }).map((_, i) => (
           <div 
             key={i} 
-            className={`w-0.5 h-0.5 rounded-full transition-opacity duration-500 ${current === i ? 'opacity-0' : 'opacity-20'} ${isDay ? 'bg-gray-400' : 'bg-mystic-gold'}`}
+            className={`w-[1px] h-[1px] rounded-full transition-all duration-500 ${current === i ? 'bg-mystic-gold scale-150 opacity-100' : 'bg-gray-700 opacity-20'}`}
           ></div>
         ))}
       </div>
@@ -102,7 +99,6 @@ const CycleSlider: React.FC<{
 const renderMessageContent = (msg: ChatMessage, isDay: boolean) => {
   const content = msg.content;
   const isProfessional = msg.isProfessional;
-  
   if (!content) return null;
   const lines = content.split('\n');
   
@@ -133,11 +129,8 @@ const renderMessageContent = (msg: ChatMessage, isDay: boolean) => {
                   </strong>
                );
             }
-            
-            const useGold = isProfessional;
-            
             return (
-              <strong key={partIdx} className={`font-bold ${useGold ? 'underline underline-offset-4 decoration-1 text-mystic-gold decoration-mystic-gold/40' : (isDay ? 'text-gray-950' : 'text-white')}`}>
+              <strong key={partIdx} className={`font-bold ${isProfessional ? 'underline underline-offset-4 decoration-1 text-mystic-gold decoration-mystic-gold/40' : (isDay ? 'text-gray-950' : 'text-white')}`}>
                   {text}
               </strong>
             );
@@ -159,15 +152,13 @@ export const BaZiView: React.FC<BaZiViewProps> = ({ defaultQuestion, isDayMode =
   
   const { assets } = useAssets();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  
   const daYunListRef = useRef<HTMLDivElement>(null);
   const liuNianListRef = useRef<HTMLDivElement>(null);
   const liuYueListRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { if (defaultQuestion) triggerDefaultQuestion(defaultQuestion); }, [defaultQuestion]);
-  useEffect(() => { if (messages.length > 0 && scrollContainerRef.current) scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight; }, [messages.length]); 
+  useEffect(() => { if (messages.length > 0 && scrollContainerRef.current) scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight; }, [messages.length, chatLoading]); 
 
-  // 当选择改变时自动滚动列表
   useEffect(() => {
     const activeBtn = daYunListRef.current?.children[selectedDaYunIndex] as HTMLElement;
     if (activeBtn) activeBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
@@ -185,7 +176,7 @@ export const BaZiView: React.FC<BaZiViewProps> = ({ defaultQuestion, isDayMode =
 
   const currentAge = birthDate ? new Date().getFullYear() - parseInt(birthDate.split('-')[0]) : 0;
 
-  if (loading || (viewMode === 'VIEW' && !chartData)) {
+  if (loading) {
      return (
         <div className={`w-full h-full flex flex-col items-center justify-center pb-24 space-y-4 ${isDayMode ? 'bg-gray-50' : 'bg-mystic-dark'}`}>
              <div className="w-16 h-16 border-4 border-mystic-gold/30 border-t-mystic-gold rounded-full animate-spin"></div>
@@ -214,7 +205,7 @@ export const BaZiView: React.FC<BaZiViewProps> = ({ defaultQuestion, isDayMode =
               <span className={isDayMode ? 'text-gray-500' : 'text-gray-200'}>出生时间</span>
               <input type="time" className={`bg-transparent text-right outline-none ${isDayMode ? 'text-gray-800' : 'text-gray-400'}`} value={birthTime} onChange={e => setBirthTime(e.target.value)} />
            </div>
-           <button onClick={() => handleStart(false)} className={`w-full font-bold py-4 rounded-full mt-4 shadow-lg transition-all active:scale-95 ${isDayMode ? 'bg-mystic-gold text-white' : 'bg-[#e8c688] text-black'}`}>重新排盘</button>
+           <button onClick={() => handleStart(false)} className={`w-full font-bold py-4 rounded-full mt-4 shadow-lg transition-all active:scale-95 ${isDayMode ? 'bg-mystic-gold text-white' : 'bg-[#e8c688] text-black'}`}>更新排盘</button>
            <button onClick={() => setViewMode('VIEW')} className="w-full text-gray-500 text-sm mt-2">取消修改</button>
         </div>
       </div>
@@ -299,18 +290,18 @@ export const BaZiView: React.FC<BaZiViewProps> = ({ defaultQuestion, isDayMode =
                                   {pillars.map((p, i) => (<div key={i} className={`py-3 text-xs bg-gray-50/50 ${isDayMode ? 'text-mystic-gold font-medium' : 'text-mystic-gold/80'}`}>{p.data.xingYun || '-'}</div>))}
                                   <div className="py-3 text-gray-500 font-bold flex items-center justify-center shrink-0">神煞</div>
                                   {pillars.map((p, i) => (
-                                      <div key={i} className="py-3 px-1 flex flex-wrap justify-center gap-1 min-w-0">
+                                      <div key={i} className="py-3 px-1 flex flex-wrap justify-center items-center content-center gap-1 min-w-0 max-h-24 overflow-y-auto scrollbar-hide">
                                           {p.data.shenSha.map((ss, idx) => (
-                                              <span key={idx} className={`text-[8px] border px-1 py-0.5 rounded-sm whitespace-nowrap leading-none transition-colors ${isDayMode ? 'text-mystic-gold border-mystic-gold/30 bg-mystic-gold/5' : 'text-mystic-gold/70 border-mystic-gold/20'}`}>
+                                              <span key={idx} className={`text-[8px] border px-1.5 py-0.5 rounded-[2px] whitespace-nowrap leading-none transition-colors transform scale-95 origin-center ${isDayMode ? 'text-mystic-gold border-mystic-gold/30 bg-mystic-gold/5' : 'text-mystic-gold/80 border-mystic-gold/20 bg-white/5'}`}>
                                                 {ss}
                                               </span>
                                           ))}
+                                          {p.data.shenSha.length === 0 && <span className="text-[10px] text-gray-500 opacity-30">-</span>}
                                       </div>
                                   ))}
                               </div>
                           </div>
                           <div className="space-y-4 px-2 pb-4">
-                             {/* 大运栏 */}
                              <div>
                                <div className="flex items-center">
                                    <div className={`w-8 text-xs font-serif font-bold border-r mr-2 flex flex-col items-center shrink-0 transition-colors ${isDayMode ? 'text-gray-400 border-gray-100' : 'text-gray-500 border-white/10'}`}><span>大</span><span>运</span></div>
@@ -323,15 +314,8 @@ export const BaZiView: React.FC<BaZiViewProps> = ({ defaultQuestion, isDayMode =
                                        ))}
                                    </div>
                                </div>
-                               <CycleSlider 
-                                 current={selectedDaYunIndex} 
-                                 total={chart.daYun.length} 
-                                 onChange={(idx) => { setSelectedDaYunIndex(idx); setSelectedLiuNianIndex(0); setSelectedLiuYueIndex(0); }} 
-                                 isDay={isDayMode} 
-                               />
+                               <CycleSlider current={selectedDaYunIndex} total={chart.daYun.length} onChange={(idx) => { setSelectedDaYunIndex(idx); setSelectedLiuNianIndex(0); setSelectedLiuYueIndex(0); }} isDay={isDayMode} />
                              </div>
-
-                             {/* 流年栏 */}
                              <div>
                                <div className="flex items-center">
                                    <div className={`w-8 text-xs font-serif font-bold border-r mr-2 flex flex-col items-center shrink-0 transition-colors ${isDayMode ? 'text-gray-400 border-gray-100' : 'text-gray-500 border-white/10'}`}><span>流</span><span>年</span></div>
@@ -344,15 +328,8 @@ export const BaZiView: React.FC<BaZiViewProps> = ({ defaultQuestion, isDayMode =
                                        ))}
                                    </div>
                                </div>
-                               <CycleSlider 
-                                 current={selectedLiuNianIndex} 
-                                 total={selectedDaYun?.liuNian.length || 0} 
-                                 onChange={(idx) => { setSelectedLiuNianIndex(idx); setSelectedLiuYueIndex(0); }} 
-                                 isDay={isDayMode} 
-                               />
+                               <CycleSlider current={selectedLiuNianIndex} total={selectedDaYun?.liuNian.length || 0} onChange={(idx) => { setSelectedLiuNianIndex(idx); setSelectedLiuYueIndex(0); }} isDay={isDayMode} />
                              </div>
-
-                             {/* 流月栏 */}
                              {selectedLiuNian && (
                                 <div>
                                   <div className="flex items-center">
@@ -366,12 +343,7 @@ export const BaZiView: React.FC<BaZiViewProps> = ({ defaultQuestion, isDayMode =
                                           ))}
                                       </div>
                                   </div>
-                                  <CycleSlider 
-                                    current={selectedLiuYueIndex} 
-                                    total={selectedLiuNian.liuYue.length} 
-                                    onChange={setSelectedLiuYueIndex} 
-                                    isDay={isDayMode} 
-                                  />
+                                  <CycleSlider current={selectedLiuYueIndex} total={selectedLiuNian.liuYue.length} onChange={setSelectedLiuYueIndex} isDay={isDayMode} />
                                 </div>
                              )}
                           </div>
@@ -408,12 +380,12 @@ export const BaZiView: React.FC<BaZiViewProps> = ({ defaultQuestion, isDayMode =
           </div>
       </div>
       <div className={`shrink-0 w-full px-4 pt-4 pb-4 z-20 border-t shadow-[0_-10px_20px_rgba(0,0,0,0.03)] transition-colors ${isDayMode ? 'bg-white border-gray-100' : 'bg-mystic-dark border-white/5'}`}>
-            {messages.length >= 1 && !chatLoading && (
+            {!chatLoading && (
                 <div className="flex gap-2 mb-3 animate-fade-in-up">
-                    {messages.length === 1 ? (
+                    {(messages.length <= 1) ? (
                         <button 
                           onClick={() => handleSendMessage("请为我进行专业详盘分析，包含大局综述、神煞深度分析、六亲关系推演及诗意结尾。", true, true)} 
-                          className={`flex-1 py-3 px-4 rounded-xl font-bold transition-all shadow-sm active:scale-95 flex items-center justify-center gap-2 ${isDayMode ? 'bg-mystic-gold text-white border border-mystic-gold' : 'bg-gradient-to-r from-[#c5b078] to-[#a08d55] text-black'}`}
+                          className={`flex-1 py-3 px-4 rounded-xl font-bold transition-all shadow-lg active:scale-95 flex items-center justify-center gap-2 ${isDayMode ? 'bg-mystic-gold text-white border border-mystic-gold' : 'bg-gradient-to-r from-[#c5b078] to-[#a08d55] text-black'}`}
                         >
                           <IconMagic className={`w-4 h-4 ${isDayMode ? 'brightness-200' : ''}`} />
                           <span>专业详盘</span>

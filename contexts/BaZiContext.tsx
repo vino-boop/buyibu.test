@@ -29,7 +29,7 @@ interface BaZiContextType {
   messages: ChatMessage[];
   loading: boolean;
   chatLoading: boolean;
-  handleStart: (isInitial: boolean) => Promise<void>;
+  handleStart: (withAnalysis: boolean) => Promise<void>;
   handleSendMessage: (msg?: string, isPro?: boolean, isDirect?: boolean) => Promise<void>;
   inputMessage: string;
   setInputMessage: (m: string) => void;
@@ -38,7 +38,6 @@ interface BaZiContextType {
 
 const BaZiContext = createContext<BaZiContextType | undefined>(undefined);
 
-// BaZiProvider manages the state and logic for BaZi calculation and AI analysis
 export const BaZiProvider: React.FC<{ userProfile: UserProfile; children: ReactNode }> = ({ userProfile, children }) => {
   const [name, setName] = useState(userProfile.name);
   const [gender, setGender] = useState(userProfile.gender);
@@ -58,25 +57,48 @@ export const BaZiProvider: React.FC<{ userProfile: UserProfile; children: ReactN
   const [chatLoading, setChatLoading] = useState(false);
   const [inputMessage, setInputMessage] = useState('');
 
-  // handleStart triggers the initial or re-calculation of the BaZi chart and its AI analysis
-  const handleStart = async (isInitial: boolean) => {
-    setLoading(true);
+  const handleStart = async (withAnalysis: boolean) => {
+    if (withAnalysis) {
+      setChatLoading(true);
+    } else {
+      setLoading(true);
+    }
+
     try {
-      const res = await analyzeBaZi(name, birthDate, birthTime, gender, '北京');
-      setChartData(res);
-      setMessages([{ id: Date.now().toString(), role: 'assistant', content: res.analysis }]);
-      if (!isInitial) setViewMode('VIEW');
+      const chart = calculateLocalBaZi(name, birthDate, birthTime, gender);
+      
+      if (withAnalysis) {
+        const res = await analyzeBaZi(name, birthDate, birthTime, gender, '北京');
+        setChartData(res);
+        setMessages([{ id: Date.now().toString(), role: 'assistant', content: res.analysis }]);
+        setViewMode('VIEW');
+      } else {
+        setChartData({ chart, analysis: "" });
+        const displayName = (name === '用户' || !name) ? '缘主' : name;
+        setMessages([{ 
+          id: Date.now().toString(), 
+          role: 'assistant', 
+          content: `命盘已现。${displayName}若需窥探乾坤造化，请点选下方 **“专业详盘”**，由吾为你彻查因果。` 
+        }]);
+      }
     } catch (e) {
       console.error("BaZi Start Error:", e);
     } finally {
       setLoading(false);
+      setChatLoading(false);
     }
   };
 
-  // handleSendMessage handles user chat interactions with the AI master
   const handleSendMessage = async (msg?: string, isPro = false, isDirect = false) => {
     const text = msg || inputMessage;
     if (!text.trim() || !chartData) return;
+
+    const isFirstAnalysis = messages.length <= 1 && isPro;
+
+    if (isFirstAnalysis) {
+      await handleStart(true);
+      return;
+    }
 
     const userMsg: ChatMessage = { 
       id: Date.now().toString(), 
@@ -90,7 +112,8 @@ export const BaZiProvider: React.FC<{ userProfile: UserProfile; children: ReactN
     setChatLoading(true);
 
     try {
-      const res = await chatWithContext([...messages, userMsg], chartData.analysis);
+      const context = messages.length > 0 ? messages[0].content : chartData.analysis;
+      const res = await chatWithContext([...messages, userMsg], context);
       setMessages(prev => [...prev, { 
         id: (Date.now() + 1).toString(), 
         role: 'assistant', 
@@ -102,36 +125,23 @@ export const BaZiProvider: React.FC<{ userProfile: UserProfile; children: ReactN
       setMessages(prev => [...prev, { 
         id: (Date.now() + 1).toString(), 
         role: 'assistant', 
-        content: "大师推演受阻，请稍后再试。" 
+        content: "推演受阻，机缘未至。" 
       }]);
     } finally {
       setChatLoading(false);
     }
   };
 
-  // triggerDefaultQuestion handles pre-defined questions from the UI
   const triggerDefaultQuestion = async (q: string) => {
-      let currentChart = chartData;
-      if (!currentChart) {
-          setLoading(true);
-          try {
-              currentChart = await analyzeBaZi(name, birthDate, birthTime, gender, '北京');
-              setChartData(currentChart);
-              setMessages([{ id: Date.now().toString(), role: 'assistant', content: currentChart.analysis }]);
-          } catch (e) {
-              console.error(e);
-          } finally {
-              setLoading(false);
-          }
+      if (!chartData) {
+          await handleStart(false);
       }
-      if (currentChart) {
-          handleSendMessage(q);
-      }
+      handleSendMessage(q);
   };
 
   useEffect(() => {
     if (!chartData) {
-      handleStart(true);
+      handleStart(false);
     }
   }, []);
 
@@ -147,7 +157,6 @@ export const BaZiProvider: React.FC<{ userProfile: UserProfile; children: ReactN
   );
 };
 
-// useBaZi is the hook for components to access BaZi state
 export const useBaZi = () => {
   const context = useContext(BaZiContext);
   if (!context) {
