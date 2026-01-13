@@ -1,7 +1,7 @@
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { BaZiResponse, Gender, ChatMessage, UserProfile } from '../types';
-import { analyzeBaZi, chatWithContext } from '../services/aiService';
+import { analyzeBaZi, chatWithContext, formatBaZiToText } from '../services/aiService';
 import { calculateLocalBaZi } from '../services/geminiService';
 
 interface BaZiContextType {
@@ -66,7 +66,6 @@ export const BaZiProvider: React.FC<{ userProfile: UserProfile; children: ReactN
 
     try {
       const chart = calculateLocalBaZi(name, birthDate, birthTime, gender);
-      
       if (withAnalysis) {
         const res = await analyzeBaZi(name, birthDate, birthTime, gender, '北京');
         setChartData(res);
@@ -77,7 +76,7 @@ export const BaZiProvider: React.FC<{ userProfile: UserProfile; children: ReactN
         setMessages([{ 
           id: Date.now().toString(), 
           role: 'assistant', 
-          content: `命盘已现。阁下若需窥探乾坤造化，请点选下方 **“专业详盘”**，由吾为你彻查因果。` 
+          content: `命盘已现。阁下若需窥探乾坤造化，请点选下方 **“专业详盘”**。` 
         }]);
       }
     } catch (e) {
@@ -92,56 +91,35 @@ export const BaZiProvider: React.FC<{ userProfile: UserProfile; children: ReactN
     const text = msg || inputMessage;
     if (!text.trim() || !chartData) return;
 
-    const isFirstAnalysis = messages.length <= 1 && isPro;
-
-    if (isFirstAnalysis) {
+    if (messages.length <= 1 && isPro) {
       await handleStart(true);
       return;
     }
 
-    const userMsg: ChatMessage = { 
-      id: Date.now().toString(), 
-      role: 'user', 
-      content: text, 
-      isProfessional: isPro 
-    };
-    
+    const userMsg: ChatMessage = { id: Date.now().toString(), role: 'user', content: text, isProfessional: isPro };
     setMessages(prev => [...prev, userMsg]);
     setInputMessage('');
     setChatLoading(true);
 
     try {
+      const baZiData = formatBaZiToText(chartData.chart);
       const context = messages.length > 0 ? messages[0].content : chartData.analysis;
-      const res = await chatWithContext([...messages, userMsg], context);
-      setMessages(prev => [...prev, { 
-        id: (Date.now() + 1).toString(), 
-        role: 'assistant', 
-        content: res, 
-        isProfessional: isPro 
-      }]);
+      const res = await chatWithContext([...messages, userMsg], context, baZiData);
+      setMessages(prev => [...prev, { id: (Date.now() + 1).toString(), role: 'assistant', content: res, isProfessional: isPro }]);
     } catch (e) {
-      console.error("BaZi Chat Error:", e);
-      setMessages(prev => [...prev, { 
-        id: (Date.now() + 1).toString(), 
-        role: 'assistant', 
-        content: "推演受阻，机缘未至。" 
-      }]);
+      setMessages(prev => [...prev, { id: (Date.now() + 1).toString(), role: 'assistant', content: "推演受阻，机缘未至。" }]);
     } finally {
       setChatLoading(false);
     }
   };
 
   const triggerDefaultQuestion = async (q: string) => {
-      if (!chartData) {
-          await handleStart(false);
-      }
+      if (!chartData) await handleStart(false);
       handleSendMessage(q);
   };
 
   useEffect(() => {
-    if (!chartData) {
-      handleStart(false);
-    }
+    if (!chartData) handleStart(false);
   }, []);
 
   return (
@@ -158,8 +136,6 @@ export const BaZiProvider: React.FC<{ userProfile: UserProfile; children: ReactN
 
 export const useBaZi = () => {
   const context = useContext(BaZiContext);
-  if (!context) {
-    throw new Error('useBaZi must be used within a BaZiProvider');
-  }
+  if (!context) throw new Error('useBaZi error');
   return context;
 };
