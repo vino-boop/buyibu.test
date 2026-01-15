@@ -6,8 +6,8 @@ import { Solar, Lunar } from 'lunar-javascript';
 
 // Fix: Using gemini-3-pro-preview for complex text tasks (reasoning/命理) as per task guidelines
 const DEFAULT_GEMINI_MODEL = 'gemini-3-pro-preview';
-// DeepSeek V3 在 API 中通常标识为 deepseek-chat
-const DEFAULT_DEEPSEEK_MODEL = 'deepseek-chat';
+// DeepSeek V3 官方 API 标识符更新为 deepseek-v3
+const DEFAULT_DEEPSEEK_MODEL = 'deepseek-v3';
 
 export function formatBaZiToText(chart: BaZiChart, selectedIndices?: { dy: number, ln: number }): string {
   const formatPillar = (p: BaZiPillar, label: string) => {
@@ -135,7 +135,6 @@ async function callAI(prompt: string, systemInstruction?: string, isJson = false
         return data.choices[0].message.content;
     }
   } else {
-    // Fix: Always use process.env.API_KEY for GoogleGenAI initialization
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     if (onChunk) {
         const streamResponse = await ai.models.generateContentStream({
@@ -174,12 +173,9 @@ const getBaseInstruction = (baZiData?: string) => {
 4. 【文风要求】：辞藻清雅，论断果敢。在保持大师风范的同时，对现代职业和情感诉求有敏锐的洞察，用语稍微偏向现代语境。
 5. 【推演基石】：深度结合阁下的八字原局、格局、神煞、以及完整的大运流年。${baZiData ? `阁下命盘数据：${baZiData}` : ""}
 6. 【限制】：加粗语法（**内容**）全篇严禁超过 3 处。不要提及你是 AI。
-7. 【追问引导】：在回答的最后，必须给出3个引导用户继续追问的短句（每句不超过12字）。格式固定为：[SUGGESTIONS: 建议1, 建议2, 建议3]`;
+7. 【追追引导】：在回答的最后，必须给出3个引导用户继续追问的短句（每句不超过12字）。格式固定为：[SUGGESTIONS: 建议1, 建议2, 建议3]`;
 };
 
-/**
- * Helper to parse and strip suggestions from the content
- */
 export function extractSuggestions(content: string): { content: string, suggestions: string[] } {
   const regex = /\[SUGGESTIONS:\s*(.*?)\]/i;
   const match = content.match(regex);

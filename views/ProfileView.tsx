@@ -82,7 +82,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ userProfile, isDayMode
                             type="text" 
                             value={assets.apiModel || ''} 
                             onChange={(e) => updateAsset('apiModel', e.target.value)} 
-                            placeholder={assets.apiProvider === 'DEEPSEEK' ? 'deepseek-chat' : 'gemini-3-pro-preview'}
+                            placeholder={assets.apiProvider === 'DEEPSEEK' ? 'deepseek-v3' : 'gemini-3-pro-preview'}
                             className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-4 text-sm text-white font-mono focus:border-mystic-gold/50 outline-none" 
                         />
                     </div>
