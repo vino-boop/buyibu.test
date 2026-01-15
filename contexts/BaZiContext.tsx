@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { BaZiResponse, Gender, ChatMessage, UserProfile } from '../types';
 import { analyzeBaZi, chatWithContext, formatBaZiToText } from '../services/aiService';
 import { calculateLocalBaZi } from '../services/geminiService';
@@ -37,7 +38,6 @@ interface BaZiContextType {
 
 const BaZiContext = createContext<BaZiContextType | undefined>(undefined);
 
-// Fix: Import React to resolve "Cannot find namespace 'React'" when using React.FC
 export const BaZiProvider: React.FC<{ userProfile: UserProfile; children: ReactNode }> = ({ userProfile, children }) => {
   const [name, setName] = useState(userProfile.name);
   const [gender, setGender] = useState(userProfile.gender);
@@ -58,6 +58,7 @@ export const BaZiProvider: React.FC<{ userProfile: UserProfile; children: ReactN
   const [inputMessage, setInputMessage] = useState('');
 
   const handleStart = async (withAnalysis: boolean) => {
+    // 立即根据类型设置状态
     if (withAnalysis) {
       setChatLoading(true);
     } else {
@@ -81,7 +82,13 @@ export const BaZiProvider: React.FC<{ userProfile: UserProfile; children: ReactN
       }
     } catch (e) {
       console.error("BaZi Start Error:", e);
+      setMessages([{ 
+        id: Date.now().toString(), 
+        role: 'assistant', 
+        content: `推演由于外力中断，请检查设置或稍后再试。` 
+      }]);
     } finally {
+      // 确保在任何情况下都会关闭 loading
       setLoading(false);
       setChatLoading(false);
     }
@@ -102,7 +109,6 @@ export const BaZiProvider: React.FC<{ userProfile: UserProfile; children: ReactN
     setChatLoading(true);
 
     try {
-      // 核心修改：在对话时注入当前选中的大运和流年
       const baZiData = formatBaZiToText(chartData.chart, { 
           dy: selectedDaYunIndex, 
           ln: selectedLiuNianIndex 

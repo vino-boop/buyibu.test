@@ -4,7 +4,8 @@ import { BaZiResponse, HexagramLine, LiuYaoResponse, ChatMessage, BaZiChart, BaZ
 import { calculateLocalBaZi } from "./geminiService";
 
 const DEFAULT_GEMINI_MODEL = 'gemini-3-flash-preview';
-const DEFAULT_DEEPSEEK_MODEL = 'deepseek-reasoner';
+// 调整为 deepseek-chat，它是 DeepSeek V3 模型，速度极快且支持 JSON 模式
+const DEFAULT_DEEPSEEK_MODEL = 'deepseek-chat';
 
 /**
  * 将命盘数据转化为 AI 可读的“全生命周期数据流”
@@ -80,25 +81,38 @@ async function callAI(prompt: string, systemInstruction?: string, isJson = false
   if (config.provider === 'DEEPSEEK') {
     if (!config.deepseekKey) throw new Error("DeepSeek Key 未配置");
     const apiUrl = `${config.deepseekBase}/chat/completions`;
+    // 判断是否为 R1 模型（reasoner），R1 目前不支持 json_object 格式
     const isReasoner = modelName.includes('reasoner');
+    
     try {
       const response = await fetch(apiUrl, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${config.deepseekKey}` },
+        headers: { 
+          'Content-Type': 'application/json', 
+          'Authorization': `Bearer ${config.deepseekKey}` 
+        },
         body: JSON.stringify({
           model: modelName,
           messages: [
             ...(systemInstruction ? [{ role: 'system', content: systemInstruction }] : []),
             { role: 'user', content: prompt }
           ],
+          // 仅非 R1 模型支持 JSON 模式
           response_format: (isJson && !isReasoner) ? { type: 'json_object' } : undefined,
           temperature: isReasoner ? undefined : 0.6,
         })
       });
-      if (!response.ok) throw new Error(`API 异常: ${response.status}`);
+      
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.error?.message || `API 异常: ${response.status}`);
+      }
+      
       const data = await response.json();
       return data.choices[0].message.content;
-    } catch (e: any) { throw new Error(`DeepSeek 推演中断: ${e.message}`); }
+    } catch (e: any) { 
+      throw new Error(`DeepSeek 推演中断: ${e.message}`); 
+    }
   } else {
     try {
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
@@ -108,7 +122,9 @@ async function callAI(prompt: string, systemInstruction?: string, isJson = false
         config: { systemInstruction, responseMimeType: isJson ? "application/json" : undefined },
       });
       return response.text;
-    } catch (e: any) { throw new Error(`Gemini 推演受阻: ${e.message}`); }
+    } catch (e: any) { 
+      throw new Error(`Gemini 推演受阻: ${e.message}`); 
+    }
   }
 }
 
