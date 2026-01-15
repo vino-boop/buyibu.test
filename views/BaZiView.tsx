@@ -1,6 +1,6 @@
 
 import React, { useEffect, useRef } from 'react';
-import { Gender, ChatMessage } from '../types';
+import { Gender, ChatMessage, CalendarType } from '../types';
 import { useAssets } from '../contexts/AssetContext';
 import { useBaZi } from '../contexts/BaZiContext';
 import { IconMagic } from '../components/MysticIcons';
@@ -117,6 +117,7 @@ const renderMessageContent = (msg: ChatMessage, isDay: boolean) => {
 export const BaZiView: React.FC<BaZiViewProps> = ({ defaultQuestion, isDayMode = false }) => {
   const {
       name, setName, gender, setGender, birthDate, setBirthDate, birthTime, setBirthTime,
+      calendarType, setCalendarType, isLeapMonth, setIsLeapMonth,
       viewMode, setViewMode, chartDisplayMode, setChartDisplayMode, showFullDetails, setShowFullDetails,
       selectedDaYunIndex, setSelectedDaYunIndex, selectedLiuNianIndex, setSelectedLiuNianIndex, selectedLiuYueIndex, setSelectedLiuYueIndex,
       chartData, messages, loading, chatLoading, handleStart, handleSendMessage, inputMessage, setInputMessage, triggerDefaultQuestion
@@ -173,8 +174,20 @@ export const BaZiView: React.FC<BaZiViewProps> = ({ defaultQuestion, isDayMode =
               <button onClick={() => setGender(Gender.FEMALE)} className={`flex-1 py-1 rounded-full text-xs transition-all ${gender === Gender.FEMALE ? 'bg-mystic-gold text-black font-bold shadow-sm' : 'text-gray-500'}`}>女</button>
            </div>
            <div className={`border-b py-2 flex items-center justify-between transition-colors ${isDayMode ? 'border-gray-100' : 'border-white/10'}`}>
+              <span className={isDayMode ? 'text-gray-500' : 'text-gray-200'}>历法</span>
+              <div className={`flex rounded-full p-1 w-32 transition-colors ${isDayMode ? 'bg-gray-100' : 'bg-black/30'}`}>
+                  <button onClick={() => setCalendarType(CalendarType.SOLAR)} className={`flex-1 py-1 rounded-full text-[10px] transition-all ${calendarType === CalendarType.SOLAR ? 'bg-mystic-gold text-black font-bold shadow-sm' : 'text-gray-500'}`}>阳历</button>
+                  <button onClick={() => setCalendarType(CalendarType.LUNAR)} className={`flex-1 py-1 rounded-full text-[10px] transition-all ${calendarType === CalendarType.LUNAR ? 'bg-mystic-gold text-black font-bold shadow-sm' : 'text-gray-500'}`}>农历</button>
+              </div>
+           </div>
+           <div className={`border-b py-2 flex items-center justify-between transition-colors ${isDayMode ? 'border-gray-100' : 'border-white/10'}`}>
               <span className={isDayMode ? 'text-gray-500' : 'text-gray-200'}>出生日期</span>
-              <input type="date" className={`bg-transparent text-right outline-none ${isDayMode ? 'text-gray-800' : 'text-gray-400'}`} value={birthDate} onChange={e => setBirthDate(e.target.value)} />
+              <div className="flex items-center gap-2">
+                <input type="date" className={`bg-transparent text-right outline-none ${isDayMode ? 'text-gray-800' : 'text-gray-400'}`} value={birthDate} onChange={e => setBirthDate(e.target.value)} />
+                {calendarType === CalendarType.LUNAR && (
+                  <button onClick={() => setIsLeapMonth(!isLeapMonth)} className={`px-2 py-1 rounded text-[10px] border transition-colors ${isLeapMonth ? 'border-mystic-gold text-mystic-gold bg-mystic-gold/10' : 'border-gray-500 text-gray-500'}`}>闰</button>
+                )}
+              </div>
            </div>
            <div className={`border-b py-2 flex items-center justify-between transition-colors ${isDayMode ? 'border-gray-100' : 'border-white/10'}`}>
               <span className={isDayMode ? 'text-gray-500' : 'text-gray-200'}>出生时间</span>

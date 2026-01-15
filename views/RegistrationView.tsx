@@ -1,8 +1,8 @@
 
 import React, { useState, useMemo } from 'react';
 import { YunHeLogo } from '../components/YunHeLogo';
-import { Gender, UserProfile, getElementStyle } from '../types';
-import { Solar } from 'lunar-javascript';
+import { Gender, UserProfile, getElementStyle, CalendarType } from '../types';
+import { Solar, Lunar } from 'lunar-javascript';
 import { useAssets } from '../contexts/AssetContext';
 
 interface RegistrationViewProps {
@@ -16,6 +16,8 @@ export const RegistrationView: React.FC<RegistrationViewProps> = ({ onComplete, 
   const [birthDate, setBirthDate] = useState('');
   const [birthTime, setBirthTime] = useState('');
   const [gender, setGender] = useState<Gender>(Gender.MALE);
+  const [calendarType, setCalendarType] = useState<CalendarType>(CalendarType.SOLAR);
+  const [isLeapMonth, setIsLeapMonth] = useState(false);
   const [showError, setShowError] = useState(false);
   const [showDevMode, setShowDevMode] = useState(false);
 
@@ -26,13 +28,21 @@ export const RegistrationView: React.FC<RegistrationViewProps> = ({ onComplete, 
     try {
         const [y, m, d] = birthDate.split('-').map(Number);
         const [h, min] = birthTime ? birthTime.split(':').map(Number) : [12, 0];
-        const solar = Solar.fromYmdHms(y, m, d, h, min, 0);
-        const dayGan = solar.getLunar().getEightChar().getDayGan();
+        
+        let lunar: Lunar;
+        if (calendarType === CalendarType.LUNAR) {
+            lunar = Lunar.fromYmdHms(y, isLeapMonth ? -m : m, d, h, min, 0);
+        } else {
+            const solar = Solar.fromYmdHms(y, m, d, h, min, 0);
+            lunar = solar.getLunar();
+        }
+        
+        const dayGan = lunar.getEightChar().getDayGan();
         return getElementStyle(dayGan);
     } catch (e) {
         return { char: '?', color: 'from-gray-800 to-black', border: 'border-white/10', shadow: 'shadow-none' };
     }
-  }, [birthDate, birthTime]);
+  }, [birthDate, birthTime, calendarType, isLeapMonth]);
 
   const BrandingPanel = () => (
     <div className={`hidden sm:flex flex-col items-center justify-center relative overflow-hidden transition-all duration-1000 w-[45%] bg-gradient-to-br ${step === 1 ? elementInfo.color : 'from-[#0f1110] to-[#1a1b1e]'}`}>
@@ -159,9 +169,29 @@ export const RegistrationView: React.FC<RegistrationViewProps> = ({ onComplete, 
                    </div>
                 </div>
 
+                <div className="space-y-2">
+                   <label className="text-[10px] text-gray-600 uppercase tracking-widest font-bold ml-1">历法 (Calendar)</label>
+                   <div className="flex h-12 bg-white/5 rounded-xl p-1 mt-1">
+                      <button onClick={() => setCalendarType(CalendarType.SOLAR)} className={`flex-1 rounded-lg text-sm transition-all ${calendarType === CalendarType.SOLAR ? 'bg-mystic-gold text-black font-bold' : 'text-gray-500'}`}>阳历 (Solar)</button>
+                      <button onClick={() => setCalendarType(CalendarType.LUNAR)} className={`flex-1 rounded-lg text-sm transition-all ${calendarType === CalendarType.LUNAR ? 'bg-mystic-gold text-black font-bold' : 'text-gray-500'}`}>农历 (Lunar)</button>
+                   </div>
+                </div>
+
                 <div className="space-y-2 group">
-                   <label className={`text-[10px] uppercase tracking-widest font-bold ml-1 transition-colors ${showError && !birthDate ? 'text-red-500' : 'text-gray-600 group-focus-within:text-mystic-gold'}`}>出生日期 (Birth Date) *</label>
-                   <input type="date" className={`w-full bg-transparent border-b outline-none py-3 text-lg text-white transition-all ${showError && !birthDate ? 'border-red-500/50' : 'border-gray-800 focus:border-mystic-gold'}`} value={birthDate} onChange={(e) => { setBirthDate(e.target.value); setShowError(false); }} />
+                   <label className={`text-[10px] uppercase tracking-widest font-bold ml-1 transition-colors ${showError && !birthDate ? 'text-red-500' : 'text-gray-600 group-focus-within:text-mystic-gold'}`}>
+                      {calendarType === CalendarType.LUNAR ? '农历日期' : '出生日期'} (Birth Date) *
+                   </label>
+                   <div className="flex gap-2">
+                    <input type="date" className={`flex-1 bg-transparent border-b outline-none py-3 text-lg text-white transition-all ${showError && !birthDate ? 'border-red-500/50' : 'border-gray-800 focus:border-mystic-gold'}`} value={birthDate} onChange={(e) => { setBirthDate(e.target.value); setShowError(false); }} />
+                    {calendarType === CalendarType.LUNAR && (
+                      <button 
+                        onClick={() => setIsLeapMonth(!isLeapMonth)} 
+                        className={`px-3 border-b transition-all text-xs font-bold uppercase tracking-tighter ${isLeapMonth ? 'text-mystic-gold border-mystic-gold' : 'text-gray-600 border-gray-800'}`}
+                      >
+                        闰月
+                      </button>
+                    )}
+                   </div>
                 </div>
 
                 <div className="space-y-2 group">
@@ -171,7 +201,7 @@ export const RegistrationView: React.FC<RegistrationViewProps> = ({ onComplete, 
              </div>
 
              <div className="mt-20">
-                <button onClick={() => { if (!birthDate) { setShowError(true); return; } onComplete({ name: name || '缘主', gender, birthDate, birthTime: birthTime || '12:00', birthPlace: '北京' }); }} className="w-full bg-mystic-gold text-black font-bold text-lg py-5 rounded-2xl hover:brightness-110 shadow-xl active:scale-95 transition-all">开启命盘</button>
+                <button onClick={() => { if (!birthDate) { setShowError(true); return; } onComplete({ name: name || '缘主', gender, birthDate, birthTime: birthTime || '12:00', birthPlace: '北京', calendarType, isLeapMonth }); }} className="w-full bg-mystic-gold text-black font-bold text-lg py-5 rounded-2xl hover:brightness-110 shadow-xl active:scale-95 transition-all">开启命盘</button>
                 <p className="text-gray-800 text-[9px] text-center mt-8 tracking-[0.4em] uppercase font-serif">Privacy Secured · 个人信息仅用于命理计算</p>
              </div>
           </div>

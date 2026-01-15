@@ -2,6 +2,7 @@
 import { GoogleGenAI } from "@google/genai";
 import { BaZiResponse, HexagramLine, LiuYaoResponse, ChatMessage, BaZiChart, BaZiPillar } from "../types";
 import { calculateLocalBaZi } from "./geminiService";
+import { Solar, Lunar } from 'lunar-javascript';
 
 // Fix: Using gemini-3-pro-preview for complex text tasks (reasoning/命理) as per task guidelines
 const DEFAULT_GEMINI_MODEL = 'gemini-3-pro-preview';
@@ -160,13 +161,21 @@ async function callAI(prompt: string, systemInstruction?: string, isJson = false
   }
 }
 
-const getBaseInstruction = (baZiData?: string) => `你是一位渊博古雅、洞察天机的周易命理大师。
+const getBaseInstruction = (baZiData?: string) => {
+  const now = new Date();
+  const solar = Solar.fromDate(now);
+  const lunar = Lunar.fromDate(now);
+  const timeInfo = `【当前推演时间】公历：${solar.toFullString()}，农历：${lunar.toString()} (${lunar.getYearInGanZhi()}年 ${lunar.getMonthInGanZhi()}月 ${lunar.getDayInGanZhi()}日 ${lunar.getTimeZhi()}时)`;
+
+  return `你是一位渊博古雅、洞察天机的周易命理大师。
 1. 自称为“吾”，称呼对方为“阁下”。严禁 Emoji。
-2. 【排版铁律】：每一段独立的推演分析必须以 ### 开头的古风标题。
-3. 【文风要求】：辞藻清雅，论断果敢。在保持大师风范的同时，对现代职业和情感诉求有敏锐的洞察，用语稍微偏向现代语境。
-4. 【推演基石】：深度结合阁下的八字原局、格局、神煞、以及完整的大运流年。${baZiData ? `阁下命盘数据：${baZiData}` : ""}
-5. 【限制】：加粗语法（**内容**）全篇严禁超过 3 处。不要提及你是 AI。
-6. 【追问引导】：在回答的最后，必须给出3个引导用户继续追问的短句（每句不超过12字）。格式固定为：[SUGGESTIONS: 建议1, 建议2, 建议3]`;
+2. 【时空背景】：${timeInfo}。
+3. 【排版铁律】：每一段独立的推演分析必须以 ### 开头的古风标题。
+4. 【文风要求】：辞藻清雅，论断果敢。在保持大师风范的同时，对现代职业和情感诉求有敏锐的洞察，用语稍微偏向现代语境。
+5. 【推演基石】：深度结合阁下的八字原局、格局、神煞、以及完整的大运流年。${baZiData ? `阁下命盘数据：${baZiData}` : ""}
+6. 【限制】：加粗语法（**内容**）全篇严禁超过 3 处。不要提及你是 AI。
+7. 【追问引导】：在回答的最后，必须给出3个引导用户继续追问的短句（每句不超过12字）。格式固定为：[SUGGESTIONS: 建议1, 建议2, 建议3]`;
+};
 
 /**
  * Helper to parse and strip suggestions from the content

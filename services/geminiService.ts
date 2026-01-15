@@ -1,6 +1,6 @@
 
-import { BaZiPillar, DaYun } from "../types";
-import { Solar, EightChar } from 'lunar-javascript';
+import { BaZiPillar, DaYun, CalendarType } from "../types";
+import { Solar, Lunar, EightChar } from 'lunar-javascript';
 
 /**
  * 核心算法：全面神煞计算器 (扩充至55+种神煞逻辑)
@@ -137,11 +137,29 @@ function getPillarShenSha(eightChar: EightChar, pillarIdx: number): string[] {
 /**
  * 核心算法：本地八字排盘
  */
-export function calculateLocalBaZi(name: string, date: string, time: string, gender: string) {
+export function calculateLocalBaZi(name: string, date: string, time: string, gender: string, calendarType: CalendarType = CalendarType.SOLAR, isLeapMonth: boolean = false) {
   const [y, m, d] = (date || '1990-01-01').split('-').map(Number);
   const [h, min] = (time || '12:00').split(':').map(Number);
-  const solar = Solar.fromYmdHms(y, m, d, h, min, 0);
-  const lunar = solar.getLunar();
+  
+  let solar: Solar;
+  let lunar: Lunar;
+
+  if (calendarType === CalendarType.LUNAR) {
+      lunar = Lunar.fromYmdHms(y, m, d, h, min, 0);
+      // Handle potential leap month if the library doesn't automatically detect it from date input
+      // Usually lunar-javascript expects month to be negative for leap, or specific parameters.
+      // If user explicitly checked 'leap', we might need to adjust.
+      if (isLeapMonth) {
+          // Attempt to find the leap month for that year
+          const leapMonth = lunar.getYear() === y ? lunar.getMonth() : m;
+          lunar = Lunar.fromYmdHms(y, -Math.abs(leapMonth), d, h, min, 0);
+      }
+      solar = lunar.getSolar();
+  } else {
+      solar = Solar.fromYmdHms(y, m, d, h, min, 0);
+      lunar = solar.getLunar();
+  }
+
   const eightChar = lunar.getEightChar();
   
   const createPillar = (type: 'Year' | 'Month' | 'Day' | 'Hour', idx: number): BaZiPillar => {

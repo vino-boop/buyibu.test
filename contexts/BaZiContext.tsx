@@ -1,7 +1,7 @@
 
 // Fix: Added React import to resolve 'Cannot find namespace React' when using React.FC
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { BaZiResponse, Gender, ChatMessage, UserProfile, BaZiChart } from '../types';
+import { BaZiResponse, Gender, ChatMessage, UserProfile, BaZiChart, CalendarType } from '../types';
 import { analyzeBaZi, chatWithContext, formatBaZiToText, extractSuggestions } from '../services/aiService';
 import { calculateLocalBaZi } from '../services/geminiService';
 import { Lunar } from 'lunar-javascript';
@@ -15,6 +15,10 @@ interface BaZiContextType {
   setBirthDate: (d: string) => void;
   birthTime: string;
   setBirthTime: (t: string) => void;
+  calendarType: CalendarType;
+  setCalendarType: (c: CalendarType) => void;
+  isLeapMonth: boolean;
+  setIsLeapMonth: (l: boolean) => void;
   viewMode: 'EDIT' | 'VIEW';
   setViewMode: (v: 'EDIT' | 'VIEW') => void;
   chartDisplayMode: 'COLLAPSED' | 'EXPANDED';
@@ -45,6 +49,8 @@ export const BaZiProvider: React.FC<{ userProfile: UserProfile; children: ReactN
   const [gender, setGender] = useState(userProfile.gender);
   const [birthDate, setBirthDate] = useState(userProfile.birthDate);
   const [birthTime, setBirthTime] = useState(userProfile.birthTime);
+  const [calendarType, setCalendarType] = useState<CalendarType>(userProfile.calendarType || CalendarType.SOLAR);
+  const [isLeapMonth, setIsLeapMonth] = useState<boolean>(userProfile.isLeapMonth || false);
   const [viewMode, setViewMode] = useState<'EDIT' | 'VIEW'>('VIEW');
   const [chartDisplayMode, setChartDisplayMode] = useState<'COLLAPSED' | 'EXPANDED'>('EXPANDED');
   const [showFullDetails, setShowFullDetails] = useState(false);
@@ -101,7 +107,7 @@ export const BaZiProvider: React.FC<{ userProfile: UserProfile; children: ReactN
     else setLoading(true);
 
     try {
-      const chart = calculateLocalBaZi(name, birthDate, birthTime, gender);
+      const chart = calculateLocalBaZi(name, birthDate, birthTime, gender, calendarType, isLeapMonth);
       
       // 自动定位至当前时间
       autoLocateIndices(chart);
@@ -210,6 +216,7 @@ export const BaZiProvider: React.FC<{ userProfile: UserProfile; children: ReactN
   return (
     <BaZiContext.Provider value={{
       name, setName, gender, setGender, birthDate, setBirthDate, birthTime, setBirthTime,
+      calendarType, setCalendarType, isLeapMonth, setIsLeapMonth,
       viewMode, setViewMode, chartDisplayMode, setChartDisplayMode, showFullDetails, setShowFullDetails,
       selectedDaYunIndex, setSelectedDaYunIndex, selectedLiuNianIndex, setSelectedLiuNianIndex, selectedLiuYueIndex, setSelectedLiuYueIndex,
       chartData, messages, loading, chatLoading, handleStart, handleSendMessage, inputMessage, setInputMessage, triggerDefaultQuestion

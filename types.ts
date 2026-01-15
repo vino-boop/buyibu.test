@@ -12,12 +12,19 @@ export enum Gender {
   FEMALE = 'Female'
 }
 
+export enum CalendarType {
+  SOLAR = 'SOLAR',
+  LUNAR = 'LUNAR'
+}
+
 export interface UserProfile {
   name: string;
   gender: Gender;
   birthDate: string; // YYYY-MM-DD
   birthTime: string; // HH:mm
   birthPlace: string;
+  calendarType?: CalendarType;
+  isLeapMonth?: boolean;
   phoneNumber?: string;
 }
 
