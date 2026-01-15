@@ -34,7 +34,6 @@ export const RegistrationView: React.FC<RegistrationViewProps> = ({ onComplete, 
     }
   }, [birthDate, birthTime]);
 
-  // 左侧品牌面板（PC专用）
   const BrandingPanel = () => (
     <div className={`hidden sm:flex flex-col items-center justify-center relative overflow-hidden transition-all duration-1000 w-[45%] bg-gradient-to-br ${step === 1 ? elementInfo.color : 'from-[#0f1110] to-[#1a1b1e]'}`}>
        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-30"></div>
@@ -65,42 +64,49 @@ export const RegistrationView: React.FC<RegistrationViewProps> = ({ onComplete, 
   );
 
   const DevModePanel = () => (
-    <div className="fixed sm:absolute inset-0 sm:right-0 sm:left-auto sm:w-[400px] bg-mystic-paper/95 backdrop-blur-2xl z-[100] border-l border-white/5 shadow-2xl animate-fade-in-right flex flex-col">
+    <div className="fixed inset-0 sm:absolute sm:right-0 sm:left-auto sm:w-[400px] bg-mystic-paper/98 backdrop-blur-3xl z-[999] border-l border-white/10 shadow-2xl animate-fade-in-right flex flex-col">
        <div className="p-8 space-y-8 flex-1 overflow-y-auto scrollbar-hide">
           <div className="flex justify-between items-center border-b border-white/10 pb-4">
              <div className="flex flex-col">
-                <h3 className="text-mystic-gold text-lg font-bold tracking-widest uppercase">开发者配置</h3>
-                <span className="text-[10px] text-gray-500">Model Dashboard</span>
+                <h3 className="text-mystic-gold text-lg font-bold tracking-widest uppercase">引擎配置</h3>
+                <span className="text-[10px] text-gray-500 uppercase tracking-tighter">API Service Options</span>
              </div>
              <button onClick={() => setShowDevMode(false)} className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-gray-400 hover:text-white transition-colors">✕</button>
           </div>
           
-          <div className="space-y-6">
-             <div className="space-y-3">
-                <label className="text-xs text-gray-500 font-bold uppercase tracking-widest">提供商</label>
+          <div className="space-y-8">
+             <div className="space-y-4">
+                <label className="text-[10px] text-gray-500 font-bold uppercase tracking-[0.2em]">服务商 (Provider)</label>
                 <div className="grid grid-cols-2 gap-3 p-1 bg-black/40 rounded-xl border border-white/5">
                    <button onClick={() => updateAsset('apiProvider', 'GEMINI')} className={`py-3 text-xs rounded-lg transition-all ${assets.apiProvider !== 'DEEPSEEK' ? 'bg-mystic-gold text-black font-bold' : 'text-gray-500'}`}>Google</button>
                    <button onClick={() => updateAsset('apiProvider', 'DEEPSEEK')} className={`py-3 text-xs rounded-lg transition-all ${assets.apiProvider === 'DEEPSEEK' ? 'bg-mystic-gold text-black font-bold' : 'text-gray-500'}`}>DeepSeek</button>
                 </div>
              </div>
              <div className="space-y-2">
-                <label className="text-xs text-gray-500 font-bold uppercase tracking-widest">模型</label>
-                <input type="text" value={assets.apiModel || ''} onChange={(e) => updateAsset('apiModel', e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-4 text-sm text-white font-mono" />
+                <label className="text-[10px] text-gray-500 font-bold uppercase tracking-[0.2em]">模型 (Model ID)</label>
+                <input type="text" value={assets.apiModel || ''} onChange={(e) => updateAsset('apiModel', e.target.value)} placeholder={assets.apiProvider === 'DEEPSEEK' ? 'deepseek-chat' : 'gemini-3-pro-preview'} className="w-full bg-black/40 border border-white/10 rounded-xl px-5 py-4 text-sm text-white font-mono focus:border-mystic-gold/50 outline-none" />
              </div>
+
+             {assets.apiProvider === 'DEEPSEEK' && (
+                <div className="space-y-6 animate-fade-in">
+                    <div className="space-y-2">
+                        <label className="text-[10px] text-gray-500 font-bold uppercase tracking-[0.2em]">API Key</label>
+                        <input type="password" value={assets.customApiKey || ''} onChange={(e) => updateAsset('customApiKey', e.target.value)} placeholder="sk-..." className="w-full bg-black/40 border border-white/10 rounded-xl px-5 py-4 text-sm text-white font-mono focus:border-mystic-gold/50 outline-none" />
+                    </div>
+                </div>
+             )}
           </div>
        </div>
-       <div className="p-8 border-t border-white/5">
-          <button onClick={() => setShowDevMode(false)} className="w-full py-4 rounded-xl bg-mystic-gold text-black font-bold">确定</button>
+       <div className="p-8 border-t border-white/5 bg-black/20">
+          <button onClick={() => setShowDevMode(false)} className="w-full py-5 rounded-2xl bg-mystic-gold text-black font-bold shadow-xl active:scale-95 transition-all uppercase tracking-widest text-sm">保存并应用</button>
        </div>
     </div>
   );
 
   return (
     <div className="w-full h-full bg-[#0f1110] flex overflow-hidden">
-      {/* PC 品牌墙 */}
       <BrandingPanel />
 
-      {/* 注册表单区 */}
       <div className="flex-1 h-full flex flex-col items-center justify-center p-6 sm:p-16 relative overflow-y-auto scrollbar-hide bg-[#0f1110]">
         
         {step === 0 && (
@@ -110,13 +116,8 @@ export const RegistrationView: React.FC<RegistrationViewProps> = ({ onComplete, 
              </div>
              
              <div className="w-full space-y-10">
-                <div className="text-center sm:text-left">
-                   <h2 className="text-4xl text-white font-serif mb-4 font-light tracking-widest leading-tight">欢迎开启<br/><span className="text-mystic-gold font-bold">运何天机</span></h2>
-                   <p className="text-gray-500 text-sm leading-relaxed max-w-[280px] sm:max-w-none mx-auto sm:mx-0">基于高阶命理引擎与人工智能，为您拨开云雾，洞见前程。</p>
-                </div>
-
                 <div className="space-y-4 pt-4">
-                   <button onClick={() => setStep(1)} className="w-full bg-mystic-gold text-black font-bold text-lg py-5 rounded-2xl hover:scale-[1.02] transition-all shadow-[0_10px_30px_rgba(197,176,120,0.1)] active:scale-95">立即排盘</button>
+                   <button onClick={() => setStep(1)} className="w-full bg-mystic-gold text-black font-bold text-lg py-5 rounded-2xl hover:scale-[1.02] transition-all shadow-[0_10px_30px_rgba(197,176,120,0.1)] active:scale-95">立刻登录</button>
                    <div className="flex items-center gap-4 py-2">
                       <div className="flex-1 h-[0.5px] bg-white/5"></div>
                       <span className="text-[9px] text-gray-700 uppercase tracking-[0.3em]">Or Entry via</span>

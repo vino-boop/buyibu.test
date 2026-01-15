@@ -39,7 +39,7 @@ const SubPage: React.FC<{ title: string; onClose: () => void; isDay: boolean; ch
 };
 
 export const ProfileView: React.FC<ProfileViewProps> = ({ userProfile, isDayMode, onThemeToggle, onBack, onLogout }) => {
-  const { assets } = useAssets();
+  const { assets, updateAsset } = useAssets();
   const [activeSubPage, setActiveSubPage] = useState<string | null>(null);
 
   const renderSubPageContent = () => {
@@ -60,6 +60,62 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ userProfile, isDayMode
                           <div className={textClass}>{userProfile.birthDate} {userProfile.birthTime}</div>
                       </div>
                   </div>
+              );
+          case 'API引擎':
+              return (
+                <div className="space-y-6 animate-fade-in">
+                    <div className="p-4 rounded-xl bg-amber-900/10 border border-amber-500/10 text-[10px] text-amber-500/80 leading-relaxed uppercase tracking-widest">
+                        开发者调试：在这里您可以自由切换 AI 模型提供商。
+                    </div>
+                    
+                    <div className="space-y-4">
+                        <label className={`text-xs font-bold uppercase tracking-widest ${labelClass}`}>服务提供商</label>
+                        <div className="grid grid-cols-2 gap-3 p-1 bg-black/40 rounded-xl border border-white/5">
+                            <button onClick={() => updateAsset('apiProvider', 'GEMINI')} className={`py-3 text-xs rounded-lg transition-all ${assets.apiProvider !== 'DEEPSEEK' ? 'bg-mystic-gold text-black font-bold' : 'text-gray-500'}`}>Google</button>
+                            <button onClick={() => updateAsset('apiProvider', 'DEEPSEEK')} className={`py-3 text-xs rounded-lg transition-all ${assets.apiProvider === 'DEEPSEEK' ? 'bg-mystic-gold text-black font-bold' : 'text-gray-500'}`}>DeepSeek</button>
+                        </div>
+                    </div>
+
+                    <div className="space-y-2">
+                        <label className={`text-xs font-bold uppercase tracking-widest ${labelClass}`}>Model ID</label>
+                        <input 
+                            type="text" 
+                            value={assets.apiModel || ''} 
+                            onChange={(e) => updateAsset('apiModel', e.target.value)} 
+                            placeholder={assets.apiProvider === 'DEEPSEEK' ? 'deepseek-chat' : 'gemini-3-pro-preview'}
+                            className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-4 text-sm text-white font-mono focus:border-mystic-gold/50 outline-none" 
+                        />
+                    </div>
+
+                    {assets.apiProvider === 'DEEPSEEK' && (
+                        <div className="space-y-6 pt-2">
+                             <div className="space-y-2">
+                                <label className={`text-xs font-bold uppercase tracking-widest ${labelClass}`}>API Secret Key</label>
+                                <input 
+                                    type="password" 
+                                    value={assets.customApiKey || ''} 
+                                    onChange={(e) => updateAsset('customApiKey', e.target.value)} 
+                                    placeholder="sk-..."
+                                    className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-4 text-sm text-white font-mono focus:border-mystic-gold/50 outline-none" 
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className={`text-xs font-bold uppercase tracking-widest ${labelClass}`}>Base URL</label>
+                                <input 
+                                    type="text" 
+                                    value={assets.apiBaseUrl || ''} 
+                                    onChange={(e) => updateAsset('apiBaseUrl', e.target.value)} 
+                                    placeholder="https://api.deepseek.com"
+                                    className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-4 text-[10px] text-white font-mono focus:border-mystic-gold/50 outline-none" 
+                                />
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="pt-8">
+                         <button onClick={() => setActiveSubPage(null)} className="w-full py-4 rounded-xl bg-mystic-gold text-black font-bold shadow-xl">保存配置</button>
+                    </div>
+                </div>
               );
           default:
                return (
@@ -87,7 +143,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ userProfile, isDayMode
       </div>
 
       <div className="flex-1 overflow-y-auto px-4 pb-8 scrollbar-hide">
-        <div className="w-full h-48 rounded-2xl relative overflow-hidden mb-8 shadow-2xl border border-white/5 group">
+        <div className="w-full h-44 sm:h-48 rounded-2xl relative overflow-hidden mb-8 shadow-2xl border border-white/5 group">
            <div className="absolute inset-0 bg-gradient-to-br from-slate-800 to-black"></div>
            <div className="absolute inset-0 opacity-80 mix-blend-overlay bg-[url('https://api.dicebear.com/9.x/notionists/svg?seed=Mountain&backgroundColor=transparent')] bg-cover bg-center filter sepia brightness-50"></div>
            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
@@ -108,7 +164,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ userProfile, isDayMode
                  </div>
               </div>
               <div className="flex items-end justify-between">
-                  <div className="text-gray-400 text-[10px]">VIP 有效期至 2025-12-31</div>
+                  <div className="text-gray-400 text-[10px]">DAO AI ENGINE · {assets.apiProvider || 'GEMINI'}</div>
                   <div className="text-right">
                      <div className="flex items-baseline gap-1 text-white font-bold drop-shadow-md">
                         <span className="text-2xl">20元</span>
@@ -131,7 +187,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ userProfile, isDayMode
                 </div>
               } 
            />
-           <MenuItem isDay={isDayMode} label="通知设置" onClick={() => setActiveSubPage('通知设置')} />
+           <MenuItem isDay={isDayMode} label="API引擎配置" onClick={() => setActiveSubPage('API引擎')} />
            <MenuItem isDay={isDayMode} label="帮助与反馈" onClick={() => setActiveSubPage('帮助与反馈')} />
         </div>
 
