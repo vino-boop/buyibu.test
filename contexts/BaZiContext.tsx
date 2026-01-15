@@ -58,19 +58,26 @@ export const BaZiProvider: React.FC<{ userProfile: UserProfile; children: ReactN
   const [inputMessage, setInputMessage] = useState('');
 
   const handleStart = async (withAnalysis: boolean) => {
-    // 立即根据类型设置状态
-    if (withAnalysis) {
-      setChatLoading(true);
-    } else {
-      setLoading(true);
-    }
+    if (withAnalysis) setChatLoading(true);
+    else setLoading(true);
 
     try {
       const chart = calculateLocalBaZi(name, birthDate, birthTime, gender);
       if (withAnalysis) {
-        const res = await analyzeBaZi(name, birthDate, birthTime, gender, '北京');
+        const assistantMsgId = Date.now().toString();
+        setMessages([{ id: assistantMsgId, role: 'assistant', content: "" }]);
+        
+        const res = await analyzeBaZi(name, birthDate, birthTime, gender, '北京', (chunk) => {
+            setMessages(prev => {
+                const last = prev[prev.length - 1];
+                if (last && last.id === assistantMsgId) {
+                    return [...prev.slice(0, -1), { ...last, content: last.content + chunk }];
+                }
+                return prev;
+            });
+            setChatLoading(false); // 数据一来就关闭加载状态
+        });
         setChartData(res);
-        setMessages([{ id: Date.now().toString(), role: 'assistant', content: res.analysis }]);
         setViewMode('VIEW');
       } else {
         setChartData({ chart, analysis: "" });
@@ -80,15 +87,9 @@ export const BaZiProvider: React.FC<{ userProfile: UserProfile; children: ReactN
           content: `命盘已现。阁下若需窥探乾坤造化，请点选下方 **“专业详盘”**。` 
         }]);
       }
-    } catch (e) {
-      console.error("BaZi Start Error:", e);
-      setMessages([{ 
-        id: Date.now().toString(), 
-        role: 'assistant', 
-        content: `推演由于外力中断，请检查设置或稍后再试。` 
-      }]);
+    } catch (e: any) {
+      setMessages(prev => [...prev, { id: Date.now().toString(), role: 'assistant', content: `### 推演受阻\n${e.message}` }]);
     } finally {
-      // 确保在任何情况下都会关闭 loading
       setLoading(false);
       setChatLoading(false);
     }
@@ -104,20 +105,27 @@ export const BaZiProvider: React.FC<{ userProfile: UserProfile; children: ReactN
     }
 
     const userMsg: ChatMessage = { id: Date.now().toString(), role: 'user', content: text, isProfessional: isPro };
-    setMessages(prev => [...prev, userMsg]);
+    const assistantMsgId = (Date.now() + 1).toString();
+    setMessages(prev => [...prev, userMsg, { id: assistantMsgId, role: 'assistant', content: "", isProfessional: isPro }]);
     setInputMessage('');
     setChatLoading(true);
 
     try {
-      const baZiData = formatBaZiToText(chartData.chart, { 
-          dy: selectedDaYunIndex, 
-          ln: selectedLiuNianIndex 
-      });
+      const baZiData = formatBaZiToText(chartData.chart, { dy: selectedDaYunIndex, ln: selectedLiuNianIndex });
       const context = messages.length > 0 ? messages[0].content : chartData.analysis;
-      const res = await chatWithContext([...messages, userMsg], context, baZiData);
-      setMessages(prev => [...prev, { id: (Date.now() + 1).toString(), role: 'assistant', content: res, isProfessional: isPro }]);
+      
+      await chatWithContext([...messages, userMsg], context, baZiData, (chunk) => {
+          setMessages(prev => {
+              const last = prev[prev.length - 1];
+              if (last && last.id === assistantMsgId) {
+                  return [...prev.slice(0, -1), { ...last, content: last.content + chunk }];
+              }
+              return prev;
+          });
+          setChatLoading(false);
+      });
     } catch (e) {
-      setMessages(prev => [...prev, { id: (Date.now() + 1).toString(), role: 'assistant', content: "推演受阻，机缘未至。" }]);
+      setMessages(prev => [...prev.slice(0, -1), { id: assistantMsgId, role: 'assistant', content: "吾正在闭关，请稍后再试。" }]);
     } finally {
       setChatLoading(false);
     }

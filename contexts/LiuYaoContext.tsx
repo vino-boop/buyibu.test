@@ -54,7 +54,6 @@ const INITIAL_MANUAL_LINES: HexagramLine[] = [
   { position: 6, value: 8 },
 ];
 
-// LiuYaoProvider manages the state and logic for various divination methods (coins, time, stalks)
 export const LiuYaoProvider: React.FC<{ userProfile: UserProfile; children: ReactNode }> = ({ userProfile, children }) => {
   const [mode, setMode] = useState<InputMode>('SHAKE');
   const [question, setQuestion] = useState('');
@@ -88,7 +87,6 @@ export const LiuYaoProvider: React.FC<{ userProfile: UserProfile; children: Reac
     }
   }, []);
 
-  // handleToss simulates coin tossing for SHAKE mode
   const handleToss = () => {
     if (shakeStep >= 6 || isFlipping) return;
     setIsFlipping(true);
@@ -97,10 +95,10 @@ export const LiuYaoProvider: React.FC<{ userProfile: UserProfile; children: Reac
       setCoins(newCoins);
       const sum = newCoins.reduce((a, b) => a + b, 0);
       let value: number;
-      if (sum === 6) value = 6; // 3 tails: Old Yin
-      else if (sum === 7) value = 7; // 2 tails, 1 head: Young Yang
-      else if (sum === 8) value = 8; // 1 tail, 2 heads: Young Yin
-      else value = 9; // 3 heads: Old Yang
+      if (sum === 6) value = 6;
+      else if (sum === 7) value = 7;
+      else if (sum === 8) value = 8;
+      else value = 9;
 
       setShakeLines(prev => [...prev, { position: shakeStep + 1, value }]);
       setShakeStep(prev => prev + 1);
@@ -108,7 +106,6 @@ export const LiuYaoProvider: React.FC<{ userProfile: UserProfile; children: Reac
     }, 600);
   };
 
-  // handleTimeStart generates a hexagram based on current time
   const handleTimeStart = () => {
     const lines: HexagramLine[] = [1, 2, 3, 4, 5, 6].map(pos => ({
         position: pos,
@@ -118,7 +115,6 @@ export const LiuYaoProvider: React.FC<{ userProfile: UserProfile; children: Reac
     setShakeStep(6);
   };
 
-  // handleAnalyze sends the generated hexagram to the AI for interpretation
   const handleAnalyze = async () => {
     if (!question.trim()) { 
       setShakeError(true); 
@@ -149,21 +145,29 @@ export const LiuYaoProvider: React.FC<{ userProfile: UserProfile; children: Reac
     }
   };
 
-  // handleSendMessage handles user chat interactions for LiuYao results
   const handleSendMessage = async (msg?: string) => {
     const text = msg || inputMessage;
     if (!text.trim() || !result) return;
     
     const userMsg: ChatMessage = { id: Date.now().toString(), role: 'user', content: text };
-    setMessages(prev => [...prev, userMsg]);
+    const assistantMsgId = (Date.now() + 1).toString();
+    setMessages(prev => [...prev, userMsg, { id: assistantMsgId, role: 'assistant', content: "" }]);
     setInputMessage('');
     setIsAnalyzing(true);
 
     try {
-      const res = await chatWithContext([...messages, userMsg], result.analysis);
-      setMessages(prev => [...prev, { id: (Date.now() + 1).toString(), role: 'assistant', content: res }]);
+      await chatWithContext([...messages, userMsg], result.analysis, undefined, (chunk) => {
+          setMessages(prev => {
+              const last = prev[prev.length - 1];
+              if (last && last.id === assistantMsgId) {
+                  return [...prev.slice(0, -1), { ...last, content: last.content + chunk }];
+              }
+              return prev;
+          });
+          setIsAnalyzing(false);
+      });
     } catch (e) {
-      console.error("LiuYao Chat Error:", e);
+      setMessages(prev => [...prev.slice(0, -1), { id: assistantMsgId, role: 'assistant', content: "机缘未至，请稍后再试。" }]);
     } finally {
       setIsAnalyzing(false);
     }
@@ -212,11 +216,8 @@ export const LiuYaoProvider: React.FC<{ userProfile: UserProfile; children: Reac
   );
 };
 
-// useLiuYao is the hook for components to access LiuYao state
 export const useLiuYao = () => {
   const context = useContext(LiuYaoContext);
-  if (!context) {
-    throw new Error('useLiuYao must be used within a LiuYaoProvider');
-  }
+  if (!context) throw new Error('useLiuYao must be used within a LiuYaoProvider');
   return context;
 };
