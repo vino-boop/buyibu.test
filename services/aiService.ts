@@ -114,10 +114,10 @@ async function callAI(prompt: string, systemInstruction?: string, isJson = false
 
 const getBaseInstruction = (baZiData?: string) => `你是一位渊博古雅、洞察天机的周易命理大师。
 1. 自称为“吾”，称呼对方为“阁下”。严禁 Emoji。
-2. 【核心排版规则】：为了确保阁下获得清晰的指引，每一段独立的推演分析必须冠以以 ### 开头的古风标题（例如 ### 【格神气象】）。
-3. 【推演基石】：深度结合阁下的八字原局、神煞、以及完整的大运流年序列。${baZiData ? `阁下命盘数据：${baZiData}` : ""}
-4. 【文风】：辞藻清雅，论断果敢。全篇加粗语法（**内容**）严禁超过 3 处。
-5. 【职业操守】：不要提及你是 AI，保持命理师的专业感与神秘感。`;
+2. 【排版铁律】：每一段独立的推演分析必须以 ### 开头的古风标题。
+3. 【文风要求】：辞藻清雅，论断果敢。在保持大师风范的同时，对现代职业（互联网、金融、创业等）和情感诉求有敏锐的洞察，用语稍微偏向现代语境，不要过于晦涩。
+4. 【推演基石】：深度结合阁下的八字原局、格局、神煞、以及完整的大运流年。${baZiData ? `阁下命盘数据：${baZiData}` : ""}
+5. 【限制】：加粗语法（**内容**）全篇严禁超过 3 处。不要提及你是 AI。`;
 
 export async function analyzeBaZi(name: string, date: string, time: string, gender: string, place: string): Promise<BaZiResponse> {
   const chart = calculateLocalBaZi(name, date, time, gender);
@@ -127,18 +127,24 @@ export async function analyzeBaZi(name: string, date: string, time: string, gend
 请执行【最高级别专业详盘】深度推演，严格按以下带有 ### 子标题的结构输出：
 
 ### 【格局判定】
-识别月令气象，判定格神（如建禄格、食神生财、伤官佩印等），定下命局的高低气势基调。
+判定格神（如建禄格、从儿格等），并结合现代语境定下命局的能量层级与气质基调。
 
-### 【六亲全析】
-分析印比食伤财官在原局的状态，深度映射父母助力、同辈缘分、伴侣契合度及子女福荫。
+### 【时命气象】
+针对阁下当前年龄段（如：而立之年的拼搏期、不惑之年的转型期等）的整体心理状态、精力分配及社会坐标进行深度白话解析。
+
+### 【神煞点睛】
+点出命局中最关键的 2-3 个神煞（如天乙贵人、驿马、魁罡等），解释它们如何影响阁下的性格特质和突发机缘。
+
+### 【六亲因缘】
+推演印比食伤财官在原局的状态，映射父母、同辈、伴侣及子女在现代生活中的助力深度与互动模式。
 
 ### 【岁运关键】
-扫描提供的大运序列，指出 2-3 个关键转折年份。必须包含**财运财富增减**与**感情正缘节点**的精准推算。
+扫描提供的大运序列，指出 2-3 个流年节点。必须包含**事业财富增减**与**情感婚恋机会**。
 
 ### 【天机总结】
-包含一句古雅的诗总结和引导性追问（诗与追问之间不设标题）。
+结尾必须包含一句古雅的诗总结和引导性追问（诗与追问不设标题）。
 
-要求：文辞干练，每一部分都必须带标题。**加粗严禁超过 3 处**。`;
+要求：严禁简写。**加粗严禁超过 3 处**。`;
 
   try {
     const analysis = await callAI(prompt, getBaseInstruction(baZiData));
@@ -153,8 +159,8 @@ export async function chatWithContext(messages: ChatMessage[], context: string, 
   const isProfessional = lastUserMessage?.isProfessional;
   
   const modeInstruction = isProfessional 
-    ? "【专业详盘模式】：保持专业深度。必须使用 ### 子标题划分段落。指出具体年份节点。结尾附追问。" 
-    : "【直白详述模式】：将晦涩术语翻译为阁下能听懂的白话。要求：信息密度必须与专业模式持平，严禁删减逻辑！必须使用 ### 子标题划分段落，将每个术语背后的生活逻辑详细阐述。";
+    ? "【专业详盘模式】：分析必须带有 ### 子标题。语境偏现代，深度剖析岁运交互及具体节点。" 
+    : "【直白详述模式】：完全去掉术语。必须保留 ### 子标题。信息密度必须与专业模式持平，将术语逻辑转化为通俗的职业与情感建议。";
 
   const systemInstruction = `${getBaseInstruction(baZiData)}\n${modeInstruction}\n对话背景：${context}`;
 
@@ -176,9 +182,9 @@ export async function interpretLiuYao(lines: HexagramLine[], question: string, u
     "hexagramName": "卦名",
     "hexagramSymbol": "符号",
     "judgment": "极简断语（限12字内，严禁加粗）",
-    "analysis": "请严格按照以下结构输出内容，每一项前均需 ### 子标题：\\n\\n### 【卦辞解析】\\n解析本卦核心大义。\\n\\n### 【动变机锋】\\n解析爻位变动及吉凶趋势。\\n\\n### 【事态指引】\\n针对问题的具体建议。\\n\\n### 【诗以咏志】\\n包含诗句及结尾引导追问。"
+    "analysis": "请严格按照以下结构输出内容，每一项前均需 ### 子标题：\\n\\n### 【卦辞解析】\\n解析核心大义。\\n\\n### 【动变机锋】\\n解析变动及趋势。\\n\\n### 【事态指引】\\n针对问题的现代生活建议。\\n\\n### 【诗以咏志】\\n包含诗句及结尾引导追问（不设标题）。"
   }
-  要求：自称为“吾”，直批吉凶。每一段都必须带标题。全篇加粗严禁超过 3 处。`;
+  要求：语境稍微偏向现代。全篇加粗严禁超过 3 处。`;
 
   try {
     const response = await callAI(prompt, getBaseInstruction(baZiData) + "\n必须返回纯 JSON。", true);
