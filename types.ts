@@ -124,6 +124,7 @@ export interface ChatMessage {
   type?: 'text' | 'bazi_result' | 'liuyao_result';
   data?: any;
   isProfessional?: boolean; // Flag to indicate if the content was generated in professional mode
+  suggestions?: string[]; // AI-generated follow-up questions
 }
 
 /**

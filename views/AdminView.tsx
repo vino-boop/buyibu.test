@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useAssets, AppAssets, isImageUrl } from '../contexts/AssetContext';
 import { Article } from '../types';
@@ -179,7 +178,7 @@ export const AdminView: React.FC = () => {
                         onClick={() => {
                             updateAsset('apiProvider', 'GEMINI');
                             // Reset model for Gemini
-                            updateAsset('apiModel', 'gemini-3-flash-preview');
+                            updateAsset('apiModel', 'gemini-3-pro-preview');
                         }}
                         className={`flex-1 py-3 px-4 rounded-lg border text-sm transition-all ${assets.apiProvider !== 'DEEPSEEK' ? 'bg-mystic-gold text-black border-mystic-gold font-bold' : 'bg-black/20 border-white/10 text-gray-400'}`}
                     >
@@ -220,37 +219,37 @@ export const AdminView: React.FC = () => {
                     <label className="text-gray-400 text-xs block">Model Name</label>
                     <input 
                         type="text"
-                        value={assets.apiModel || (assets.apiProvider === 'DEEPSEEK' ? 'deepseek-reasoner' : 'gemini-3-flash-preview')}
+                        value={assets.apiModel || (assets.apiProvider === 'DEEPSEEK' ? 'deepseek-reasoner' : 'gemini-3-pro-preview')}
                         onChange={(e) => updateAsset('apiModel', e.target.value)}
                         className="w-full bg-black/20 border border-white/10 rounded px-4 py-3 text-sm text-white focus:border-mystic-gold outline-none font-mono"
                     />
                     <p className="text-[10px] text-gray-500">
-                        {assets.apiProvider === 'DEEPSEEK' ? '推荐: deepseek-reasoner (R1) 或 deepseek-chat' : '推荐: gemini-3-flash-preview'}
+                        {assets.apiProvider === 'DEEPSEEK' ? '推荐: deepseek-reasoner (R1) 或 deepseek-chat' : '推荐: gemini-3-pro-preview'}
                     </p>
                 </div>
 
-                {/* API Key */}
-                <div className="space-y-2 border-t border-white/5 pt-4">
-                    <label className="text-mystic-gold font-medium block">API Key</label>
-                    <input 
-                        type="password"
-                        value={assets.customApiKey || ''}
-                        onChange={(e) => updateAsset('customApiKey', e.target.value)}
-                        placeholder={`输入 ${assets.apiProvider === 'DEEPSEEK' ? 'DeepSeek' : 'Google'} API Key`}
-                        className="w-full bg-black/20 border border-white/10 rounded px-4 py-3 text-sm text-white focus:border-mystic-gold outline-none font-mono"
-                    />
-                    <p className="text-[10px] text-gray-500 leading-relaxed">
-                        {assets.apiProvider === 'DEEPSEEK' 
-                            ? "DeepSeek Key 格式通常为 'sk-...'。" 
-                            : "Google Key 格式通常为 'AIza...'。"}
-                    </p>
-                </div>
+                {/* API Key (Only for DeepSeek as per Gemini guidelines) */}
+                {assets.apiProvider === 'DEEPSEEK' && (
+                    <div className="space-y-2 border-t border-white/5 pt-4">
+                        <label className="text-mystic-gold font-medium block">API Key</label>
+                        <input 
+                            type="password"
+                            value={assets.customApiKey || ''}
+                            onChange={(e) => updateAsset('customApiKey', e.target.value)}
+                            placeholder="输入 DeepSeek API Key"
+                            className="w-full bg-black/20 border border-white/10 rounded px-4 py-3 text-sm text-white focus:border-mystic-gold outline-none font-mono"
+                        />
+                        <p className="text-[10px] text-gray-500 leading-relaxed">
+                            DeepSeek Key 格式通常为 'sk-...'。
+                        </p>
+                    </div>
+                )}
             </div>
             
              <div className="flex items-center gap-2 pt-2">
-                <div className={`w-2 h-2 rounded-full ${assets.customApiKey ? 'bg-green-500' : 'bg-gray-500'}`}></div>
+                <div className={`w-2 h-2 rounded-full ${assets.apiProvider === 'GEMINI' || assets.customApiKey ? 'bg-green-500' : 'bg-gray-500'}`}></div>
                 <span className="text-xs text-gray-400">
-                    状态: {assets.customApiKey ? `已配置 ${assets.apiProvider === 'DEEPSEEK' ? 'DeepSeek' : 'Google'} Key` : '未配置 Key'}
+                    状态: {assets.apiProvider === 'GEMINI' ? '已配置 Google API Key (ENV)' : (assets.customApiKey ? '已配置 DeepSeek Key' : '未配置 Key')}
                 </span>
             </div>
         </div>

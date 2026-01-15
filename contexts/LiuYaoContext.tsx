@@ -1,4 +1,5 @@
 
+import { extractSuggestions } from '../services/aiService';
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { HexagramLine, CoinSide, LiuYaoResponse, ChatMessage, LiuYaoHistoryRecord, YaoType, InputMode, UserProfile } from '../types';
 import { interpretLiuYao, chatWithContext } from '../services/aiService';
@@ -125,15 +126,18 @@ export const LiuYaoProvider: React.FC<{ userProfile: UserProfile; children: Reac
     try {
       const currentLines = mode === 'MANUAL' ? manualLines : shakeLines;
       const res = await interpretLiuYao(currentLines, question, userProfile);
-      setResult(res);
-      setMessages([{ id: Date.now().toString(), role: 'assistant', content: res.analysis }]);
+      
+      const { content, suggestions } = extractSuggestions(res.analysis);
+      const cleanResult = { ...res, analysis: content };
+      setResult(cleanResult);
+      setMessages([{ id: Date.now().toString(), role: 'assistant', content, suggestions }]);
       
       const record: LiuYaoHistoryRecord = {
         id: Date.now().toString(),
         question,
         timestamp: Date.now(),
         dateStr: new Date().toLocaleDateString('zh-CN'),
-        result: res
+        result: cleanResult
       };
       const newHistory = [record, ...history];
       setHistory(newHistory);
@@ -166,6 +170,16 @@ export const LiuYaoProvider: React.FC<{ userProfile: UserProfile; children: Reac
           });
           setIsAnalyzing(false);
       });
+
+      // After stream ends, extract suggestions
+      setMessages(prev => {
+        const last = prev[prev.length - 1];
+        if (last && last.id === assistantMsgId) {
+            const { content, suggestions } = extractSuggestions(last.content);
+            return [...prev.slice(0, -1), { ...last, content, suggestions }];
+        }
+        return prev;
+      });
     } catch (e) {
       setMessages(prev => [...prev.slice(0, -1), { id: assistantMsgId, role: 'assistant', content: "机缘未至，请稍后再试。" }]);
     } finally {
@@ -191,7 +205,8 @@ export const LiuYaoProvider: React.FC<{ userProfile: UserProfile; children: Reac
   const restoreRecord = (record: LiuYaoHistoryRecord) => {
     setResult(record.result);
     setQuestion(record.question);
-    setMessages([{ id: Date.now().toString(), role: 'assistant', content: record.result.analysis }]);
+    const { content, suggestions } = extractSuggestions(record.result.analysis);
+    setMessages([{ id: Date.now().toString(), role: 'assistant', content, suggestions }]);
     setShowChat(true);
     setShowHistoryModal(false);
   };

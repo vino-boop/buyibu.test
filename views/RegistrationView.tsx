@@ -34,157 +34,150 @@ export const RegistrationView: React.FC<RegistrationViewProps> = ({ onComplete, 
     }
   }, [birthDate, birthTime]);
 
-  if (step === 0) {
-    return (
-      <div className="w-full h-full flex flex-col items-center justify-between py-24 px-8 bg-[#0f1110] relative">
-         <div className="flex-1 flex flex-col justify-center transform -translate-y-10">
-            <YunHeLogo size={140} />
-         </div>
-
-         {showDevMode ? (
-            <div className="w-full bg-mystic-paper p-6 rounded-3xl border border-mystic-gold/20 space-y-5 mb-12 animate-fade-in-up shadow-2xl">
-               <div className="flex justify-between items-center border-b border-white/5 pb-2">
-                  <h3 className="text-mystic-gold text-xs font-bold tracking-widest uppercase">模型竞技场</h3>
-                  <button onClick={() => setShowDevMode(false)} className="text-gray-500 text-xs hover:text-white">关闭</button>
+  // 左侧品牌面板（PC专用）
+  const BrandingPanel = () => (
+    <div className={`hidden sm:flex flex-col items-center justify-center relative overflow-hidden transition-all duration-1000 w-[45%] bg-gradient-to-br ${step === 1 ? elementInfo.color : 'from-[#0f1110] to-[#1a1b1e]'}`}>
+       <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-30"></div>
+       <div className="relative z-10 animate-fade-in text-center flex flex-col items-center">
+          {step === 0 ? (
+            <div className="scale-110 mb-12">
+               <YunHeLogo size={220} />
+            </div>
+          ) : (
+            <div className="mb-12">
+               <div className={`w-52 h-52 rounded-[3.5rem] bg-white/5 backdrop-blur-xl border border-white/10 flex items-center justify-center shadow-2xl transition-transform duration-700 hover:scale-105`}>
+                  <span className="text-9xl text-white font-serif">{elementInfo.char}</span>
                </div>
-               
-               <div className="space-y-4">
-                  <div className="space-y-2">
-                     <label className="text-[10px] text-gray-500 ml-1">选择引擎</label>
-                     <div className="flex gap-2 p-1 bg-black/40 rounded-xl border border-white/5">
-                        <button 
-                           onClick={() => {
-                              updateAsset('apiProvider', 'GEMINI');
-                              updateAsset('apiModel', 'gemini-3-flash-preview');
-                           }}
-                           className={`flex-1 py-2 text-[10px] rounded-lg transition-all ${assets.apiProvider !== 'DEEPSEEK' ? 'bg-mystic-gold text-black font-bold' : 'text-gray-500 hover:text-gray-300'}`}
-                        >Gemini</button>
-                        <button 
-                           onClick={() => {
-                              updateAsset('apiProvider', 'DEEPSEEK');
-                              updateAsset('apiModel', 'deepseek-reasoner');
-                           }}
-                           className={`flex-1 py-2 text-[10px] rounded-lg transition-all ${assets.apiProvider === 'DEEPSEEK' ? 'bg-mystic-gold text-black font-bold' : 'text-gray-500 hover:text-gray-300'}`}
-                        >DeepSeek</button>
-                     </div>
-                  </div>
-
-                  <div className="space-y-1">
-                     <label className="text-[10px] text-gray-500 ml-1">模型名称</label>
-                     <input 
-                        type="text" 
-                        value={assets.apiModel || ''} 
-                        onChange={(e) => updateAsset('apiModel', e.target.value)}
-                        placeholder={assets.apiProvider === 'DEEPSEEK' ? 'deepseek-reasoner' : 'gemini-3-flash-preview'}
-                        className="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:border-mystic-gold/50 outline-none font-mono"
-                     />
-                  </div>
-
-                  {assets.apiProvider === 'DEEPSEEK' && (
-                     <div className="space-y-3 animate-fade-in">
-                        <div className="space-y-1">
-                           <label className="text-[10px] text-gray-500 ml-1">DeepSeek API Key</label>
-                           <input 
-                              type="password" 
-                              value={assets.customApiKey || ''} 
-                              onChange={(e) => updateAsset('customApiKey', e.target.value)}
-                              placeholder="sk-..."
-                              className="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:border-mystic-gold/50 outline-none font-mono"
-                           />
-                        </div>
-                        <div className="space-y-1">
-                           <label className="text-[10px] text-gray-500 ml-1">API Endpoint</label>
-                           <input 
-                              type="text" 
-                              value={assets.apiBaseUrl || ''} 
-                              onChange={(e) => updateAsset('apiBaseUrl', e.target.value)}
-                              placeholder="https://api.deepseek.com"
-                              className="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:border-mystic-gold/50 outline-none font-mono text-[10px]"
-                           />
-                        </div>
-                     </div>
-                  )}
+               <div className="mt-10">
+                  <h3 className="text-mystic-gold text-sm tracking-[0.6em] uppercase font-serif">本命日主 · 天机已现</h3>
                </div>
             </div>
-         ) : (
-            <div className="w-full space-y-5 mb-12">
-               <button onClick={() => setStep(1)} className="w-full bg-[#e8cfa1] text-black font-medium text-lg py-4 rounded-lg hover:opacity-90 transition-opacity shadow-[0_4px_20px_rgba(232,207,161,0.2)]">注册</button>
-               <div className="text-center pt-2">
-                  <span className="text-gray-500 text-sm">已经有账号了？</span>
-                  <button className="text-[#e8cfa1] text-sm ml-2 font-medium">登录</button>
-               </div>
-               <button 
-                  onClick={() => setShowDevMode(true)} 
-                  className="w-full text-[10px] text-gray-700 hover:text-gray-400 transition-colors tracking-[0.3em] uppercase mt-4 font-serif"
-               >
-                  Developer Mode · {assets.apiProvider || 'GEMINI'}
-               </button>
-            </div>
-         )}
-         
-         <div className="absolute top-8 right-8 text-gray-500 border border-gray-600 rounded-full w-6 h-6 flex items-center justify-center text-xs cursor-pointer">?</div>
-         <button onClick={onEnterAdmin} className="absolute bottom-6 text-[10px] text-gray-800 hover:text-gray-600 transition-colors uppercase tracking-widest">后台管理</button>
+          )}
+          <div className="max-w-xs text-white/30 text-[10px] font-serif leading-loose tracking-widest mt-6 uppercase">
+             {step === 0 ? "万物有序，皆有其时。窥探命运之轮，从这里开始。" : "乾坤造化，阴阳互根。阁下之命盘正在推演中。"}
+          </div>
+       </div>
+       <div className="absolute bottom-12 left-12 opacity-20 flex flex-col gap-1">
+          <span className="text-[10px] text-white tracking-widest font-bold">DAO AI ENGINE</span>
+          <span className="text-[8px] text-white/50 tracking-widest uppercase">Ancient Wisdom meets AI</span>
+       </div>
+    </div>
+  );
+
+  const DevModePanel = () => (
+    <div className="fixed sm:absolute inset-0 sm:right-0 sm:left-auto sm:w-[400px] bg-mystic-paper/95 backdrop-blur-2xl z-[100] border-l border-white/5 shadow-2xl animate-fade-in-right flex flex-col">
+       <div className="p-8 space-y-8 flex-1 overflow-y-auto scrollbar-hide">
+          <div className="flex justify-between items-center border-b border-white/10 pb-4">
+             <div className="flex flex-col">
+                <h3 className="text-mystic-gold text-lg font-bold tracking-widest uppercase">开发者配置</h3>
+                <span className="text-[10px] text-gray-500">Model Dashboard</span>
+             </div>
+             <button onClick={() => setShowDevMode(false)} className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-gray-400 hover:text-white transition-colors">✕</button>
+          </div>
+          
+          <div className="space-y-6">
+             <div className="space-y-3">
+                <label className="text-xs text-gray-500 font-bold uppercase tracking-widest">提供商</label>
+                <div className="grid grid-cols-2 gap-3 p-1 bg-black/40 rounded-xl border border-white/5">
+                   <button onClick={() => updateAsset('apiProvider', 'GEMINI')} className={`py-3 text-xs rounded-lg transition-all ${assets.apiProvider !== 'DEEPSEEK' ? 'bg-mystic-gold text-black font-bold' : 'text-gray-500'}`}>Google</button>
+                   <button onClick={() => updateAsset('apiProvider', 'DEEPSEEK')} className={`py-3 text-xs rounded-lg transition-all ${assets.apiProvider === 'DEEPSEEK' ? 'bg-mystic-gold text-black font-bold' : 'text-gray-500'}`}>DeepSeek</button>
+                </div>
+             </div>
+             <div className="space-y-2">
+                <label className="text-xs text-gray-500 font-bold uppercase tracking-widest">模型</label>
+                <input type="text" value={assets.apiModel || ''} onChange={(e) => updateAsset('apiModel', e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-4 text-sm text-white font-mono" />
+             </div>
+          </div>
+       </div>
+       <div className="p-8 border-t border-white/5">
+          <button onClick={() => setShowDevMode(false)} className="w-full py-4 rounded-xl bg-mystic-gold text-black font-bold">确定</button>
+       </div>
+    </div>
+  );
+
+  return (
+    <div className="w-full h-full bg-[#0f1110] flex overflow-hidden">
+      {/* PC 品牌墙 */}
+      <BrandingPanel />
+
+      {/* 注册表单区 */}
+      <div className="flex-1 h-full flex flex-col items-center justify-center p-6 sm:p-16 relative overflow-y-auto scrollbar-hide bg-[#0f1110]">
+        
+        {step === 0 && (
+          <div className="w-full max-w-md flex flex-col items-center animate-fade-in">
+             <div className="sm:hidden mb-12">
+                <YunHeLogo size={120} />
+             </div>
+             
+             <div className="w-full space-y-10">
+                <div className="text-center sm:text-left">
+                   <h2 className="text-4xl text-white font-serif mb-4 font-light tracking-widest leading-tight">欢迎开启<br/><span className="text-mystic-gold font-bold">运何天机</span></h2>
+                   <p className="text-gray-500 text-sm leading-relaxed max-w-[280px] sm:max-w-none mx-auto sm:mx-0">基于高阶命理引擎与人工智能，为您拨开云雾，洞见前程。</p>
+                </div>
+
+                <div className="space-y-4 pt-4">
+                   <button onClick={() => setStep(1)} className="w-full bg-mystic-gold text-black font-bold text-lg py-5 rounded-2xl hover:scale-[1.02] transition-all shadow-[0_10px_30px_rgba(197,176,120,0.1)] active:scale-95">立即排盘</button>
+                   <div className="flex items-center gap-4 py-2">
+                      <div className="flex-1 h-[0.5px] bg-white/5"></div>
+                      <span className="text-[9px] text-gray-700 uppercase tracking-[0.3em]">Or Entry via</span>
+                      <div className="flex-1 h-[0.5px] bg-white/5"></div>
+                   </div>
+                   <button className="w-full bg-white/5 border border-white/5 text-gray-400 font-medium py-4 rounded-2xl hover:bg-white/10 transition-all">已有命书 · 登录</button>
+                </div>
+
+                <div className="pt-8 flex justify-center sm:justify-start gap-8">
+                   <button onClick={() => setShowDevMode(true)} className="text-[9px] text-gray-700 hover:text-mystic-gold transition-colors tracking-widest uppercase font-serif">引擎配置</button>
+                   <button onClick={onEnterAdmin} className="text-[9px] text-gray-700 hover:text-white transition-colors tracking-widest uppercase font-serif">后台管理</button>
+                </div>
+             </div>
+          </div>
+        )}
+
+        {step === 1 && (
+          <div className="w-full max-w-xl animate-fade-in-up">
+             <button onClick={() => setStep(0)} className="text-gray-600 text-sm w-fit mb-12 hover:text-white transition-colors flex items-center gap-2">
+                <span className="text-xl">❮</span> 返回
+             </button>
+
+             <div className="mb-12">
+                <h2 className="text-3xl text-white font-serif font-light tracking-widest mb-2">录入生辰</h2>
+                <p className="text-gray-500 text-sm">精确的时间有助于 AI 更准确地分析您的五行格局。</p>
+             </div>
+
+             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-10 gap-y-10">
+                <div className="space-y-2 group">
+                   <label className="text-[10px] text-gray-600 uppercase tracking-widest font-bold ml-1 group-focus-within:text-mystic-gold transition-colors">姓名 (Name)</label>
+                   <input type="text" placeholder="如何称呼阁下" className="w-full bg-transparent border-b border-gray-800 focus:border-mystic-gold outline-none py-3 text-lg text-white transition-all" value={name} onChange={(e) => setName(e.target.value)} />
+                </div>
+
+                <div className="space-y-2">
+                   <label className="text-[10px] text-gray-600 uppercase tracking-widest font-bold ml-1">性别 (Gender)</label>
+                   <div className="flex h-12 bg-white/5 rounded-xl p-1 mt-1">
+                      <button onClick={() => setGender(Gender.MALE)} className={`flex-1 rounded-lg text-sm transition-all ${gender === Gender.MALE ? 'bg-mystic-gold text-black font-bold' : 'text-gray-500'}`}>乾造 (男)</button>
+                      <button onClick={() => setGender(Gender.FEMALE)} className={`flex-1 rounded-lg text-sm transition-all ${gender === Gender.FEMALE ? 'bg-mystic-gold text-black font-bold' : 'text-gray-500'}`}>坤造 (女)</button>
+                   </div>
+                </div>
+
+                <div className="space-y-2 group">
+                   <label className={`text-[10px] uppercase tracking-widest font-bold ml-1 transition-colors ${showError && !birthDate ? 'text-red-500' : 'text-gray-600 group-focus-within:text-mystic-gold'}`}>出生日期 (Birth Date) *</label>
+                   <input type="date" className={`w-full bg-transparent border-b outline-none py-3 text-lg text-white transition-all ${showError && !birthDate ? 'border-red-500/50' : 'border-gray-800 focus:border-mystic-gold'}`} value={birthDate} onChange={(e) => { setBirthDate(e.target.value); setShowError(false); }} />
+                </div>
+
+                <div className="space-y-2 group">
+                   <label className="text-[10px] text-gray-600 uppercase tracking-widest font-bold ml-1 group-focus-within:text-mystic-gold transition-colors">出生时间 (Birth Time)</label>
+                   <input type="time" className="w-full bg-transparent border-b border-gray-800 focus:border-mystic-gold outline-none py-3 text-lg text-white transition-all" value={birthTime} onChange={(e) => setBirthTime(e.target.value)} />
+                </div>
+             </div>
+
+             <div className="mt-20">
+                <button onClick={() => { if (!birthDate) { setShowError(true); return; } onComplete({ name: name || '缘主', gender, birthDate, birthTime: birthTime || '12:00', birthPlace: '北京' }); }} className="w-full bg-mystic-gold text-black font-bold text-lg py-5 rounded-2xl hover:brightness-110 shadow-xl active:scale-95 transition-all">开启命盘</button>
+                <p className="text-gray-800 text-[9px] text-center mt-8 tracking-[0.4em] uppercase font-serif">Privacy Secured · 个人信息仅用于命理计算</p>
+             </div>
+          </div>
+        )}
+
+        {showDevMode && <DevModePanel />}
       </div>
-    );
-  }
-
-  if (step === 1) {
-    return (
-      <div className="w-full h-full flex flex-col px-8 pt-12 pb-12 bg-[#0f1110] overflow-y-auto">
-         <button onClick={() => setStep(0)} className="text-gray-400 text-2xl w-fit mb-8 hover:text-white transition-colors">❮</button>
-         <div className="flex justify-center mb-10">
-            <span className="flex gap-3">
-               <div className="w-2 h-2 rounded-full bg-gray-700"></div>
-               <div className="w-2 h-2 rounded-full bg-[#e8cfa1] shadow-[0_0_8px_rgba(232,207,161,0.5)]"></div>
-               <div className="w-2 h-2 rounded-full bg-gray-700"></div>
-            </span>
-         </div>
-         <h2 className="text-3xl text-white text-center mb-12 font-medium tracking-widest font-serif">个人信息</h2>
-         <div className="flex justify-center mb-16">
-            <div className={`w-28 h-28 bg-gradient-to-br ${elementInfo.color} rounded-3xl flex items-center justify-center shadow-[0_0_40px_rgba(0,0,0,0.3)] ${elementInfo.shadow} border ${elementInfo.border} transition-all duration-700`}>
-               <span className="text-5xl text-white/90 font-serif animate-fade-in">{elementInfo.char}</span>
-            </div>
-            {birthDate && <div className="absolute mt-32 text-xs text-gray-500 tracking-widest uppercase font-serif">本命日主</div>}
-         </div>
-         <div className="space-y-10 px-2 flex-1">
-            <div className="border-b border-gray-800 pb-2 flex justify-between items-center group focus-within:border-[#e8cfa1] transition-colors">
-               <span className="text-gray-800 select-none text-lg">Name</span>
-               <input type="text" placeholder="请输入姓名" className="bg-transparent outline-none text-white text-right placeholder-gray-600 w-full text-lg font-light tracking-wide" value={name} onChange={(e) => setName(e.target.value)} />
-            </div>
-            <div className={`border-b pb-2 flex justify-between items-center relative group focus-within:border-[#e8cfa1] transition-colors ${showError && !birthDate ? 'border-red-500/50' : 'border-gray-800'}`}>
-               <span className="text-gray-800 text-sm font-bold absolute left-0 bottom-5 pointer-events-none opacity-20">Date</span>
-               <input type="date" className="bg-transparent outline-none text-white text-right w-full placeholder-transparent text-lg font-light tracking-wide z-10" value={birthDate} onChange={(e) => { setBirthDate(e.target.value); setShowError(false); }} />
-               {!birthDate && <span className="absolute right-0 text-gray-600 pointer-events-none text-lg font-light">出生日期 <span className="text-[#e8cfa1]">*</span></span>}
-            </div>
-            <div className={`border-b pb-2 flex justify-between items-center relative group focus-within:border-[#e8cfa1] transition-colors border-gray-800`}>
-               <span className="text-gray-800 text-sm font-bold absolute left-0 bottom-5 pointer-events-none opacity-20">Time</span>
-               <input type="time" className="bg-transparent outline-none text-white text-right w-full placeholder-transparent text-lg font-light tracking-wide z-10" value={birthTime} onChange={(e) => setBirthTime(e.target.value)} />
-               {!birthTime && <span className="absolute right-0 text-gray-600 pointer-events-none text-lg font-light">出生时间</span>}
-            </div>
-            <div className="border-b border-gray-800 pb-2 flex justify-between items-center relative">
-               <span className="text-gray-800 text-sm font-bold absolute left-0 bottom-5 pointer-events-none opacity-20">Gender</span>
-               <div className="flex gap-10 w-full justify-end">
-                  <label className="flex items-center gap-3 cursor-pointer group select-none">
-                     <span className={`text-lg transition-colors ${gender === Gender.MALE ? 'text-white' : 'text-gray-500 group-hover:text-gray-300'}`}>男</span>
-                     <div onClick={() => setGender(Gender.MALE)} className={`w-6 h-6 rounded border transition-all duration-300 flex items-center justify-center ${gender === Gender.MALE ? 'bg-[#e8cfa1] border-[#e8cfa1] scale-110' : 'border-gray-600'}`}>
-                        {gender === Gender.MALE && <span className="text-black text-xs font-bold">✓</span>}
-                     </div>
-                  </label>
-                  <label className="flex items-center gap-3 cursor-pointer group select-none">
-                     <span className={`text-lg transition-colors ${gender === Gender.FEMALE ? 'text-white' : 'text-gray-500 group-hover:text-gray-300'}`}>女</span>
-                     <div onClick={() => setGender(Gender.FEMALE)} className={`w-6 h-6 rounded border transition-all duration-300 flex items-center justify-center ${gender === Gender.FEMALE ? 'bg-[#e8cfa1] border-[#e8cfa1] scale-110' : 'border-gray-600'}`}>
-                         {gender === Gender.FEMALE && <span className="text-black text-xs font-bold">✓</span>}
-                     </div>
-                  </label>
-               </div>
-            </div>
-         </div>
-         <p className="text-gray-600/60 text-xs mt-8 mb-6 px-2 text-center tracking-wider">你的信息将不会公开显示</p>
-         <div className="mt-auto mb-4">
-            <button onClick={() => { if (!birthDate) { setShowError(true); return; } onComplete({ name: name || '用户', gender, birthDate, birthTime: birthTime || '12:00', birthPlace: '北京' }); }} className={`w-full bg-[#e8cfa1] text-black font-medium text-lg py-4 rounded-xl hover:bg-[#d6bc8b] transition-all shadow-lg active:scale-[0.98] ${!birthDate ? 'opacity-90' : ''}`}>进入运何</button>
-         </div>
-      </div>
-    );
-  }
-  return null;
+    </div>
+  );
 };

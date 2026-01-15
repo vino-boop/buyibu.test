@@ -3,7 +3,8 @@ import { GoogleGenAI } from "@google/genai";
 import { BaZiResponse, HexagramLine, LiuYaoResponse, ChatMessage, BaZiChart, BaZiPillar } from "../types";
 import { calculateLocalBaZi } from "./geminiService";
 
-const DEFAULT_GEMINI_MODEL = 'gemini-3-flash-preview';
+// Fix: Using gemini-3-pro-preview for complex text tasks (reasoning/命理) as per task guidelines
+const DEFAULT_GEMINI_MODEL = 'gemini-3-pro-preview';
 // DeepSeek V3 在 API 中通常标识为 deepseek-chat
 const DEFAULT_DEEPSEEK_MODEL = 'deepseek-chat';
 
@@ -133,6 +134,7 @@ async function callAI(prompt: string, systemInstruction?: string, isJson = false
         return data.choices[0].message.content;
     }
   } else {
+    // Fix: Always use process.env.API_KEY for GoogleGenAI initialization
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     if (onChunk) {
         const streamResponse = await ai.models.generateContentStream({
@@ -163,7 +165,22 @@ const getBaseInstruction = (baZiData?: string) => `你是一位渊博古雅、�
 2. 【排版铁律】：每一段独立的推演分析必须以 ### 开头的古风标题。
 3. 【文风要求】：辞藻清雅，论断果敢。在保持大师风范的同时，对现代职业和情感诉求有敏锐的洞察，用语稍微偏向现代语境。
 4. 【推演基石】：深度结合阁下的八字原局、格局、神煞、以及完整的大运流年。${baZiData ? `阁下命盘数据：${baZiData}` : ""}
-5. 【限制】：加粗语法（**内容**）全篇严禁超过 3 处。不要提及你是 AI。`;
+5. 【限制】：加粗语法（**内容**）全篇严禁超过 3 处。不要提及你是 AI。
+6. 【追问引导】：在回答的最后，必须给出3个引导用户继续追问的短句（每句不超过12字）。格式固定为：[SUGGESTIONS: 建议1, 建议2, 建议3]`;
+
+/**
+ * Helper to parse and strip suggestions from the content
+ */
+export function extractSuggestions(content: string): { content: string, suggestions: string[] } {
+  const regex = /\[SUGGESTIONS:\s*(.*?)\]/i;
+  const match = content.match(regex);
+  if (match) {
+    const suggestions = match[1].split(',').map(s => s.trim()).filter(Boolean);
+    const cleanContent = content.replace(regex, '').trim();
+    return { content: cleanContent, suggestions };
+  }
+  return { content, suggestions: [] };
+}
 
 export async function analyzeBaZi(name: string, date: string, time: string, gender: string, place: string, onChunk?: (c: string) => void): Promise<BaZiResponse> {
   const chart = calculateLocalBaZi(name, date, time, gender);

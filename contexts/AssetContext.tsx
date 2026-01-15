@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Article } from '../types';
 
@@ -76,7 +75,8 @@ const DEFAULT_ASSETS: AppAssets = {
   customApiKey: '', 
   apiProvider: 'GEMINI',
   apiBaseUrl: '',
-  apiModel: 'gemini-3-flash-preview'
+  // Fix: Setting default Gemini model to pro version for higher reasoning quality
+  apiModel: 'gemini-3-pro-preview'
 };
 
 interface AssetContextType {

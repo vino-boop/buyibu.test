@@ -55,7 +55,6 @@ const HEXAGRAM_DATA: Record<string, { name: string; symbol: string; judgment: st
   "000110": { name: "泽地萃", symbol: "䷬", judgment: "亨. 王假有庙，利见大人，亨，利贞。" },
   "011000": { name: "地风升", symbol: "䷭", judgment: "元亨，用见大人，勿恤，南征吉。" },
   "010110": { name: "泽水困", symbol: "䷮", judgment: "亨，贞，大人吉，无咎. 有言不信。" },
-  // Fix: Replaced "综合评价：" with "judgment:" and wrapped value in quotes for correct syntax
   "011010": { name: "水风井", symbol: "䷯", judgment: "改邑不改井，无丧无得. 往来井井。" },
   "101110": { name: "泽火革", symbol: "䷰", judgment: "巳日乃孚，元亨利贞，悔亡。" },
   "011101": { name: "火风鼎", symbol: "䷱", judgment: "元吉，亨。" },
@@ -67,7 +66,6 @@ const HEXAGRAM_DATA: Record<string, { name: string; symbol: string; judgment: st
   "001101": { name: "火山旅", symbol: "䷷", judgment: "小亨，旅贞吉。" },
   "011011": { name: "巽为风", symbol: "䷸", judgment: "小亨，利攸往，利见大人。" },
   "110110": { name: "兑为泽", symbol: "䷹", judgment: "亨，利贞。" },
-  // Fix: Replaced "综合评价：" with "judgment:" and wrapped value in quotes for correct syntax
   "010011": { name: "风水涣", symbol: "䷺", judgment: "亨. 王假有庙，利涉大川，利贞。" },
   "110010": { name: "水泽节", symbol: "䷻", judgment: "亨. 苦节，不可贞。" },
   "110011": { name: "风泽中孚", symbol: "䷼", judgment: "豚鱼吉，利涉大川，利贞。" },
@@ -275,6 +273,9 @@ export const LiuYaoView: React.FC<{ isDayMode?: boolean }> = ({ isDayMode = fals
       }, 1200);
   };
 
+  const lastAssistantMessage = [...messages].reverse().find(m => m.role === 'assistant');
+  const suggestions = lastAssistantMessage?.suggestions || [];
+
   if (showChat) {
     const currentLines = mode === 'MANUAL' ? manualLines : shakeLines;
     const activeHexagram = result || (currentHexagramInfo ? { hexagramName: currentHexagramInfo.name, hexagramSymbol: currentHexagramInfo.symbol, analysis: '', judgment: currentHexagramInfo.judgment } : null);
@@ -310,10 +311,17 @@ export const LiuYaoView: React.FC<{ isDayMode?: boolean }> = ({ isDayMode = fals
            <div ref={chatEndRef} />
         </div>
         <div className={`absolute bottom-0 left-0 w-full px-4 pt-4 pb-4 z-20 border-t shadow-[0_-10px_20px_rgba(0,0,0,0.03)] ${isDayMode ? 'bg-white border-gray-100' : 'bg-mystic-dark border-white/5'}`}>
-            {messages.length >= 1 && !isAnalyzing && (
-              <div className="flex gap-2 mb-3 animate-fade-in-up">
-                  <button onClick={() => handleSendMessage("请专业一点，用专业周易命理术语深入剖析卦象和爻辞。")} className="flex-1 py-2.5 px-4 rounded-xl font-bold transition-all shadow-sm active:scale-95 flex items-center justify-center gap-2 bg-mystic-gold/10 text-mystic-gold border border-mystic-gold/40 hover:bg-mystic-gold/20"><IconScroll className="w-4 h-4" /><span className="text-xs">专业一点</span></button>
-                  <button onClick={() => handleSendMessage("请直白一点，彻底去掉术语，用最通俗易懂的话告诉我怎么做。")} className="flex-1 py-2.5 px-4 rounded-xl font-bold transition-all shadow-sm active:scale-95 flex items-center justify-center gap-2 bg-mystic-gold/10 text-mystic-gold border border-mystic-gold/40 hover:bg-mystic-gold/20"><IconChat className="w-4 h-4" /><span className="text-xs">直白一点</span></button>
+            {!isAnalyzing && suggestions.length > 0 && (
+              <div className="flex flex-wrap gap-2 mb-3 animate-fade-in-up">
+                  {suggestions.map((s, idx) => (
+                    <button 
+                      key={idx} 
+                      onClick={() => handleSendMessage(s)} 
+                      className={`py-1.5 px-3 rounded-full text-xs transition-all shadow-sm active:scale-95 border ${isDayMode ? 'bg-mystic-gold/5 text-mystic-gold border-mystic-gold/20 hover:bg-mystic-gold/10' : 'bg-white/5 text-mystic-gold border-white/10 hover:bg-white/10'}`}
+                    >
+                      💬 {s}
+                    </button>
+                  ))}
               </div>
             )}
             <div className="relative">
