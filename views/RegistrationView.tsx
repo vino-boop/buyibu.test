@@ -119,8 +119,14 @@ export const RegistrationView: React.FC<RegistrationViewProps> = ({ onComplete, 
              </div>
              <div className="space-y-2">
                 <label className="text-[10px] text-gray-500 font-bold uppercase tracking-[0.2em]">模型 (Model ID)</label>
-                <input type="text" value={assets.apiModel || ''} onChange={(e) => updateAsset('apiModel', e.target.value)} placeholder={assets.apiProvider === 'DEEPSEEK' ? 'deepseek-v3' : 'gemini-3-pro-preview'} className="w-full bg-black/40 border border-white/10 rounded-xl px-5 py-4 text-sm text-white font-mono focus:border-mystic-gold/50 outline-none" />
+                <input type="text" value={assets.apiModel || ''} onChange={(e) => updateAsset('apiModel', e.target.value)} placeholder={assets.apiProvider === 'DEEPSEEK' ? 'deepseek-chat' : 'gemini-3-pro-preview'} className="w-full bg-black/40 border border-white/10 rounded-xl px-5 py-4 text-sm text-white font-mono focus:border-mystic-gold/50 outline-none" />
              </div>
+             {assets.apiProvider === 'DEEPSEEK' && (
+                <div className="space-y-2 animate-fade-in">
+                    <label className="text-[10px] text-gray-500 font-bold uppercase tracking-[0.2em]">API Key</label>
+                    <input type="password" value={assets.customApiKey || ''} onChange={(e) => updateAsset('customApiKey', e.target.value)} placeholder="sk-..." className="w-full bg-black/40 border border-white/10 rounded-xl px-5 py-4 text-sm text-white font-mono focus:border-mystic-gold/50 outline-none" />
+                </div>
+             )}
           </div>
        </div>
        <div className="p-8 border-t border-white/5 bg-black/20">

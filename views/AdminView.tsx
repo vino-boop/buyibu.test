@@ -192,7 +192,7 @@ export const AdminView: React.FC = () => {
                             updateAsset('apiProvider', 'DEEPSEEK');
                             // Set defaults for DeepSeek
                             updateAsset('apiBaseUrl', 'https://api.deepseek.com');
-                            updateAsset('apiModel', 'deepseek-v3');
+                            updateAsset('apiModel', 'deepseek-chat');
                         }}
                         className={`flex-1 py-3 px-4 rounded-lg border text-sm transition-all ${assets.apiProvider === 'DEEPSEEK' ? 'bg-mystic-gold text-black border-mystic-gold font-bold' : 'bg-black/20 border-white/10 text-gray-400'}`}
                     >
@@ -222,12 +222,12 @@ export const AdminView: React.FC = () => {
                     <label className="text-gray-400 text-xs block">Model Name</label>
                     <input 
                         type="text"
-                        value={assets.apiModel || (assets.apiProvider === 'DEEPSEEK' ? 'deepseek-v3' : 'gemini-3-pro-preview')}
+                        value={assets.apiModel || (assets.apiProvider === 'DEEPSEEK' ? 'deepseek-chat' : 'gemini-3-pro-preview')}
                         onChange={(e) => updateAsset('apiModel', e.target.value)}
                         className="w-full bg-black/20 border border-white/10 rounded px-4 py-3 text-sm text-white focus:border-mystic-gold outline-none font-mono"
                     />
                     <p className="text-[10px] text-gray-500">
-                        {assets.apiProvider === 'DEEPSEEK' ? '推荐: deepseek-v3 或 deepseek-reasoner' : '推荐: gemini-3-pro-preview'}
+                        {assets.apiProvider === 'DEEPSEEK' ? '推荐: deepseek-chat 或 deepseek-reasoner' : '推荐: gemini-3-pro-preview'}
                     </p>
                 </div>
 

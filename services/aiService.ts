@@ -6,7 +6,7 @@ import { Solar, Lunar } from 'lunar-javascript';
 
 // Using gemini-3-pro-preview for complex text tasks
 const DEFAULT_GEMINI_MODEL = 'gemini-3-pro-preview';
-const DEFAULT_DEEPSEEK_MODEL = 'deepseek-v3';
+const DEFAULT_DEEPSEEK_MODEL = 'deepseek-chat';
 
 export function formatBaZiToText(chart: BaZiChart, selectedIndices?: { dy: number, ln: number, lm?: number }): string {
   const formatPillar = (p: BaZiPillar, label: string) => {
@@ -74,7 +74,9 @@ function getActiveConfig() {
 
 function getEffectiveModelName(): string {
   const config = getActiveConfig();
-  if (config.provider === 'DEEPSEEK') return config.model || DEFAULT_DEEPSEEK_MODEL;
+  if (config.provider === 'DEEPSEEK') {
+    return config.model || DEFAULT_DEEPSEEK_MODEL;
+  }
   return (config.model && !config.model.toLowerCase().includes('deepseek')) ? config.model : DEFAULT_GEMINI_MODEL;
 }
 
