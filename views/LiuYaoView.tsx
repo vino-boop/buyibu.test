@@ -228,6 +228,7 @@ export const LiuYaoView: React.FC<{ isDayMode?: boolean }> = ({ isDayMode = fals
   const [isScrolling, setIsScrolling] = useState(false);
 
   useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages.length]);
+  
   useEffect(() => {
       if (mode === 'TIME') {
           const updateTime = () => {
@@ -263,7 +264,12 @@ export const LiuYaoView: React.FC<{ isDayMode?: boolean }> = ({ isDayMode = fals
      return info ? { ...info, binaryStr } : { name: '未知卦', symbol: '?', judgment: '', binaryStr };
   }, [shakeLines, manualLines, mode]);
 
-  const reset = () => { setIsNumberRitualStarted(false); setTempSplitIndex(24); baseReset(); };
+  const reset = () => { 
+    setIsNumberRitualStarted(false); 
+    setTempSplitIndex(24); 
+    baseReset(); 
+  };
+
   const confirmNumberSplit = () => {
       if (isSplitting || numberStep >= 3) return;
       setIsSplitting(true);
@@ -292,14 +298,8 @@ export const LiuYaoView: React.FC<{ isDayMode?: boolean }> = ({ isDayMode = fals
   const validateAndStartAnalyze = () => {
     if (!question.trim()) {
         setShakeError(true);
-        // If ritual is active, we need to temporarily show the input to fix it
-        if (isRitualActive) {
-            alert('请先填写阁下欲问之事。');
-            baseReset(); // Or handle it more gracefully
-        } else {
-            inputRef.current?.focus();
-            inputRef.current?.scrollIntoView({ behavior: 'smooth' });
-        }
+        inputRef.current?.focus();
+        inputRef.current?.scrollIntoView({ behavior: 'smooth' });
         return;
     }
     handleAnalyze();
@@ -342,7 +342,7 @@ export const LiuYaoView: React.FC<{ isDayMode?: boolean }> = ({ isDayMode = fals
            {isAnalyzing && <div className="flex justify-start animate-fade-in-up"><div className={`w-8 h-8 rounded-full border flex items-center justify-center mr-2 ${isDayMode ? 'bg-white border-gray-100 shadow-sm' : 'bg-mystic-dark border-mystic-gold/30'}`}><span className="animate-spin text-mystic-gold">☯</span></div><div className={`px-4 py-3 rounded-2xl rounded-bl-sm border text-sm bg-mystic-paper/80 border-white/10 text-gray-400`}>推演中</div></div>}
            <div ref={chatEndRef} />
         </div>
-        <div className={`absolute bottom-0 left-0 w-full px-4 pt-4 pb-4 z-20 border-t shadow-[0_-10px_20px_rgba(0,0,0,0.03)] transition-all duration-500 ease-in-out ${isScrolling ? 'translate-y-full opacity-0' : 'translate-y-0 opacity-100'} ${isDayMode ? 'bg-white border-gray-100' : 'bg-mystic-dark border-white/5'}`}>
+        <div className={`absolute bottom-0 left-0 w-full px-4 pt-4 pb-4 z-20 border-t shadow-[0_-10px_20px_rgba(0,0,0,0.03)] transition-all duration-500 ease-in-out ${isScrolling ? 'translate-y-full opacity-0 pointer-events-none' : 'translate-y-0 opacity-100'} ${isDayMode ? 'bg-white border-gray-100' : 'bg-mystic-dark border-white/5'}`}>
             {!isAnalyzing && suggestions.length > 0 && (
               <div className="flex flex-wrap gap-2 mb-3 animate-fade-in-up">
                   {suggestions.map((s, idx) => (

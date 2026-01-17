@@ -8,7 +8,7 @@ import { Solar, Lunar } from 'lunar-javascript';
 const DEFAULT_GEMINI_MODEL = 'gemini-3-pro-preview';
 const DEFAULT_DEEPSEEK_MODEL = 'deepseek-v3';
 
-export function formatBaZiToText(chart: BaZiChart, selectedIndices?: { dy: number, ln: number }): string {
+export function formatBaZiToText(chart: BaZiChart, selectedIndices?: { dy: number, ln: number, lm?: number }): string {
   const formatPillar = (p: BaZiPillar, label: string) => {
     return `${label}柱：【${p.stem}${p.branch}】
 - 十神主星：${p.mainStar || '日主'}
@@ -30,8 +30,13 @@ export function formatBaZiToText(chart: BaZiChart, selectedIndices?: { dy: numbe
   if (selectedIndices) {
       const dy = chart.daYun[selectedIndices.dy];
       const ln = dy?.liuNian[selectedIndices.ln];
+      const lm = typeof selectedIndices.lm === 'number' ? ln?.liuYue[selectedIndices.lm] : null;
+      
       if (dy && ln) {
           selectedContext = `\n【当前聚焦坐标】\n- 关注大运：${dy.ganZhi}\n- 关注流年：${ln.year}年 (${ln.ganZhi})`;
+          if (lm) {
+              selectedContext += `\n- 关注流月：${lm.month} (${lm.ganZhi})`;
+          }
       }
   }
 
@@ -172,14 +177,14 @@ const getBaseInstruction = (baZiData?: string) => {
 2. 文风要求：辞藻清雅，论断果敢。大师风范，稍微偏向神秘主义，分析透彻格局气象。`;
   } else if (config.personality === AppPersonality.PRAGMATIC) {
     personalityInstruction = `你是一位遵循“玄学为引，实操为本”理念的现代命理顾问。
-1. 自称为“吾”或“我”，称呼对方为“阁下”。
+1. 自称为“我”，称呼对方为“您”。
 2. 文风要求：融合传统命理术语与现代商业/生活术语。多使用如“认知差”、“流量红利”、“审美溢价”、“供应链思维”、“战略定位”等词汇。
 3. 必须输出：在每一项推演分析后，必须给出一个极其具体、可落地的【实战建议】。`;
   } else if (config.personality === AppPersonality.CLASSICAL) {
     personalityInstruction = `你是一位精通古法命理、饱读诗书的古籍学者。
 1. 语言风格：纯正文言文或极简古文风，古色古香。
 2. 引用要求：必须频繁且准确地引用《滴天髓》、《渊海子平》、《子平真诠》、《穷通宝鉴》、《三命通会》等命理经典名句。
-3. 称谓：自称为“老朽”或“鄙人”，称呼对方为“居士”或“仁兄/贤妹”。`;
+3. 称谓：自称为“老朽”或“鄙人”，称呼对方为“居士”。`;
   }
 
   return `${personalityInstruction}
@@ -205,7 +210,7 @@ export async function analyzeBaZi(name: string, date: string, time: string, gend
   const chart = calculateLocalBaZi(name, date, time, gender);
   const baZiData = formatBaZiToText(chart);
 
-  const prompt = `阁下：${name}，${gender === 'Male' ? '乾造' : '坤造'}。
+  const prompt = `缘主：${name}，${gender === 'Male' ? '乾造' : '坤造'}。
 请执行【最高级别专业详盘】深度推演，严格按以下带有 ### 子标题的结构输出：
 ### 【格局判定】
 ### 【时命气象】

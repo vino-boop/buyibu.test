@@ -257,7 +257,7 @@ export const BaZiProvider: React.FC<{ userProfile: UserProfile; children: ReactN
     try {
       const baZiData = hePanData 
           ? `合盘推演：缘主一(${hePanData.profile1.name}) 缘主二(${hePanData.profile2.name})`
-          : formatBaZiToText(chartData!.chart, { dy: selectedDaYunIndex, ln: selectedLiuNianIndex });
+          : formatBaZiToText(chartData!.chart, { dy: selectedDaYunIndex, ln: selectedLiuNianIndex, lm: selectedLiuYueIndex });
       
       const context = messages.length > 0 ? messages[0].content : (hePanData ? hePanData.analysis : chartData!.analysis);
       

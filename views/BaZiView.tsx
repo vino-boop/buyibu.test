@@ -136,8 +136,15 @@ export const BaZiView: React.FC<BaZiViewProps> = ({ defaultQuestion, isDayMode =
   const [isScrolling, setIsScrolling] = useState(false);
 
   useEffect(() => { if (defaultQuestion) triggerDefaultQuestion(defaultQuestion); }, [defaultQuestion]);
-  useEffect(() => { if (messages.length > 0 && scrollContainerRef.current) scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight; }, [messages.length, chatLoading]); 
+  
+  // Scroll to bottom on new messages
+  useEffect(() => { 
+    if (messages.length > 0 && scrollContainerRef.current) {
+        scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight; 
+    }
+  }, [messages.length, chatLoading]); 
 
+  // Handle hiding/showing bottom bar based on scroll activity
   const handleScroll = () => {
     if (!isScrolling) setIsScrolling(true);
     if (scrollTimeoutRef.current) window.clearTimeout(scrollTimeoutRef.current);
@@ -416,6 +423,21 @@ export const BaZiView: React.FC<BaZiViewProps> = ({ defaultQuestion, isDayMode =
                                     </div>
                                     <CycleSlider current={selectedLiuNianIndex} total={chartData.chart.daYun[selectedDaYunIndex]?.liuNian.length || 0} onChange={(idx) => { setSelectedLiuNianIndex(idx); setSelectedLiuYueIndex(0); }} isDay={isDayMode} />
                                   </div>
+                                  {/* NEW: LiuYue UI */}
+                                  <div>
+                                    <div className="flex items-center">
+                                        <div className={`w-8 sm:w-10 text-[11px] sm:text-xs font-serif font-bold border-r mr-2 sm:mr-3 flex flex-col items-center shrink-0 transition-colors ${isDayMode ? 'text-gray-400 border-gray-100' : 'text-gray-500 border-white/10'}`}><span>流</span><span>月</span></div>
+                                        <div ref={liuYueListRef} className="flex-1 flex overflow-x-auto gap-2 sm:gap-3 py-2 min-w-0 scrollbar-hide flex-nowrap touch-pan-x">
+                                            {chartData.chart.daYun[selectedDaYunIndex]?.liuNian[selectedLiuNianIndex]?.liuYue.map((ly, i) => (
+                                                <button key={i} onClick={() => setSelectedLiuYueIndex(i)} className={`flex-shrink-0 flex flex-col items-center justify-center min-w-[3.5rem] sm:min-w-[4rem] h-14 sm:h-16 rounded-xl border transition-all ${selectedLiuYueIndex === i ? 'bg-mystic-gold text-black border-mystic-gold shadow-lg scale-105 z-10' : (isDayMode ? 'bg-white border-gray-100 text-gray-500 hover:bg-gray-50' : 'bg-white/5 border-white/5 text-gray-500')}`}>
+                                                    <span className="text-sm sm:text-base font-serif font-bold">{ly.ganZhi}</span>
+                                                    <span className="text-[9px] sm:text-[10px] opacity-70">{ly.month}</span>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    <CycleSlider current={selectedLiuYueIndex} total={chartData.chart.daYun[selectedDaYunIndex]?.liuNian[selectedLiuNianIndex]?.liuYue.length || 0} onChange={(idx) => setSelectedLiuYueIndex(idx)} isDay={isDayMode} />
+                                  </div>
                                 </div>
                             </div>
                         )}
@@ -453,7 +475,7 @@ export const BaZiView: React.FC<BaZiViewProps> = ({ defaultQuestion, isDayMode =
           </div>
       </div>
 
-      <div className={`shrink-0 w-full px-4 pt-4 sm:pt-6 pb-6 sm:pb-8 z-20 border-t shadow-[0_-10px_30px_rgba(0,0,0,0.05)] transition-all duration-500 ease-in-out ${isScrolling ? 'translate-y-full opacity-0' : 'translate-y-0 opacity-100'} ${isDayMode ? 'bg-white border-gray-100' : 'bg-mystic-dark border-white/5'}`}>
+      <div className={`shrink-0 w-full px-4 pt-4 sm:pt-6 pb-6 sm:pb-8 z-20 border-t shadow-[0_-10px_30px_rgba(0,0,0,0.05)] transition-all duration-500 ease-in-out ${isScrolling ? 'translate-y-full opacity-0 pointer-events-none' : 'translate-y-0 opacity-100'} ${isDayMode ? 'bg-white border-gray-100' : 'bg-mystic-dark border-white/5'}`}>
             <div className="max-w-4xl mx-auto">
                 {!chatLoading && (
                     <div className="flex flex-wrap gap-2 mb-3 sm:mb-4 animate-fade-in-up">
