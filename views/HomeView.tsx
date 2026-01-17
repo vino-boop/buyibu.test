@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { AppMode, Article, Gender, getElementStyle } from '../types';
 import { useAssets, isImageUrl } from '../contexts/AssetContext';
 import { useBaZi } from '../contexts/BaZiContext';
@@ -10,7 +10,7 @@ interface HomeViewProps {
   isDayMode?: boolean;
 }
 
-type FilterType = 'ALL' | 'PAST' | 'FUTURE' | 'DECADE';
+type FilterType = 'ALL' | 'FORTUNE' | 'ROMANCE' | 'HEALTH';
 
 const getElementByChar = (char: string): string => {
   if (!char) return '土';
@@ -34,11 +34,18 @@ const ELEMENT_COLORS: Record<string, string> = {
   '木': '#10b981', '火': '#ef4444', '土': '#f59e0b', '金': '#c5b078', '水': '#3b82f6',
 };
 
+const seededRandom = (seed: number) => {
+  const x = Math.sin(seed) * 10000;
+  return x - Math.floor(x);
+};
+
 export const HomeView: React.FC<HomeViewProps> = ({ onNavigate, isDayMode = false }) => {
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
   const [chartFilter, setChartFilter] = useState<FilterType>('ALL');
   const { assets } = useAssets();
-  const { chartData, setViewMode } = useBaZi();
+  const { chartData, setViewMode, setEditTab } = useBaZi();
+  
+  const chartScrollRef = useRef<HTMLDivElement>(null);
 
   const currentYear = new Date().getFullYear();
   const userBirthYear = chartData?.chart?.solarDate ? parseInt(chartData.chart.solarDate.split('年')[0]) : 1990;
@@ -56,70 +63,109 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate, isDayMode = fals
     return counts;
   }, [chartData]);
 
-  // 专业加权能量算法：月令(Month Branch)占40%，其余7个位置平分60% (每个约8.57%)
   const strengthPercentage = useMemo(() => {
     if (!chartData?.chart) return 50;
-    
     const { year, month, day, hour } = chartData.chart;
     const selfElement = getElementByChar(day.stem);
     const { parent, sibling } = ELEMENT_RELATIONS[selfElement];
-    
-    // 位置权重
     const positions = [
-      { char: year.stem, weight: 8.57 },
-      { char: year.branch, weight: 8.57 },
-      { char: month.stem, weight: 8.57 },
-      { char: month.branch, weight: 40.0 }, // 月令权重最大
-      { char: day.stem, weight: 8.57 },    // 日主本身
-      { char: day.branch, weight: 8.57 },
-      { char: hour.stem, weight: 8.57 },
-      { char: hour.branch, weight: 8.57 }
+      { char: year.stem, weight: 8.57 }, { char: year.branch, weight: 8.57 },
+      { char: month.stem, weight: 8.57 }, { char: month.branch, weight: 40.0 },
+      { char: day.stem, weight: 8.57 }, { char: day.branch, weight: 8.57 },
+      { char: hour.stem, weight: 8.57 }, { char: hour.branch, weight: 8.57 }
     ];
-
     let totalSupport = 0;
     positions.forEach(p => {
       const e = getElementByChar(p.char);
-      if (e === parent || e === sibling) {
-        totalSupport += p.weight;
-      }
+      if (e === parent || e === sibling) totalSupport += p.weight;
     });
-
     return Math.min(100, Math.max(0, totalSupport));
   }, [chartData]);
 
-  // 专业 K 线逻辑
   const luckKLineData = useMemo(() => {
     if (!chartData?.chart) return [];
-    const raw = chartData.chart.daYun.map((dy, i) => {
-      const base = 35 + (Math.sin(i * 0.9) * 35);
-      const noise = (Math.random() - 0.5) * 20;
-      const close = Math.max(15, Math.min(95, base + noise));
-      const open = i === 0 ? 30 : 0;
-      const high = Math.min(100, close + Math.random() * 15);
-      const low = Math.max(0, close - Math.random() * 15);
-      return { label: dy.ganZhi, open, close, high, low, age: dy.startAge, year: dy.startYear };
-    });
-    for (let i = 1; i < raw.length; i++) { raw[i].open = raw[i-1].close; }
-    raw[0].open = 25; 
-    if (chartFilter === 'PAST') return raw.filter(d => d.age < currentAge);
-    if (chartFilter === 'FUTURE') return raw.filter(d => d.age >= currentAge);
-    if (chartFilter === 'DECADE') return raw.filter(d => Math.abs(d.age - currentAge) <= 10);
-    return raw;
-  }, [chartData, chartFilter, currentAge]);
+    
+    if (chartFilter === 'ALL') {
+      const raw = chartData.chart.daYun.map((dy, i) => {
+        const base = 35 + (Math.sin(i * 0.9) * 35);
+        const noise = (seededRandom(i + 100) - 0.5) * 20;
+        const close = Math.max(15, Math.min(95, base + noise));
+        const high = Math.min(100, close + seededRandom(i + 200) * 15);
+        const low = Math.max(0, close - seededRandom(i + 300) * 15);
+        return { label: dy.ganZhi, open: 0, close, high, low, age: dy.startAge, year: dy.startYear, isYearly: false };
+      });
+      for (let i = 0; i < raw.length; i++) { raw[i].open = i === 0 ? 30 : raw[i-1].close; }
+      return raw;
+    } else {
+      const allYears = chartData.chart.daYun.flatMap(dy => dy.liuNian);
+      // 预留更多年份：前后 15 年，方便左右滑动查看
+      const filtered = allYears.filter(ln => Math.abs(ln.year - currentYear) <= 15);
+      const categorySeed = chartFilter === 'FORTUNE' ? 1000 : chartFilter === 'ROMANCE' ? 2000 : 3000;
 
-  const peakPoint = useMemo(() => luckKLineData.length ? luckKLineData.reduce((max, p) => p.high > max.high ? p : max, luckKLineData[0]) : null, [luckKLineData]);
-  const valleyPoint = useMemo(() => luckKLineData.length ? luckKLineData.reduce((min, p) => p.low < min.low ? p : min, luckKLineData[0]) : null, [luckKLineData]);
+      const raw = filtered.map((ln, i) => {
+        const base = 40 + (Math.sin((ln.year % 12) * 0.8) * 30);
+        const noise = (seededRandom(ln.year + categorySeed) - 0.5) * 25;
+        const close = Math.max(10, Math.min(95, base + noise));
+        const high = Math.min(100, close + seededRandom(ln.year + categorySeed + 50) * 12);
+        const low = Math.max(0, close - seededRandom(ln.year + categorySeed + 100) * 12);
+        return { label: ln.ganZhi, open: 0, close, high, low, age: ln.age, year: ln.year, isYearly: true };
+      });
+      for (let i = 0; i < raw.length; i++) { raw[i].open = i === 0 ? 35 : raw[i-1].close; }
+      return raw;
+    }
+  }, [chartData, chartFilter, currentYear]);
+
+  // 自动居中当前年份/大运
+  useEffect(() => {
+    if (chartScrollRef.current && luckKLineData.length > 0) {
+      const container = chartScrollRef.current;
+      const points = luckKLineData;
+      let currentIndex = -1;
+
+      if (chartFilter === 'ALL') {
+        currentIndex = points.findIndex((d, idx) => 
+          d.age <= currentAge && (idx === points.length - 1 || points[idx+1].age > currentAge)
+        );
+      } else {
+        currentIndex = points.findIndex(d => d.year === currentYear);
+      }
+
+      if (currentIndex !== -1) {
+        const pointWidth = 42; // 每个数据点的宽度
+        const scrollOffset = (currentIndex * pointWidth) + 32 - (container.offsetWidth / 2) + (pointWidth / 2);
+        container.scrollTo({
+          left: scrollOffset,
+          behavior: 'smooth'
+        });
+      }
+    }
+  }, [luckKLineData, chartFilter, currentYear, currentAge]);
 
   const categories = [
-    { name: '婚嫁', icon: <IconMarriage />, question: '请帮我分析一下我的姻缘和婚姻运势。' },
+    { name: '婚嫁', icon: <IconMarriage />, question: '请帮我从合盘的角度分析一下我的姻缘和婚姻运势。' },
     { name: '仕途', icon: <IconCareer />, question: '请帮我分析一下我的事业发展和官运。' },
     { name: '健康', icon: <IconHealth />, question: '请帮我分析一下我的身体健康状况和注意事项。' },
     { name: '考试', icon: <IconExam />, question: '请帮我分析一下我的学业运势和考试运。' },
   ];
 
   const handleCategoryClick = (cat: any) => {
-      if (cat.name === '婚嫁') { setViewMode('EDIT'); onNavigate(AppMode.BAZI); } 
-      else { onNavigate(AppMode.BAZI, cat.question); }
+      if (cat.name === '婚嫁') {
+          setViewMode('EDIT');
+          setEditTab('ROSTER');
+      }
+      onNavigate(AppMode.BAZI, cat.question);
+  };
+
+  const handleKLinePointClick = (d: any) => {
+      let topic = "整体";
+      if (chartFilter === 'FORTUNE') topic = "财运与事业";
+      if (chartFilter === 'ROMANCE') topic = "感情与姻缘";
+      if (chartFilter === 'HEALTH') topic = "健康与体质";
+
+      const q = d.isYearly 
+          ? `请重点分析我 ${d.year} [${d.label}] 年的${topic}运势，以及需要注意的避坑指南。`
+          : `请分析我从 ${d.age} 岁到 ${d.age + 9} 岁这一段 [${d.label}] 大运的${topic}走势及核心建议。`;
+      onNavigate(AppMode.BAZI, q);
   };
 
   const renderArticleCard = (article: Article) => {
@@ -186,71 +232,74 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate, isDayMode = fals
         {chartData && (
           <div className="flex flex-col gap-6 px-1 animate-fade-in">
              <div className={`p-6 rounded-3xl border shadow-2xl relative overflow-hidden transition-colors ${isDayMode ? 'bg-white border-gray-100' : 'bg-[#151618] border-white/5'}`}>
-                <div className="flex justify-between items-start mb-10">
+                <div className="flex justify-between items-center mb-10 flex-row gap-4">
                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-mystic-gold/10 flex items-center justify-center text-mystic-gold"><span className="text-xl">📈</span></div>
                       <div>
                          <h4 className={`text-base font-serif font-bold ${isDayMode ? 'text-gray-800' : 'text-gray-200'}`}>人生K线图</h4>
-                         <p className="text-[10px] text-gray-500 font-serif">运势起伏可视化 · 当前{currentAge}岁</p>
+                         <p className="text-[10px] text-gray-500 font-serif">
+                            {chartFilter === 'ALL' ? '大运周期可视化' : '流年趋势波动图'}
+                         </p>
                       </div>
                    </div>
-                   <div className="flex bg-black/40 p-1 rounded-lg border border-white/5">
-                       {([['全部','ALL'],['已过','PAST'],['未来','FUTURE'],['近十年','DECADE']] as const).map(([label, val]) => (
-                           <button key={val} onClick={() => setChartFilter(val)} className={`px-3 py-1.5 rounded-md text-[10px] font-bold transition-all ${chartFilter === val ? 'bg-mystic-gold text-black shadow-lg' : 'text-gray-500 hover:text-gray-300'}`}>{label}</button>
+                   <div className="flex bg-black/40 p-1 rounded-lg border border-white/5 overflow-x-auto scrollbar-hide">
+                       {([['大运','ALL'],['财运','FORTUNE'],['感情','ROMANCE'],['健康','HEALTH']] as const).map(([label, val]) => (
+                           <button key={val} onClick={() => setChartFilter(val)} className={`px-4 py-1.5 rounded-md text-[10px] font-bold transition-all whitespace-nowrap ${chartFilter === val ? 'bg-mystic-gold text-black shadow-lg' : 'text-gray-500 hover:text-gray-300'}`}>{label}</button>
                        ))}
                    </div>
                 </div>
 
-                <div className="h-48 w-full flex items-end justify-between gap-1 relative pt-8 pb-4">
-                   <div className="absolute inset-0 flex flex-col justify-between pointer-events-none pb-4 pt-8 border-l border-white/5 ml-1">
-                       <span className="text-[9px] text-gray-700 absolute -left-1 top-0">100</span>
-                       <div className="w-full h-[0.5px] bg-white/5"></div>
-                       <span className="text-[9px] text-gray-700 absolute -left-1 top-1/2">50</span>
-                       <div className="w-full h-[0.5px] bg-white/5 border-dashed border-t"></div>
-                       <span className="text-[9px] text-gray-700 absolute -left-1 bottom-4">0</span>
-                       <div className="w-full h-[0.5px] bg-white/5"></div>
-                   </div>
-
-                   {luckKLineData.map((d, idx) => {
-                      const isUp = d.close >= d.open;
-                      const color = isUp ? '#10b981' : '#ef4444';
-                      const isCurrent = d.age <= currentAge && (idx === luckKLineData.length - 1 || luckKLineData[idx+1].age > currentAge);
-                      return (
-                        <div key={idx} className="flex-1 h-full flex flex-col items-center group/kline relative">
-                           <div className="w-full h-full relative flex items-center justify-center">
-                              <div className="absolute w-[1.5px] bg-gray-700" style={{ height: `${d.high - d.low}%`, bottom: `${d.low}%` }}></div>
-                              <div className={`absolute w-3 sm:w-4 rounded-sm shadow-lg transition-all duration-700`} style={{ height: `${Math.abs(d.close - d.open)}%`, bottom: `${Math.min(d.open, d.close)}%`, backgroundColor: color, boxShadow: `0 0 10px ${color}20` }}></div>
-                              {peakPoint?.age === d.age && (
-                                <div className="absolute -top-10 flex flex-col items-center animate-bounce">
-                                   <span className="text-mystic-gold text-[10px] font-bold whitespace-nowrap">★ {d.age}岁巅峰</span>
-                                   <div className="w-2 h-2 bg-mystic-gold rotate-45"></div>
-                                </div>
-                              )}
-                              {valleyPoint?.age === d.age && (
-                                <div className="absolute -bottom-10 flex flex-col items-center">
-                                   <div className="w-2 h-2 bg-red-500 rotate-45 mb-1"></div>
-                                   <span className="text-red-500 text-[10px] font-bold whitespace-nowrap">▲ {d.age}岁低谷</span>
-                                </div>
-                              )}
-                              {isCurrent && (
-                                <div className="absolute inset-0 flex flex-col items-center">
-                                   <div className="absolute h-[120%] w-[1px] border-l border-dashed border-mystic-gold/40 -top-8"></div>
-                                   <div className="absolute -top-6 bg-mystic-gold text-black text-[9px] px-1 rounded font-bold uppercase">当前</div>
-                                </div>
-                              )}
-                           </div>
-                           <span className="text-[8px] text-gray-600 mt-2 rotate-[-45deg] origin-left">{d.age}岁</span>
+                <div 
+                    ref={chartScrollRef}
+                    className="relative overflow-x-auto scroll-smooth scrollbar-hide -mx-2 touch-pan-x"
+                    style={{ WebkitOverflowScrolling: 'touch' }}
+                >
+                    <div 
+                      className="h-56 flex items-end justify-between gap-1 relative pt-10 pb-12 px-8" 
+                      style={{ minWidth: luckKLineData.length > 0 ? `${luckKLineData.length * 42 + 64}px` : '100%' }}
+                    >
+                        {/* Y-axis labels - Fixed left */}
+                        <div className="sticky left-0 inset-y-0 flex flex-col justify-between pointer-events-none pb-12 pt-10 z-30">
+                            <span className="text-[9px] text-gray-700 bg-mystic-dark/80 px-1 rounded">100</span>
+                            <span className="text-[9px] text-gray-700 bg-mystic-dark/80 px-1 rounded">0</span>
                         </div>
-                      );
-                   })}
+
+                        {/* Background Lines */}
+                        <div className="absolute inset-x-0 top-10 h-[1px] bg-white/5 pointer-events-none"></div>
+                        <div className="absolute inset-x-0 bottom-12 h-[1px] bg-white/5 pointer-events-none"></div>
+
+                        {luckKLineData.map((d, idx) => {
+                            const isUp = d.close >= d.open;
+                            const color = isUp ? '#10b981' : '#ef4444';
+                            const isCurrent = d.isYearly ? (d.year === currentYear) : (d.age <= currentAge && (idx === luckKLineData.length - 1 || luckKLineData[idx+1].age > currentAge));
+                            return (
+                                <div key={idx} onClick={() => handleKLinePointClick(d)} className="flex-1 h-full flex flex-col items-center group/kline relative cursor-pointer active:scale-95 transition-transform">
+                                    <div className="w-full h-full relative flex items-center justify-center">
+                                        <div className="absolute w-[1px] bg-gray-700/50" style={{ height: `${d.high - d.low}%`, bottom: `${d.low}%` }}></div>
+                                        <div className={`absolute w-full max-w-[16px] rounded-sm shadow-lg transition-all duration-700 group-hover/kline:brightness-125`} style={{ height: `${Math.max(2, Math.abs(d.close - d.open))}%`, bottom: `${Math.min(d.open, d.close)}%`, backgroundColor: color, boxShadow: `0 0 10px ${color}20` }}></div>
+                                        
+                                        {isCurrent && (
+                                            <div className="absolute inset-0 flex flex-col items-center pointer-events-none z-20">
+                                                <div className="absolute h-[115%] w-[1.5px] border-l border-dashed border-mystic-gold/60 -top-8"></div>
+                                                <div className="absolute -top-7 bg-mystic-gold text-black text-[9px] px-1.5 py-0.5 rounded font-bold whitespace-nowrap shadow-xl scale-90">当前</div>
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="absolute -bottom-10 flex flex-col items-center">
+                                        <span className={`text-[9px] text-gray-500 whitespace-nowrap transition-colors ${isCurrent ? 'text-mystic-gold font-bold' : ''}`}>
+                                            {d.isYearly ? d.year : `${d.age}岁`}
+                                        </span>
+                                        {!d.isYearly && <span className="text-[8px] text-gray-700">{d.label}</span>}
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
                 </div>
 
-                <div className="flex justify-center gap-6 mt-6 border-t border-white/5 pt-4">
+                <div className="flex justify-center gap-6 mt-8 border-t border-white/5 pt-4">
                    {[
                        { label: '运势上升', color: '#10b981' },
-                       { label: '运势下降', color: '#ef4444' },
-                       { label: '本命年', color: '#c5b078', type: 'dot' },
-                       { label: '合太岁', color: '#3b82f6', type: 'dot' }
+                       { label: '运势下降', color: '#ef4444' }
                    ].map(l => (
                        <div key={l.label} className="flex items-center gap-1.5 opacity-60">
                           <div className={`w-2 h-2 rounded-full`} style={{ backgroundColor: l.color }}></div>
@@ -262,8 +311,8 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate, isDayMode = fals
 
              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                  <div className={`p-6 rounded-3xl border shadow-xl flex flex-col ${isDayMode ? 'bg-white border-gray-100' : 'bg-mystic-paper border-white/5'}`}>
-                    <h4 className={`text-sm font-bold mb-6 ${isDayMode ? 'text-gray-800' : 'text-gray-200'}`}>五行能量占比</h4>
-                    <div className="flex items-center gap-6 mb-8">
+                    <h4 className={`text-sm font-bold mb-6 ${isDayMode ? 'text-gray-800' : 'text-gray-200'}`}>五行能量分布</h4>
+                    <div className="flex items-center gap-6">
                        <div className="w-24 h-24 relative flex items-center justify-center">
                           <svg viewBox="0 0 36 36" className="w-full h-full transform -rotate-90">
                              {elementBalance && Object.entries(elementBalance).reduce((acc, [el, count], idx, arr) => {
@@ -290,21 +339,40 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate, isDayMode = fals
                           ))}
                        </div>
                     </div>
-                    <div className="border-t border-white/5 pt-4">
-                        <div className="flex justify-between mb-3"><span className="text-[10px] text-gray-500 font-bold">身强 (Strong)</span><span className="text-[10px] text-gray-500">身弱 (Weak)</span></div>
-                        <div className="relative h-1.5 w-full bg-gray-500/20 rounded-full">
-                            <div 
-                              className="absolute top-1/2 -translate-y-1/2 w-3.5 h-3.5 bg-mystic-gold rounded-full shadow-[0_0_10px_rgba(197,176,120,0.8)] border-2 border-[#151618] transition-all duration-1000 z-10" 
-                              style={{ left: `calc(${strengthPercentage}% - 7px)` }}
-                            ></div>
-                        </div>
-                        <div className="mt-2 text-center text-[10px] text-gray-600 font-serif">能量指数 <span className="text-mystic-gold font-bold">{Math.floor(strengthPercentage)}%</span></div>
-                    </div>
                  </div>
 
-                 <div className={`p-6 rounded-3xl border border-dashed flex flex-col items-center justify-center gap-3 ${isDayMode ? 'bg-gray-50 border-gray-200' : 'bg-mystic-paper/30 border-white/5'}`}>
-                    <div className="text-2xl opacity-20">🧿</div>
-                    <span className="text-[10px] text-gray-500 tracking-widest uppercase">精细排盘模块迭代中</span>
+                 <div className={`p-6 rounded-3xl border shadow-xl flex flex-col relative overflow-hidden group cursor-pointer active:scale-95 transition-all ${isDayMode ? 'bg-white border-gray-100' : 'bg-mystic-paper border-white/5'}`} onClick={() => onNavigate(AppMode.BAZI, `请分析一下我的命盘气象，是身强还是身弱？这种格局对我未来几年的事业发展有什么影响？`)}>
+                    <div className="absolute top-0 right-0 w-24 h-24 bg-mystic-gold/5 blur-2xl rounded-full"></div>
+                    <div className="flex justify-between items-center mb-6">
+                        <h4 className={`text-sm font-bold ${isDayMode ? 'text-gray-800' : 'text-gray-200'}`}>命格能量指数</h4>
+                        <span className="text-[10px] text-mystic-gold border border-mystic-gold/20 px-2 py-0.5 rounded-full uppercase tracking-widest">能量测算</span>
+                    </div>
+                    
+                    <div className="flex-1 flex flex-col justify-center">
+                        <div className="flex justify-between items-end mb-3">
+                            <div className="flex flex-col">
+                                <span className={`text-3xl font-serif font-bold ${isDayMode ? 'text-gray-800' : 'text-white'}`}>{Math.floor(strengthPercentage)}%</span>
+                                <span className="text-[10px] text-gray-500">相对平衡度</span>
+                            </div>
+                            <div className="text-right">
+                                <span className={`text-lg font-serif font-bold ${strengthPercentage > 50 ? 'text-mystic-gold' : 'text-gray-400'}`}>{strengthPercentage > 50 ? '身强' : '身弱'}</span>
+                                <p className="text-[9px] text-gray-600">中庸为贵 · 顺势而为</p>
+                            </div>
+                        </div>
+
+                        <div className="relative h-2 w-full bg-gray-500/10 rounded-full overflow-hidden mb-4">
+                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-mystic-gold/10 to-transparent"></div>
+                            <div 
+                              className="absolute top-0 left-0 h-full bg-mystic-gold rounded-full transition-all duration-1000 shadow-[0_0_10px_rgba(197,176,120,0.5)]" 
+                              style={{ width: `${strengthPercentage}%` }}
+                            ></div>
+                        </div>
+                    </div>
+                    
+                    <div className="pt-4 border-t border-white/5 flex items-center justify-between">
+                         <span className="text-[9px] text-gray-600 uppercase tracking-widest">点击查看深度解析</span>
+                         <span className="text-mystic-gold text-lg">→</span>
+                    </div>
                  </div>
              </div>
           </div>

@@ -309,9 +309,9 @@ export const LiuYaoView: React.FC<{ isDayMode?: boolean }> = ({ isDayMode = fals
     const currentLines = mode === 'MANUAL' ? manualLines : shakeLines;
     const activeHexagram = result || (currentHexagramInfo ? { hexagramName: currentHexagramInfo.name, hexagramSymbol: currentHexagramInfo.symbol, analysis: '', judgment: currentHexagramInfo.judgment } : null);
     return (
-      <div className={`w-full h-full flex flex-col relative transition-colors duration-300 ${isDayMode ? 'bg-[#fcfcfc]' : 'bg-mystic-dark'}`}>
-        <div className="shrink-0 p-4 pb-0 z-10">
-           <div className={`rounded-xl p-4 shadow-xl relative overflow-hidden flex items-center gap-5 border transition-colors ${isDayMode ? 'bg-white border-gray-100' : 'bg-[#2a2b2e] border-white/5'}`}>
+      <div className={`w-full h-full relative transition-colors duration-300 overflow-hidden ${isDayMode ? 'bg-[#fcfcfc]' : 'bg-mystic-dark'}`}>
+        <div className="absolute top-0 left-0 w-full p-4 z-40">
+           <div className={`rounded-xl p-4 shadow-xl relative overflow-hidden flex items-center gap-5 border transition-colors backdrop-blur-md ${isDayMode ? 'bg-white/80 border-gray-100' : 'bg-[#2a2b2e]/90 border-white/5'}`}>
               {activeHexagram ? (
                 <>
                   <div className={`shrink-0 w-14 flex justify-center py-1 rounded-lg border transition-colors ${isDayMode ? 'bg-gray-50 border-gray-200' : 'bg-black/20 border-white/5'}`}>
@@ -322,16 +322,16 @@ export const LiuYaoView: React.FC<{ isDayMode?: boolean }> = ({ isDayMode = fals
                          <h2 className={`text-xl font-serif font-bold leading-none ${isDayMode ? 'text-gray-900' : 'text-[#e2e8f0]'}`}>{activeHexagram.hexagramName}</h2>
                          <span className={`text-xs px-1.5 py-0.5 rounded border ${isDayMode ? 'text-gray-400 bg-gray-50 border-gray-200' : 'text-gray-500 bg-white/5 border-white/5'}`}>{activeHexagram.hexagramSymbol}</span>
                      </div>
-                     <div className={`text-sm leading-snug line-clamp-2 ${isDayMode ? 'text-gray-500' : 'text-[#94a3b8]'}`}>{isAnalyzing && !result ? <span className="animate-pulse text-[#e8cfa1]">{activeHexagram.judgment || "正在推演..."}</span> : (activeHexagram.judgment || "卦象解盘中...")}</div>
+                     <div className={`text-sm leading-snug line-clamp-1 ${isDayMode ? 'text-gray-500' : 'text-[#94a3b8]'}`}>{isAnalyzing && !result ? <span className="animate-pulse text-[#e8cfa1]">{activeHexagram.judgment || "正在推演..."}</span> : (activeHexagram.judgment || "卦象解盘中...")}</div>
                   </div>
-                  <button onClick={reset} className={`absolute top-2 right-2 p-2 transition-colors ${isDayMode ? 'text-gray-400 hover:text-gray-800' : 'text-gray-600 hover:text-gray-300'}`}><span className="text-lg">↺</span></button>
+                  <button onClick={reset} className={`p-2 transition-colors ${isDayMode ? 'text-gray-400 hover:text-gray-800' : 'text-gray-600 hover:text-gray-300'}`}><span className="text-lg">↺</span></button>
                 </>
               ) : <div className="w-full flex items-center justify-center text-gray-500 animate-pulse py-2">卦象生成中...</div>}
            </div>
         </div>
         <div 
           onScroll={handleScroll}
-          className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-hide pb-32"
+          className="h-full w-full overflow-y-auto p-4 space-y-4 scrollbar-hide pb-40 pt-28"
         >
            {messages.map((msg) => (
               <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} animate-fade-in-up`}>
@@ -342,7 +342,7 @@ export const LiuYaoView: React.FC<{ isDayMode?: boolean }> = ({ isDayMode = fals
            {isAnalyzing && <div className="flex justify-start animate-fade-in-up"><div className={`w-8 h-8 rounded-full border flex items-center justify-center mr-2 ${isDayMode ? 'bg-white border-gray-100 shadow-sm' : 'bg-mystic-dark border-mystic-gold/30'}`}><span className="animate-spin text-mystic-gold">☯</span></div><div className={`px-4 py-3 rounded-2xl rounded-bl-sm border text-sm bg-mystic-paper/80 border-white/10 text-gray-400`}>推演中</div></div>}
            <div ref={chatEndRef} />
         </div>
-        <div className={`absolute bottom-0 left-0 w-full px-4 pt-4 pb-4 z-20 border-t shadow-[0_-10px_20px_rgba(0,0,0,0.03)] transition-all duration-500 ease-in-out ${isScrolling ? 'translate-y-full opacity-0 pointer-events-none' : 'translate-y-0 opacity-100'} ${isDayMode ? 'bg-white border-gray-100' : 'bg-mystic-dark border-white/5'}`}>
+        <div className={`absolute bottom-0 left-0 w-full px-4 pt-4 pb-4 z-20 border-t shadow-[0_-10px_20px_rgba(0,0,0,0.08)] transition-all duration-500 ease-in-out ${isScrolling ? 'translate-y-full opacity-0 pointer-events-none' : 'translate-y-0 opacity-100'} ${isDayMode ? 'bg-white border-gray-100' : 'bg-mystic-dark border-white/5'}`}>
             {!isAnalyzing && suggestions.length > 0 && (
               <div className="flex flex-wrap gap-2 mb-3 animate-fade-in-up">
                   {suggestions.map((s, idx) => (
@@ -357,7 +357,7 @@ export const LiuYaoView: React.FC<{ isDayMode?: boolean }> = ({ isDayMode = fals
               </div>
             )}
             <div className="relative">
-              <input type="text" value={inputMessage} onChange={e => setInputMessage(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSendMessage()} placeholder="阁下请直言" className={`w-full pl-4 pr-12 py-3 rounded-2xl border outline-none shadow-sm transition-all bg-[#1a1b1e] text-gray-200 border-white/10 focus:border-mystic-gold/50`} />
+              <input type="text" value={inputMessage} onChange={e => setInputMessage(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSendMessage()} placeholder="阁下请直言" className={`w-full pl-4 pr-12 py-3 rounded-2xl border outline-none shadow-sm transition-all ${isDayMode ? 'bg-gray-50 border-gray-200 text-gray-900 focus:bg-white' : 'bg-[#1a1b1e] text-gray-200 border-white/10 focus:border-mystic-gold/50'}`} />
               <button onClick={() => handleSendMessage()} disabled={isAnalyzing} className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center rounded-full bg-mystic-gold/20 text-mystic-gold hover:bg-mystic-gold hover:text-white transition-colors">➤</button>
             </div>
         </div>

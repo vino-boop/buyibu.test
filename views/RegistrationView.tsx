@@ -196,31 +196,31 @@ export const RegistrationView: React.FC<RegistrationViewProps> = ({ onComplete, 
 
         {step === 2 && (
             <div className="w-full max-w-2xl animate-fade-in-up">
-                <button onClick={() => setStep(1)} className="text-gray-600 text-sm w-fit mb-12 hover:text-white transition-colors flex items-center gap-2">
+                <button onClick={() => setStep(1)} className="text-gray-600 text-sm w-fit mb-8 sm:mb-12 hover:text-white transition-colors flex items-center gap-2">
                     <span className="text-xl">❮</span> 返回
                 </button>
-                <div className="mb-10 text-center">
-                    <h2 className="text-3xl text-white font-serif font-light tracking-widest mb-4">请择一推演人格</h2>
-                    <p className="text-gray-500 text-sm">不同的人格将以截然不同的视角与文风为您解惑。</p>
+                <div className="mb-6 sm:mb-10 text-center">
+                    <h2 className="text-2xl sm:text-3xl text-white font-serif font-light tracking-widest mb-3 sm:mb-4">请择一推演人格</h2>
+                    <p className="text-gray-500 text-xs sm:text-sm">不同的人格将以截然不同的视角与文风为您解惑。</p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-16">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4 mb-10 sm:mb-16">
                     {personalities.map((p) => (
                         <div 
                             key={p.type}
                             onClick={() => setSelectedPersonality(p.type)}
-                            className={`p-6 rounded-3xl border transition-all cursor-pointer relative overflow-hidden flex flex-col items-center text-center ${selectedPersonality === p.type ? 'bg-mystic-gold/10 border-mystic-gold shadow-[0_0_20px_rgba(197,176,120,0.2)]' : 'bg-white/5 border-white/5 hover:bg-white/10'}`}
+                            className={`p-4 sm:p-6 rounded-2xl sm:rounded-3xl border transition-all cursor-pointer relative overflow-hidden flex flex-col items-center text-center ${selectedPersonality === p.type ? 'bg-mystic-gold/10 border-mystic-gold shadow-[0_0_20px_rgba(197,176,120,0.2)]' : 'bg-white/5 border-white/5 hover:bg-white/10'}`}
                         >
-                            <div className="w-12 h-12 mb-4 flex items-center justify-center">
+                            <div className="w-10 h-10 sm:w-12 sm:h-12 mb-3 sm:mb-4 flex items-center justify-center">
                                 {p.icon}
                             </div>
-                            <h3 className={`text-lg font-bold mb-2 ${selectedPersonality === p.type ? 'text-mystic-gold' : 'text-gray-200'}`}>{p.name}</h3>
-                            <p className="text-xs text-gray-500 mb-4 h-8 flex items-center">{p.desc}</p>
+                            <h3 className={`text-base sm:text-lg font-bold mb-1 sm:mb-2 ${selectedPersonality === p.type ? 'text-mystic-gold' : 'text-gray-200'}`}>{p.name}</h3>
+                            <p className="text-[11px] sm:text-xs text-gray-500 mb-3 sm:mb-4 h-6 sm:h-8 flex items-center">{p.desc}</p>
                             <div className="flex flex-wrap gap-1 justify-center">
-                                {p.tags.map(tag => <span key={tag} className="text-[9px] px-1.5 py-0.5 rounded-full bg-black/40 text-gray-500">{tag}</span>)}
+                                {p.tags.map(tag => <span key={tag} className="text-[8px] sm:text-[9px] px-1.5 py-0.5 rounded-full bg-black/40 text-gray-500">{tag}</span>)}
                             </div>
                             {selectedPersonality === p.type && (
-                                <div className="absolute top-3 right-3 text-mystic-gold text-xs font-bold bg-mystic-gold/10 px-1.5 py-0.5 rounded-full">✓</div>
+                                <div className="absolute top-2 right-2 sm:top-3 sm:right-3 text-mystic-gold text-[10px] sm:text-xs font-bold bg-mystic-gold/10 px-1.5 py-0.5 rounded-full">✓</div>
                             )}
                         </div>
                     ))}
@@ -231,7 +231,7 @@ export const RegistrationView: React.FC<RegistrationViewProps> = ({ onComplete, 
                         updateAsset('activePersonality', selectedPersonality);
                         onComplete({ name: name || '缘主', gender, birthDate, birthTime: birthTime || '12:00', birthPlace: '北京', calendarType, isLeapMonth, personality: selectedPersonality });
                     }} 
-                    className="w-full bg-mystic-gold text-black font-bold text-lg py-5 rounded-2xl hover:brightness-110 shadow-xl active:scale-95 transition-all"
+                    className="w-full bg-mystic-gold text-black font-bold text-base sm:text-lg py-4 sm:py-5 rounded-xl sm:rounded-2xl hover:brightness-110 shadow-xl active:scale-95 transition-all"
                 >
                     开启命盘推演
                 </button>

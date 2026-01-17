@@ -118,7 +118,7 @@ export const BaZiView: React.FC<BaZiViewProps> = ({ defaultQuestion, isDayMode =
   const {
       name, setName, gender, setGender, birthDate, setBirthDate, birthTime, setBirthTime,
       calendarType, setCalendarType, isLeapMonth, setIsLeapMonth,
-      viewMode, setViewMode, chartDisplayMode, setChartDisplayMode, showFullDetails, setShowFullDetails,
+      viewMode, setViewMode, editTab, setEditTab, chartDisplayMode, setChartDisplayMode, showFullDetails, setShowFullDetails,
       selectedDaYunIndex, setSelectedDaYunIndex, selectedLiuNianIndex, setSelectedLiuNianIndex, selectedLiuYueIndex, setSelectedLiuYueIndex,
       chartData, hePanData, messages, loading, chatLoading, handleStart, handleSendMessage, inputMessage, setInputMessage, triggerDefaultQuestion,
       roster, saveToRoster, deleteFromRoster, performHePan
@@ -131,7 +131,6 @@ export const BaZiView: React.FC<BaZiViewProps> = ({ defaultQuestion, isDayMode =
   const liuYueListRef = useRef<HTMLDivElement>(null);
   const scrollTimeoutRef = useRef<number | null>(null);
 
-  const [editTab, setEditTab] = useState<'BASIC' | 'ROSTER'>('BASIC');
   const [hePanSelection, setHePanSelection] = useState<UserProfile[]>([]);
   const [isScrolling, setIsScrolling] = useState(false);
 
@@ -174,6 +173,18 @@ export const BaZiView: React.FC<BaZiViewProps> = ({ defaultQuestion, isDayMode =
       if (prev.length >= 2) return [prev[1], p];
       return [...prev, p];
     });
+  };
+
+  const handleViewSingleChart = () => {
+    if (hePanSelection.length !== 1) return;
+    const p = hePanSelection[0];
+    setName(p.name);
+    setGender(p.gender);
+    setBirthDate(p.birthDate);
+    setBirthTime(p.birthTime);
+    setCalendarType(p.calendarType || CalendarType.SOLAR);
+    setIsLeapMonth(p.isLeapMonth || false);
+    handleStart(false);
   };
 
   if (viewMode === 'EDIT') {
@@ -262,7 +273,22 @@ export const BaZiView: React.FC<BaZiViewProps> = ({ defaultQuestion, isDayMode =
                     <button onClick={() => handleStart(false)} className={`flex-[1.5] font-bold py-4 rounded-full shadow-lg transition-all active:scale-95 ${isDayMode ? 'bg-mystic-gold text-white' : 'bg-[#e8c688] text-black'}`}>更新排盘</button>
                 </div>
              ) : (
-                <button onClick={() => performHePan(hePanSelection[0], hePanSelection[1], false)} disabled={hePanSelection.length < 2} className={`w-full font-bold py-4 rounded-full shadow-lg transition-all active:scale-95 disabled:opacity-30 disabled:grayscale ${isDayMode ? 'bg-mystic-gold text-white' : 'bg-gradient-to-r from-mystic-gold to-amber-600 text-black'}`}>开始合盘分析</button>
+                <div className="flex gap-3">
+                    <button 
+                        onClick={handleViewSingleChart} 
+                        disabled={hePanSelection.length !== 1} 
+                        className={`flex-1 font-bold py-4 rounded-full shadow-lg transition-all active:scale-95 disabled:opacity-30 disabled:grayscale border ${isDayMode ? 'border-mystic-gold text-mystic-gold bg-white' : 'border-mystic-gold/40 text-mystic-gold bg-black/20'}`}
+                    >
+                        查看排盘
+                    </button>
+                    <button 
+                        onClick={() => performHePan(hePanSelection[0], hePanSelection[1], false)} 
+                        disabled={hePanSelection.length < 2} 
+                        className={`flex-[1.5] font-bold py-4 rounded-full shadow-lg transition-all active:scale-95 disabled:opacity-30 disabled:grayscale ${isDayMode ? 'bg-mystic-gold text-white' : 'bg-gradient-to-r from-mystic-gold to-amber-600 text-black'}`}
+                    >
+                        合盘分析
+                    </button>
+                </div>
              )}
              <button onClick={() => setViewMode('VIEW')} className="w-full text-gray-500 text-sm py-2">取消操作</button>
            </div>
@@ -292,11 +318,11 @@ export const BaZiView: React.FC<BaZiViewProps> = ({ defaultQuestion, isDayMode =
   };
 
   return (
-    <div className={`w-full h-full flex flex-col relative transition-colors duration-300 ${isDayMode ? 'bg-[#fcfcfc]' : 'bg-mystic-dark'}`}>
+    <div className={`w-full h-full relative transition-colors duration-300 overflow-hidden ${isDayMode ? 'bg-[#fcfcfc]' : 'bg-mystic-dark'}`}>
       <div 
         ref={scrollContainerRef} 
         onScroll={handleScroll}
-        className="flex-1 overflow-y-auto scrollbar-hide pb-32 pt-4"
+        className="h-full w-full overflow-y-auto scrollbar-hide pb-40 pt-4"
       >
           
           <div className="px-4">
@@ -475,7 +501,7 @@ export const BaZiView: React.FC<BaZiViewProps> = ({ defaultQuestion, isDayMode =
           </div>
       </div>
 
-      <div className={`shrink-0 w-full px-4 pt-4 sm:pt-6 pb-6 sm:pb-8 z-20 border-t shadow-[0_-10px_30px_rgba(0,0,0,0.05)] transition-all duration-500 ease-in-out ${isScrolling ? 'translate-y-full opacity-0 pointer-events-none' : 'translate-y-0 opacity-100'} ${isDayMode ? 'bg-white border-gray-100' : 'bg-mystic-dark border-white/5'}`}>
+      <div className={`absolute bottom-0 left-0 w-full px-4 pt-4 sm:pt-6 pb-6 sm:pb-8 z-20 border-t shadow-[0_-10px_30px_rgba(0,0,0,0.08)] transition-all duration-500 ease-in-out ${isScrolling ? 'translate-y-full opacity-0 pointer-events-none' : 'translate-y-0 opacity-100'} ${isDayMode ? 'bg-white border-gray-100' : 'bg-mystic-dark border-white/5'}`}>
             <div className="max-w-4xl mx-auto">
                 {!chatLoading && (
                     <div className="flex flex-wrap gap-2 mb-3 sm:mb-4 animate-fade-in-up">

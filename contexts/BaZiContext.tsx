@@ -20,6 +20,8 @@ interface BaZiContextType {
   setIsLeapMonth: (l: boolean) => void;
   viewMode: 'EDIT' | 'VIEW' | 'HEPAN';
   setViewMode: (v: 'EDIT' | 'VIEW' | 'HEPAN') => void;
+  editTab: 'BASIC' | 'ROSTER';
+  setEditTab: (t: 'BASIC' | 'ROSTER') => void;
   chartDisplayMode: 'COLLAPSED' | 'EXPANDED';
   setChartDisplayMode: (v: 'COLLAPSED' | 'EXPANDED') => void;
   showFullDetails: boolean;
@@ -56,6 +58,7 @@ export const BaZiProvider: React.FC<{ userProfile: UserProfile; children: ReactN
   const [calendarType, setCalendarType] = useState<CalendarType>(userProfile.calendarType || CalendarType.SOLAR);
   const [isLeapMonth, setIsLeapMonth] = useState<boolean>(userProfile.isLeapMonth || false);
   const [viewMode, setViewMode] = useState<'EDIT' | 'VIEW' | 'HEPAN'>('VIEW');
+  const [editTab, setEditTab] = useState<'BASIC' | 'ROSTER'>('BASIC');
   const [chartDisplayMode, setChartDisplayMode] = useState<'COLLAPSED' | 'EXPANDED'>('EXPANDED');
   const [showFullDetails, setShowFullDetails] = useState(false);
   
@@ -290,7 +293,7 @@ export const BaZiProvider: React.FC<{ userProfile: UserProfile; children: ReactN
 
   const triggerDefaultQuestion = async (q: string) => {
       if (!chartData && !hePanData) await handleStart(false);
-      handleSendMessage(q);
+      setInputMessage(q);
   };
 
   useEffect(() => {
@@ -301,7 +304,7 @@ export const BaZiProvider: React.FC<{ userProfile: UserProfile; children: ReactN
     <BaZiContext.Provider value={{
       name, setName, gender, setGender, birthDate, setBirthDate, birthTime, setBirthTime,
       calendarType, setCalendarType, isLeapMonth, setIsLeapMonth,
-      viewMode, setViewMode, chartDisplayMode, setChartDisplayMode, showFullDetails, setShowFullDetails,
+      viewMode, setViewMode, editTab, setEditTab, chartDisplayMode, setChartDisplayMode, showFullDetails, setShowFullDetails,
       selectedDaYunIndex, setSelectedDaYunIndex, selectedLiuNianIndex, setSelectedLiuNianIndex, selectedLiuYueIndex, setSelectedLiuYueIndex,
       chartData, hePanData, messages, loading, chatLoading, handleStart, handleSendMessage, inputMessage, setInputMessage, triggerDefaultQuestion,
       roster, saveToRoster, deleteFromRoster, performHePan
