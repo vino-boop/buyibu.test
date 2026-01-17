@@ -129,12 +129,22 @@ export const BaZiView: React.FC<BaZiViewProps> = ({ defaultQuestion, isDayMode =
   const daYunListRef = useRef<HTMLDivElement>(null);
   const liuNianListRef = useRef<HTMLDivElement>(null);
   const liuYueListRef = useRef<HTMLDivElement>(null);
+  const scrollTimeoutRef = useRef<number | null>(null);
 
   const [editTab, setEditTab] = useState<'BASIC' | 'ROSTER'>('BASIC');
   const [hePanSelection, setHePanSelection] = useState<UserProfile[]>([]);
+  const [isScrolling, setIsScrolling] = useState(false);
 
   useEffect(() => { if (defaultQuestion) triggerDefaultQuestion(defaultQuestion); }, [defaultQuestion]);
   useEffect(() => { if (messages.length > 0 && scrollContainerRef.current) scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight; }, [messages.length, chatLoading]); 
+
+  const handleScroll = () => {
+    if (!isScrolling) setIsScrolling(true);
+    if (scrollTimeoutRef.current) window.clearTimeout(scrollTimeoutRef.current);
+    scrollTimeoutRef.current = window.setTimeout(() => {
+      setIsScrolling(false);
+    }, 800);
+  };
 
   const currentAge = birthDate ? new Date().getFullYear() - parseInt(birthDate.split('-')[0]) : 0;
   const lastAssistantMessage = [...messages].reverse().find(m => m.role === 'assistant');
@@ -276,7 +286,11 @@ export const BaZiView: React.FC<BaZiViewProps> = ({ defaultQuestion, isDayMode =
 
   return (
     <div className={`w-full h-full flex flex-col relative transition-colors duration-300 ${isDayMode ? 'bg-[#fcfcfc]' : 'bg-mystic-dark'}`}>
-      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto scrollbar-hide pb-32 pt-4">
+      <div 
+        ref={scrollContainerRef} 
+        onScroll={handleScroll}
+        className="flex-1 overflow-y-auto scrollbar-hide pb-32 pt-4"
+      >
           
           <div className="px-4">
             {hePanData ? (
@@ -439,7 +453,7 @@ export const BaZiView: React.FC<BaZiViewProps> = ({ defaultQuestion, isDayMode =
           </div>
       </div>
 
-      <div className={`shrink-0 w-full px-4 pt-4 sm:pt-6 pb-6 sm:pb-8 z-20 border-t shadow-[0_-10px_30px_rgba(0,0,0,0.05)] transition-colors ${isDayMode ? 'bg-white border-gray-100' : 'bg-mystic-dark border-white/5'}`}>
+      <div className={`shrink-0 w-full px-4 pt-4 sm:pt-6 pb-6 sm:pb-8 z-20 border-t shadow-[0_-10px_30px_rgba(0,0,0,0.05)] transition-all duration-500 ease-in-out ${isScrolling ? 'translate-y-full opacity-0' : 'translate-y-0 opacity-100'} ${isDayMode ? 'bg-white border-gray-100' : 'bg-mystic-dark border-white/5'}`}>
             <div className="max-w-4xl mx-auto">
                 {!chatLoading && (
                     <div className="flex flex-wrap gap-2 mb-3 sm:mb-4 animate-fade-in-up">

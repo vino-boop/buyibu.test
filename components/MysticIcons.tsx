@@ -3,6 +3,32 @@ import React from 'react';
 
 const color = "#c5b078";
 
+export const IconPersonalityMystic = ({ className = "w-full h-full" }) => (
+  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
+    <circle cx="12" cy="12" r="9" stroke={color} strokeWidth="1.2"/>
+    <path d="M12 3C12 3 15 6 15 9C15 12 12 15 12 15C12 15 9 18 9 21C9 21 3 21 3 12C3 3 12 3 12 3Z" fill={color} fillOpacity="0.1"/>
+    <path d="M12 3C7.02944 3 3 7.02944 3 12C3 16.9706 7.02944 21 12 21C16.9706 21 21 16.9706 21 12C21 7.02944 16.9706 3 12 3ZM12 21V12M12 12V3M12 12C12 7.5 16.5 7.5 16.5 12C16.5 16.5 12 16.5 12 12ZM12 12C12 16.5 7.5 16.5 7.5 12C7.5 7.5 12 7.5 12 12Z" stroke={color} strokeWidth="1.2"/>
+    <circle cx="12" cy="7.5" r="1" fill={color}/>
+    <circle cx="12" cy="16.5" r="1" fill={color}/>
+  </svg>
+);
+
+export const IconPersonalityPragmatic = ({ className = "w-full h-full" }) => (
+  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
+    <circle cx="12" cy="12" r="9" stroke={color} strokeWidth="1.2"/>
+    <rect x="9" y="9" width="6" height="6" stroke={color} strokeWidth="1.2"/>
+    <path d="M12 3V9M12 15V21M3 12H9M15 12H21" stroke={color} strokeWidth="1.2" strokeLinecap="round"/>
+    <path d="M18.36 5.64L14.12 9.88M9.88 14.12L5.64 18.36M18.36 18.36L14.12 14.12M9.88 9.88L5.64 5.64" stroke={color} strokeWidth="0.8" strokeOpacity="0.5"/>
+  </svg>
+);
+
+export const IconPersonalityClassical = ({ className = "w-full h-full" }) => (
+  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
+    <path d="M4 19V5C4 3.89543 4.89543 3 6 3H19C19.5523 3 20 3.44772 20 4V17C20 18.1046 19.1046 19 18 19H4ZM4 19C4 20.1046 4.89543 21 6 21H18C19.1046 21 20 20.1046 20 19" stroke={color} strokeWidth="1.2"/>
+    <path d="M8 7H16M8 11H16M8 15H12" stroke={color} strokeWidth="1.2" strokeLinecap="round"/>
+  </svg>
+);
+
 export const IconMarriage = ({ className = "w-full h-full" }) => (
   <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
     <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>

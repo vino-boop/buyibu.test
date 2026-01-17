@@ -1,7 +1,8 @@
 
 import React, { useState } from 'react';
-import { UserProfile } from '../types';
+import { UserProfile, AppPersonality } from '../types';
 import { useAssets } from '../contexts/AssetContext';
+import { IconPersonalityMystic, IconPersonalityPragmatic, IconPersonalityClassical } from '../components/MysticIcons';
 
 interface ProfileViewProps {
   userProfile: UserProfile;
@@ -61,13 +62,41 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ userProfile, isDayMode
                       </div>
                   </div>
               );
+          case '推演人格':
+              const personalities = [
+                { type: AppPersonality.MYSTIC, name: '天机道长', icon: <IconPersonalityMystic />, desc: '自称“吾”，文辞清雅，洞察格局气象。' },
+                { type: AppPersonality.PRAGMATIC, name: '实战顾问', icon: <IconPersonalityPragmatic />, desc: '口号“玄学为引，实操为本”。融合商业术语，必有实战建议。' },
+                { type: AppPersonality.CLASSICAL, name: '古籍学者', icon: <IconPersonalityClassical />, desc: '满腹经纶，引用文言古籍名句，文风儒雅。' }
+              ];
+              return (
+                  <div className="space-y-4">
+                      {personalities.map(p => (
+                          <div 
+                            key={p.type}
+                            onClick={() => updateAsset('activePersonality', p.type)}
+                            className={`p-4 rounded-2xl border cursor-pointer transition-all ${assets.activePersonality === p.type ? 'border-mystic-gold bg-mystic-gold/10' : 'border-white/5 bg-white/5'}`}
+                          >
+                              <div className="flex items-center gap-4 mb-2">
+                                  <span className="w-10 h-10 flex items-center justify-center">{p.icon}</span>
+                                  <div className="flex-1">
+                                      <h3 className={`font-bold ${assets.activePersonality === p.type ? 'text-mystic-gold' : 'text-white'}`}>{p.name}</h3>
+                                  </div>
+                                  {assets.activePersonality === p.type && <span className="text-mystic-gold text-xs font-bold">已启用</span>}
+                              </div>
+                              <p className="text-xs text-gray-500 leading-relaxed">{p.desc}</p>
+                          </div>
+                      ))}
+                      <div className="pt-4 text-[10px] text-gray-600 uppercase tracking-widest text-center">
+                          人格切换将影响所有推演回复的文风。
+                      </div>
+                  </div>
+              );
           case 'API引擎':
               return (
                 <div className="space-y-6 animate-fade-in">
                     <div className="p-4 rounded-xl bg-amber-900/10 border border-amber-500/10 text-[10px] text-amber-500/80 leading-relaxed uppercase tracking-widest">
                         开发者调试：在这里您可以自由切换 AI 模型提供商。
                     </div>
-                    
                     <div className="space-y-4">
                         <label className={`text-xs font-bold uppercase tracking-widest ${labelClass}`}>服务提供商</label>
                         <div className="grid grid-cols-2 gap-3 p-1 bg-black/40 rounded-xl border border-white/5">
@@ -75,7 +104,6 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ userProfile, isDayMode
                             <button onClick={() => updateAsset('apiProvider', 'DEEPSEEK')} className={`py-3 text-xs rounded-lg transition-all ${assets.apiProvider === 'DEEPSEEK' ? 'bg-mystic-gold text-black font-bold' : 'text-gray-500'}`}>DeepSeek</button>
                         </div>
                     </div>
-
                     <div className="space-y-2">
                         <label className={`text-xs font-bold uppercase tracking-widest ${labelClass}`}>Model ID</label>
                         <input 
@@ -86,32 +114,6 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ userProfile, isDayMode
                             className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-4 text-sm text-white font-mono focus:border-mystic-gold/50 outline-none" 
                         />
                     </div>
-
-                    {assets.apiProvider === 'DEEPSEEK' && (
-                        <div className="space-y-6 pt-2">
-                             <div className="space-y-2">
-                                <label className={`text-xs font-bold uppercase tracking-widest ${labelClass}`}>API Secret Key</label>
-                                <input 
-                                    type="password" 
-                                    value={assets.customApiKey || ''} 
-                                    onChange={(e) => updateAsset('customApiKey', e.target.value)} 
-                                    placeholder="sk-..."
-                                    className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-4 text-sm text-white font-mono focus:border-mystic-gold/50 outline-none" 
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <label className={`text-xs font-bold uppercase tracking-widest ${labelClass}`}>Base URL</label>
-                                <input 
-                                    type="text" 
-                                    value={assets.apiBaseUrl || ''} 
-                                    onChange={(e) => updateAsset('apiBaseUrl', e.target.value)} 
-                                    placeholder="https://api.deepseek.com"
-                                    className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-4 text-[10px] text-white font-mono focus:border-mystic-gold/50 outline-none" 
-                                />
-                            </div>
-                        </div>
-                    )}
-
                     <div className="pt-8">
                          <button onClick={() => setActiveSubPage(null)} className="w-full py-4 rounded-xl bg-mystic-gold text-black font-bold shadow-xl">保存配置</button>
                     </div>
@@ -126,6 +128,8 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ userProfile, isDayMode
                );
       }
   };
+
+  const currentPersInfo = assets.activePersonality === AppPersonality.PRAGMATIC ? '实战顾问' : assets.activePersonality === AppPersonality.CLASSICAL ? '古籍学者' : '天机道长';
 
   return (
     <div className={`w-full h-full flex flex-col animate-fade-in relative z-50 transition-colors duration-300 ${isDayMode ? 'bg-[#f8f9fa]' : 'bg-[#0f1110]'}`}>
@@ -158,7 +162,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ userProfile, isDayMode
                     <div>
                         <div className="text-white font-bold text-lg">{userProfile.name}</div>
                         <div className="text-[#d4af37] text-[10px] border border-[#d4af37]/30 px-2 py-0.5 rounded-full w-fit bg-black/30 mt-1 uppercase tracking-wider">
-                            {userProfile.gender === 'Male' ? '乾造' : '坤造'} · 普通用户
+                            {userProfile.gender === 'Male' ? '乾造' : '坤造'} · VIP推演
                         </div>
                     </div>
                  </div>
@@ -166,11 +170,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ userProfile, isDayMode
               <div className="flex items-end justify-between">
                   <div className="text-gray-400 text-[10px]">DAO AI ENGINE · {assets.apiProvider || 'GEMINI'}</div>
                   <div className="text-right">
-                     <div className="flex items-baseline gap-1 text-white font-bold drop-shadow-md">
-                        <span className="text-2xl">20元</span>
-                        <span className="text-sm font-light">/月</span>
-                     </div>
-                     <div className="text-[#d4af37] text-[10px] tracking-widest font-bold">解锁全能版</div>
+                     <div className="text-[#d4af37] text-[10px] tracking-widest font-bold uppercase">{currentPersInfo} 已就绪</div>
                   </div>
               </div>
            </div>
@@ -178,6 +178,12 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ userProfile, isDayMode
 
         <div className={`rounded-2xl px-4 py-1 mb-4 border transition-colors shadow-sm ${isDayMode ? 'bg-white border-gray-100' : 'bg-[#1a1b1e] border-white/5'}`}>
            <MenuItem isDay={isDayMode} label="账号管理" onClick={() => setActiveSubPage('Account')} />
+           <MenuItem 
+              isDay={isDayMode} 
+              label="推演人格" 
+              rightElement={<div className="flex items-center gap-1"><span className="text-xs text-mystic-gold">{currentPersInfo}</span><span className="text-gray-400 text-lg">›</span></div>} 
+              onClick={() => setActiveSubPage('推演人格')} 
+           />
            <MenuItem 
               isDay={isDayMode} 
               label="白天模式" 
@@ -188,11 +194,6 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ userProfile, isDayMode
               } 
            />
            <MenuItem isDay={isDayMode} label="API引擎配置" onClick={() => setActiveSubPage('API引擎')} />
-           <MenuItem isDay={isDayMode} label="帮助与反馈" onClick={() => setActiveSubPage('帮助与反馈')} />
-        </div>
-
-        <div className={`rounded-2xl px-4 py-1 mb-8 border transition-colors shadow-sm ${isDayMode ? 'bg-white border-gray-100' : 'bg-[#1a1b1e] border-white/5'}`}>
-           <MenuItem isDay={isDayMode} label="关于我们" onClick={() => setActiveSubPage('关于我们')} />
         </div>
 
         <button 

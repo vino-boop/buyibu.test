@@ -3,7 +3,9 @@ import React, { useState } from 'react';
 import { useAssets, AppAssets, isImageUrl } from '../contexts/AssetContext';
 import { Article } from '../types';
 
-const ASSET_LABELS: Record<Exclude<keyof AppAssets, 'articles' | 'customApiKey' | 'apiProvider' | 'apiBaseUrl' | 'apiModel'>, string> = {
+// Exclude activePersonality and other non-string/complex types from labels
+// This fix addresses the TypeScript error where 'activePersonality' was expected in ASSET_LABELS
+const ASSET_LABELS: Record<Exclude<keyof AppAssets, 'articles' | 'customApiKey' | 'apiProvider' | 'apiBaseUrl' | 'apiModel' | 'activePersonality'>, string> = {
   logo: '首页 Logo',
   appName: '应用名称 (英文)',
   appSubtitle: '应用副标题 (中文)',
@@ -34,7 +36,7 @@ export const AdminView: React.FC = () => {
     }
   };
 
-  const renderInputRow = (key: Exclude<keyof AppAssets, 'articles' | 'customApiKey' | 'apiProvider' | 'apiBaseUrl' | 'apiModel'>) => {
+  const renderInputRow = (key: Exclude<keyof AppAssets, 'articles' | 'customApiKey' | 'apiProvider' | 'apiBaseUrl' | 'apiModel' | 'activePersonality'>) => {
     const value = assets[key];
     const isImageKey = key !== 'appName' && key !== 'appSubtitle';
     

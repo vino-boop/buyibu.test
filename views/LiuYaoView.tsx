@@ -50,7 +50,7 @@ const HEXAGRAM_DATA: Record<string, { name: string; symbol: string; judgment: st
   "010100": { name: "雷水解", symbol: "䷧", judgment: "利西南. 无所往，其来复吉。有攸往，夙吉。" },
   "110001": { name: "山泽损", symbol: "䷨", judgment: "有孚，元吉，无咎，可贞，利有攸往。" },
   "100011": { name: "风雷益", symbol: "䷩", judgment: "利有攸往，利涉大川。" },
-  "111110": { name: "泽天夬", symbol: "䷪", judgment: "扬于王庭，孚号，有厉. 告自邑，不利即戎. 利有攸往。" },
+  "111110": { name: "泽天夬", symbol: "䷪", judgment: "扬于王庭，孚号，有厉.告自邑，不利即戎. 利有攸往。" },
   "011111": { name: "天风姤", symbol: "䷫", judgment: "女壮，勿用取女。" },
   "000110": { name: "泽地萃", symbol: "䷬", judgment: "亨. 王假有庙，利见大人，亨，利贞。" },
   "011000": { name: "地风升", symbol: "䷭", judgment: "元亨，用见大人，勿恤，南征吉。" },
@@ -218,11 +218,14 @@ export const LiuYaoView: React.FC<{ isDayMode?: boolean }> = ({ isDayMode = fals
   } = useLiuYao();
   
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const scrollTimeoutRef = useRef<number | null>(null);
   const { assets } = useAssets();
   const [currentTimeStr, setCurrentTimeStr] = useState('');
   const [lunarInfo, setLunarInfo] = useState({ year: '', month: '', day: '', time: '' });
   const [isNumberRitualStarted, setIsNumberRitualStarted] = useState(false);
   const [tempSplitIndex, setTempSplitIndex] = useState(24);
+  const [isScrolling, setIsScrolling] = useState(false);
 
   useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages.length]);
   useEffect(() => {
@@ -238,6 +241,14 @@ export const LiuYaoView: React.FC<{ isDayMode?: boolean }> = ({ isDayMode = fals
           return () => clearInterval(timer);
       }
   }, [mode]);
+
+  const handleScroll = () => {
+    if (!isScrolling) setIsScrolling(true);
+    if (scrollTimeoutRef.current) window.clearTimeout(scrollTimeoutRef.current);
+    scrollTimeoutRef.current = window.setTimeout(() => {
+      setIsScrolling(false);
+    }, 800);
+  };
 
   const currentHexagramInfo = useMemo(() => {
      const lines = mode === 'MANUAL' ? manualLines : shakeLines;
@@ -276,6 +287,24 @@ export const LiuYaoView: React.FC<{ isDayMode?: boolean }> = ({ isDayMode = fals
   const lastAssistantMessage = [...messages].reverse().find(m => m.role === 'assistant');
   const suggestions = lastAssistantMessage?.suggestions || [];
 
+  const isRitualActive = (mode === 'SHAKE' && (shakeStep > 0 || isFlipping)) || (mode === 'TIME' && shakeLines.length > 0) || (mode === 'NUMBER' && isNumberRitualStarted) || (mode === 'MANUAL' && manualLines.some(l => l.value !== 8));
+
+  const validateAndStartAnalyze = () => {
+    if (!question.trim()) {
+        setShakeError(true);
+        // If ritual is active, we need to temporarily show the input to fix it
+        if (isRitualActive) {
+            alert('请先填写阁下欲问之事。');
+            baseReset(); // Or handle it more gracefully
+        } else {
+            inputRef.current?.focus();
+            inputRef.current?.scrollIntoView({ behavior: 'smooth' });
+        }
+        return;
+    }
+    handleAnalyze();
+  };
+
   if (showChat) {
     const currentLines = mode === 'MANUAL' ? manualLines : shakeLines;
     const activeHexagram = result || (currentHexagramInfo ? { hexagramName: currentHexagramInfo.name, hexagramSymbol: currentHexagramInfo.symbol, analysis: '', judgment: currentHexagramInfo.judgment } : null);
@@ -300,7 +329,10 @@ export const LiuYaoView: React.FC<{ isDayMode?: boolean }> = ({ isDayMode = fals
               ) : <div className="w-full flex items-center justify-center text-gray-500 animate-pulse py-2">卦象生成中...</div>}
            </div>
         </div>
-        <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-hide pb-32">
+        <div 
+          onScroll={handleScroll}
+          className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-hide pb-32"
+        >
            {messages.map((msg) => (
               <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} animate-fade-in-up`}>
                  {msg.role === 'assistant' && <div className={`w-8 h-8 rounded-full border flex items-center justify-center mr-2 shrink-0 overflow-hidden ${isDayMode ? 'bg-white border-gray-100 shadow-sm' : 'bg-mystic-dark border-mystic-gold/30'}`}><img src={assets.sage_avatar} alt="Sage" className="w-full h-full object-cover" /></div>}
@@ -310,7 +342,7 @@ export const LiuYaoView: React.FC<{ isDayMode?: boolean }> = ({ isDayMode = fals
            {isAnalyzing && <div className="flex justify-start animate-fade-in-up"><div className={`w-8 h-8 rounded-full border flex items-center justify-center mr-2 ${isDayMode ? 'bg-white border-gray-100 shadow-sm' : 'bg-mystic-dark border-mystic-gold/30'}`}><span className="animate-spin text-mystic-gold">☯</span></div><div className={`px-4 py-3 rounded-2xl rounded-bl-sm border text-sm bg-mystic-paper/80 border-white/10 text-gray-400`}>推演中</div></div>}
            <div ref={chatEndRef} />
         </div>
-        <div className={`absolute bottom-0 left-0 w-full px-4 pt-4 pb-4 z-20 border-t shadow-[0_-10px_20px_rgba(0,0,0,0.03)] ${isDayMode ? 'bg-white border-gray-100' : 'bg-mystic-dark border-white/5'}`}>
+        <div className={`absolute bottom-0 left-0 w-full px-4 pt-4 pb-4 z-20 border-t shadow-[0_-10px_20px_rgba(0,0,0,0.03)] transition-all duration-500 ease-in-out ${isScrolling ? 'translate-y-full opacity-0' : 'translate-y-0 opacity-100'} ${isDayMode ? 'bg-white border-gray-100' : 'bg-mystic-dark border-white/5'}`}>
             {!isAnalyzing && suggestions.length > 0 && (
               <div className="flex flex-wrap gap-2 mb-3 animate-fade-in-up">
                   {suggestions.map((s, idx) => (
@@ -333,10 +365,26 @@ export const LiuYaoView: React.FC<{ isDayMode?: boolean }> = ({ isDayMode = fals
     );
   }
 
-  const isRitualActive = (mode === 'SHAKE' && (shakeStep > 0 || isFlipping)) || (mode === 'TIME' && shakeLines.length > 0) || (mode === 'NUMBER' && isNumberRitualStarted);
   return (
     <div className={`w-full h-full flex flex-col items-center pb-20 px-2 overflow-y-auto relative transition-colors duration-300 ${isDayMode ? 'bg-[#fcfcfc]' : 'bg-mystic-dark'}`}>
+      
+      {/* Ritual Header (Back and Question) */}
+      <div className={`w-full px-4 pt-4 flex items-center justify-between sticky top-0 z-40 transition-all ${isRitualActive ? 'animate-fade-in' : 'opacity-0 pointer-events-none'}`}>
+        <button 
+            onClick={reset} 
+            className={`w-10 h-10 flex items-center justify-center rounded-full border shadow-lg transition-all active:scale-90 ${isDayMode ? 'bg-white border-gray-200 text-gray-600' : 'bg-mystic-paper border-white/10 text-gray-400'}`}
+        >
+            ❮
+        </button>
+        <div className="flex-1 px-4 text-center">
+            <span className="text-[10px] text-gray-500 uppercase tracking-widest font-serif block mb-0.5">当前卜问</span>
+            <div className="text-xs text-mystic-gold truncate font-serif italic opacity-80">“{question || '未命题'}”</div>
+        </div>
+        <div className="w-10"></div>
+      </div>
+
       {!isRitualActive && <button onClick={() => setShowHistoryModal(true)} className={`absolute top-4 right-4 z-10 w-10 h-10 flex items-center justify-center rounded-full border transition-colors shadow-lg p-2.5 ${isDayMode ? 'bg-white border-gray-200 text-mystic-gold' : 'bg-mystic-paper border-white/10 text-mystic-gold'}`}><IconHistory className="w-full h-full" /></button>}
+      
       {showHistoryModal && (
           <div className={`absolute inset-0 z-50 backdrop-blur-sm animate-fade-in flex flex-col ${isDayMode ? 'bg-white/95' : 'bg-black/95'}`}>
               <div className={`px-4 py-4 border-b flex justify-between items-center ${isDayMode ? 'border-gray-100' : 'border-white/10'}`}><h3 className="text-lg text-mystic-gold font-serif">历史卦象</h3><button onClick={() => setShowHistoryModal(false)} className="text-gray-400 p-2">✕</button></div>
@@ -347,17 +395,17 @@ export const LiuYaoView: React.FC<{ isDayMode?: boolean }> = ({ isDayMode = fals
         <div className="contents animate-fade-in-down">
           <div className="mt-6 mb-6 flex flex-col items-center shrink-0"><div className="w-20 h-20 rounded-2xl bg-cover bg-center shadow-lg border border-mystic-gold/30 mb-4" style={{ backgroundImage: `url(${assets.sage_avatar})` }}></div><h2 className={`text-xl font-serif tracking-widest ${isDayMode ? 'text-gray-800' : 'text-gray-200'}`}>敢问欲询何事？</h2></div>
           <div className="w-full max-w-sm mb-6 flex flex-col gap-2 px-4 shrink-0">{['阁下辞职可顺？', '近期财运如何？', '这段感情有结果吗？'].map((q) => <button key={q} onClick={() => {setQuestion(q); setShakeError(false);}} className={`w-full border rounded-lg py-3 px-4 text-sm transition-all text-left bg-mystic-paper/50 border border-white/5 text-gray-400 hover:text-white`}>{q}</button>)}</div>
-          <div className="w-full max-w-sm px-4 mb-8 relative shrink-0"><input type="text" value={question} onChange={(e) => {setQuestion(e.target.value); setShakeError(false);}} placeholder="为您解惑 (输入具体问题)" className={`w-full border rounded-xl py-3 pl-4 pr-12 outline-none shadow-sm transition-all duration-300 ${shakeError ? 'border-red-500/50 shadow-[0_0_15px_rgba(239,68,68,0.2)] animate-pulse' : 'bg-mystic-paper border-mystic-gold/20 text-white focus:border-mystic-gold'}`} /><div className="absolute right-6 top-1/2 -translate-y-1/2 w-6 h-6 flex items-center justify-center opacity-40"><IconEdit className="w-full h-full" /></div></div>
+          <div className="w-full max-w-sm px-4 mb-8 relative shrink-0"><input ref={inputRef} type="text" value={question} onChange={(e) => {setQuestion(e.target.value); setShakeError(false);}} placeholder="为您解惑 (输入具体问题)" className={`w-full border rounded-xl py-3 pl-4 pr-12 outline-none shadow-sm transition-all duration-300 ${shakeError ? 'border-red-500/50 shadow-[0_0_15px_rgba(239,68,68,0.2)] animate-pulse' : 'bg-mystic-paper border-mystic-gold/20 text-white focus:border-mystic-gold'}`} /><div className="absolute right-6 top-1/2 -translate-y-1/2 w-6 h-6 flex items-center justify-center opacity-40"><IconEdit className="w-full h-full" /></div></div>
           <div className="w-full max-w-sm px-4 mb-6 shrink-0"><div className={`w-full rounded-full p-1 flex border transition-colors bg-mystic-paper border-white/5`}>{(['MANUAL', 'SHAKE', 'TIME', 'NUMBER'] as InputMode[]).map((m) => <button key={m} onClick={() => {setMode(m); setShakeLines([]); setShakeStep(0); setNumberStep(0); setNumberResults([]); setIsNumberRitualStarted(false);}} className={`flex-1 py-2 rounded-full text-[10px] font-medium transition-all ${mode === m ? 'bg-mystic-gold text-black shadow-lg font-bold' : 'text-gray-500 hover:text-gray-300'}`}>{m === 'MANUAL' ? '手动' : m === 'SHAKE' ? '摇卦' : m === 'TIME' ? '时间' : '数字'}</button>)}</div></div>
         </div>
       )}
       <div className="w-full max-w-sm px-4 flex-1 flex flex-col pb-8">
          {mode === 'SHAKE' && (
-            <div className="flex-1 flex flex-col items-center animate-fade-in-up mt-24">
+            <div className="flex-1 flex flex-col items-center animate-fade-in-up mt-20">
                 {shakeLines.length > 0 && <div className="mb-8 w-40 animate-fade-in"><HexagramVisual lines={shakeLines} activeStep={shakeStep} variant="default" /></div>}
                 <div className={`flex gap-3 mb-10 items-center h-20`}>{coins.map((side, idx) => <div key={idx} className={`w-16 h-16 rounded-full border-4 flex items-center justify-center text-xs font-bold shadow-xl transition-all ${isFlipping ? 'animate-[spin_0.6s_ease-in-out_infinite]' : ''} ${side === CoinSide.HEAD ? 'bg-[#c5b078] border-[#a08d55] text-black' : 'bg-slate-300 border-slate-400 text-slate-700'}`}><div className="w-6 h-6 border-2 border-current opacity-40 transform rotate-45"></div></div>)}</div>
-                <button onClick={handleToss} disabled={isFlipping || shakeStep >= 6} className={`w-full font-bold py-4 rounded-xl shadow-lg active:scale-95 transition-all bg-gradient-to-r from-[#c5b078] to-[#a08d55] text-black`}>{shakeStep >= 6 ? '卦象已成' : isFlipping ? '摇卦中...' : (shakeStep > 0 ? '继续摇卦' : '开始摇卦')}</button>
-                {shakeStep >= 6 && <button onClick={handleAnalyze} className="mt-4 w-full border border-mystic-gold text-mystic-gold py-3 rounded-xl hover:bg-mystic-gold/10">开始解卦</button>}
+                <button onClick={handleToss} disabled={isFlipping || shakeStep >= 6} className={`w-full font-bold py-4 rounded-xl shadow-lg active:scale-95 transition-all ${shakeStep >= 6 ? 'bg-white/10 text-gray-500 cursor-default' : 'bg-gradient-to-r from-[#c5b078] to-[#a08d55] text-black'}`}>{shakeStep >= 6 ? '卦象已成' : isFlipping ? '摇卦中...' : (shakeStep > 0 ? '继续摇卦' : '开始摇卦')}</button>
+                {shakeStep >= 6 && <button onClick={validateAndStartAnalyze} className="mt-4 w-full border-2 border-mystic-gold text-mystic-gold py-4 rounded-xl font-bold hover:bg-mystic-gold/10 active:scale-95 transition-all animate-fade-in">开始解卦</button>}
             </div>
          )}
          {mode === 'NUMBER' && (
@@ -374,7 +422,7 @@ export const LiuYaoView: React.FC<{ isDayMode?: boolean }> = ({ isDayMode = fals
                     )}
                     {numberStep >= 3 && (
                         <div className="mt-auto w-full pt-4">
-                            <button onClick={handleAnalyze} className="w-full font-bold py-4 rounded-xl shadow-xl transition-all active:scale-95 bg-gradient-to-r from-mystic-gold to-amber-600 text-black">开始解卦</button>
+                            <button onClick={validateAndStartAnalyze} className="w-full font-bold py-4 rounded-xl shadow-xl transition-all active:scale-95 bg-gradient-to-r from-mystic-gold to-amber-600 text-black">开始解卦</button>
                             <button onClick={() => reset()} className="w-full text-[10px] py-3 text-gray-500 tracking-widest hover:text-gray-300">重新起卦</button>
                         </div>
                     )}
@@ -390,15 +438,15 @@ export const LiuYaoView: React.FC<{ isDayMode?: boolean }> = ({ isDayMode = fals
          {mode === 'MANUAL' && (
             <div className="flex-1 flex flex-col animate-fade-in-up space-y-3">
                <div className="rounded-xl p-4 border space-y-3 bg-mystic-paper/50 border-white/5">{[...manualLines].reverse().map((line, reverseIndex) => { const realIndex = 5 - reverseIndex; return <div key={line.position} className="flex items-center justify-between"><span className="text-gray-400 text-sm font-serif w-12">{YAO_LABELS[realIndex]}</span><div className="flex-1 flex rounded-lg p-1 ml-4 overflow-hidden bg-black/40">{[{ label: '--', value: 8 }, { label: '—', value: 7 }, { label: 'X', value: 6 }, { label: 'O', value: 9 }].map((opt) => <button key={opt.value} onClick={() => updateManualLine(realIndex, opt.value)} className={`flex-1 py-1.5 text-[10px] rounded transition-all ${line.value === opt.value ? 'bg-mystic-gold text-black font-bold' : 'text-gray-500'}`}>{opt.label}</button>)}</div></div>; })}</div>
-               <button onClick={handleAnalyze} className="w-full font-bold py-4 rounded-xl shadow-lg mt-4 mb-10 transition-all bg-gradient-to-r from-mystic-gold to-amber-600 text-black">开始解卦</button>
+               <button onClick={validateAndStartAnalyze} className="w-full font-bold py-4 rounded-xl shadow-lg mt-4 mb-10 transition-all bg-gradient-to-r from-mystic-gold to-amber-600 text-black">开始解卦</button>
             </div>
          )}
          {mode === 'TIME' && (
             <div className="flex-1 flex flex-col items-center animate-fade-in-up space-y-6">
                <div className="w-full p-6 rounded-xl border text-center space-y-4 bg-mystic-paper border-white/10"><div><p className="text-gray-400 text-xs mb-1">公历时间</p><div className="text-xl font-mono tracking-wide text-gray-200">{currentTimeStr}</div></div><div className="border-t pt-4 border-white/5"><p className="text-gray-400 text-xs mb-2">农历时辰</p><div className="flex justify-center gap-4 text-mystic-gold font-serif text-lg"><span>{lunarInfo.year}</span><span>{lunarInfo.month}</span><span>{lunarInfo.day}</span><span>{lunarInfo.time}</span></div></div></div>
                {shakeLines.length > 0 && <div className="mb-4 w-40 animate-fade-in"><HexagramVisual lines={shakeLines} activeStep={6} variant="default" /></div>}
-               <button onClick={handleTimeStart} className={`w-full font-bold py-4 rounded-xl shadow-lg transition-all ${shakeLines.length > 0 ? 'hidden' : 'bg-gradient-to-r from-mystic-gold to-amber-600 text-black'}`}>立即起卦</button>
-               {shakeLines.length > 0 && <div className="w-full space-y-3"><button onClick={handleAnalyze} className="w-full border border-mystic-gold text-mystic-gold py-3 rounded-xl hover:bg-mystic-gold/10">开始解卦</button><button onClick={() => { setShakeLines([]); setShakeStep(0); }} className="w-full text-xs text-gray-500 py-2">重新起卦</button></div>}
+               <button onClick={() => { if(!question.trim()) { setShakeError(true); inputRef.current?.focus(); return; } handleTimeStart(); }} className={`w-full font-bold py-4 rounded-xl shadow-lg transition-all ${shakeLines.length > 0 ? 'hidden' : 'bg-gradient-to-r from-mystic-gold to-amber-600 text-black'}`}>立即起卦</button>
+               {shakeLines.length > 0 && <div className="w-full space-y-3"><button onClick={validateAndStartAnalyze} className="w-full border-2 border-mystic-gold text-mystic-gold py-4 rounded-xl font-bold hover:bg-mystic-gold/10 active:scale-95 transition-all">开始解卦</button><button onClick={() => { setShakeLines([]); setShakeStep(0); }} className="w-full text-xs text-gray-500 py-2">重新起卦</button></div>}
             </div>
          )}
       </div>

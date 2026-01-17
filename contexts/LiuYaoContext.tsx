@@ -119,6 +119,8 @@ export const LiuYaoProvider: React.FC<{ userProfile: UserProfile; children: Reac
   const handleAnalyze = async () => {
     if (!question.trim()) { 
       setShakeError(true); 
+      // Focus element for better UX if it's offscreen
+      document.querySelector('input[placeholder*="为您解惑"]')?.scrollIntoView({ behavior: 'smooth' });
       return; 
     }
     setIsAnalyzing(true);
@@ -142,7 +144,12 @@ export const LiuYaoProvider: React.FC<{ userProfile: UserProfile; children: Reac
       const newHistory = [record, ...history];
       setHistory(newHistory);
       localStorage.setItem('liuyao_history', JSON.stringify(newHistory));
-    } catch (e) {
+    } catch (e: any) {
+      setMessages([{ 
+        id: Date.now().toString(), 
+        role: 'assistant', 
+        content: `### 推演受阻\n当前机缘未至，推演受阻。原因：${e.message || '网络连接或模型解析异常'}。请稍后再试。` 
+      }]);
       console.error("LiuYao Analysis Error:", e);
     } finally {
       setIsAnalyzing(false);
@@ -180,8 +187,8 @@ export const LiuYaoProvider: React.FC<{ userProfile: UserProfile; children: Reac
         }
         return prev;
       });
-    } catch (e) {
-      setMessages(prev => [...prev.slice(0, -1), { id: assistantMsgId, role: 'assistant', content: "机缘未至，请稍后再试。" }]);
+    } catch (e: any) {
+      setMessages(prev => [...prev.slice(0, -1), { id: assistantMsgId, role: 'assistant', content: `机缘未至，推演受阻：${e.message}` }]);
     } finally {
       setIsAnalyzing(false);
     }

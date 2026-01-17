@@ -1,6 +1,6 @@
 
 import { GoogleGenAI } from "@google/genai";
-import { BaZiResponse, HexagramLine, LiuYaoResponse, ChatMessage, BaZiChart, BaZiPillar, UserProfile, HePanResponse } from "../types";
+import { BaZiResponse, HexagramLine, LiuYaoResponse, ChatMessage, BaZiChart, BaZiPillar, UserProfile, HePanResponse, AppPersonality } from "../types";
 import { calculateLocalBaZi } from "./geminiService";
 import { Solar, Lunar } from 'lunar-javascript';
 
@@ -59,11 +59,12 @@ function getActiveConfig() {
         provider: (config.apiProvider || 'GEMINI').toUpperCase() as 'GEMINI' | 'DEEPSEEK',
         model: config.apiModel,
         deepseekKey: config.customApiKey || '',
-        deepseekBase: baseUrl
+        deepseekBase: baseUrl,
+        personality: config.activePersonality || AppPersonality.MYSTIC
       };
     }
   } catch (e) {}
-  return { provider: 'GEMINI' as const, model: undefined, deepseekKey: '', deepseekBase: 'https://api.deepseek.com' };
+  return { provider: 'GEMINI' as const, model: undefined, deepseekKey: '', deepseekBase: 'https://api.deepseek.com', personality: AppPersonality.MYSTIC };
 }
 
 function getEffectiveModelName(): string {
@@ -157,17 +158,34 @@ async function callAI(prompt: string, systemInstruction?: string, isJson = false
 }
 
 const getBaseInstruction = (baZiData?: string) => {
+  const config = getActiveConfig();
   const now = new Date();
   const solar = Solar.fromDate(now);
   const lunar = Lunar.fromDate(now);
-  const timeInfo = `【当前推演时间】公历：${solar.toFullString()}，农历：${lunar.toString()} (${lunar.getYearInGanZhi()}年 ${lunar.getMonthInGanZhi()}月 ${lunar.getDayInGanZhi()}日 ${lunar.getTimeZhi()}时)`;
+  const timeInfo = `【推演时间】公历：${solar.toFullString()}，农历：${lunar.toString()} (${lunar.getYearInGanZhi()}年 ${lunar.getMonthInGanZhi()}月 ${lunar.getDayInGanZhi()}日 ${lunar.getTimeZhi()}时)`;
 
-  return `你是一位渊博古雅、洞察天机的周易命理大师。
+  let personalityInstruction = "";
+  
+  if (config.personality === AppPersonality.MYSTIC) {
+    personalityInstruction = `你是一位渊博古雅、洞察天机的周易命理大师“天机道长”。
 1. 自称为“吾”，称呼对方为“阁下”。严禁 Emoji。
-2. 【时空背景】：${timeInfo}。
-3. 【排版铁律】：每一段独立的推演分析必须以 ### 开头的古风标题。
-4. 【文风要求】：辞藻清雅，论断果敢。在保持大师风范的同时，对现代职业和情感诉求有敏锐的洞察，用语稍微偏向现代语境。
-5. 【推演基石】：深度结合阁下的八字原局、格局、神煞、以及完整的大运流年。${baZiData ? `阁下命盘数据：${baZiData}` : ""}
+2. 文风要求：辞藻清雅，论断果敢。大师风范，稍微偏向神秘主义，分析透彻格局气象。`;
+  } else if (config.personality === AppPersonality.PRAGMATIC) {
+    personalityInstruction = `你是一位遵循“玄学为引，实操为本”理念的现代命理顾问。
+1. 自称为“吾”或“我”，称呼对方为“阁下”。
+2. 文风要求：融合传统命理术语与现代商业/生活术语。多使用如“认知差”、“流量红利”、“审美溢价”、“供应链思维”、“战略定位”等词汇。
+3. 必须输出：在每一项推演分析后，必须给出一个极其具体、可落地的【实战建议】。`;
+  } else if (config.personality === AppPersonality.CLASSICAL) {
+    personalityInstruction = `你是一位精通古法命理、饱读诗书的古籍学者。
+1. 语言风格：纯正文言文或极简古文风，古色古香。
+2. 引用要求：必须频繁且准确地引用《滴天髓》、《渊海子平》、《子平真诠》、《穷通宝鉴》、《三命通会》等命理经典名句。
+3. 称谓：自称为“老朽”或“鄙人”，称呼对方为“居士”或“仁兄/贤妹”。`;
+  }
+
+  return `${personalityInstruction}
+3. 【时空背景】：${timeInfo}。
+4. 【排版铁律】：每一段独立的推演分析必须以 ### 开头的标题。
+5. 【推演基石】：深度结合阁下的八字原局、格局、神煞、以及完整的大运流年。${baZiData ? `阁下命理数据：${baZiData}` : ""}
 6. 【限制】：加粗语法（**内容**）全篇严禁超过 3 处。不要提及你是 AI。
 7. 【追随引导】：在回答的最后，必须给出3个引导用户继续追问的短句（每句不超过12字）。格式固定为：[SUGGESTIONS: 建议1, 建议2, 建议3]`;
 };
@@ -195,6 +213,7 @@ export async function analyzeBaZi(name: string, date: string, time: string, gend
 ### 【六亲因缘】
 ### 【岁运关键】
 ### 【天机总结】
+${getActiveConfig().personality === AppPersonality.PRAGMATIC ? "并在最后附加 ### 【实战建议】" : ""}
 要求：文辞干练，每一部分都必须带标题。**加粗严禁超过 3 处**。`;
 
   try {
@@ -220,8 +239,9 @@ ${data2}
 ### 【合盘总论】
 ### 【五行契合】
 ### 【性情交互】
-### 【共振节点】 (两人岁运中的共同关键时间)
+### 【共振节点】
 ### 【趋吉建议】
+${getActiveConfig().personality === AppPersonality.PRAGMATIC ? "并在最后附加 ### 【实战建议】" : ""}
 要求：大师口吻，文辞古雅清雅，**加粗严禁超过 3 处**。`;
 
   const analysis = await callAI(prompt, getBaseInstruction(), false, onChunk);
@@ -231,14 +251,17 @@ ${data2}
 export async function chatWithContext(messages: ChatMessage[], context: string, baZiData?: string, onChunk?: (c: string) => void): Promise<string> {
   const lastUserMessage = messages[messages.length - 1];
   const isProfessional = lastUserMessage?.isProfessional;
+  const config = getActiveConfig();
   
   const modeInstruction = isProfessional 
     ? "【专业详盘模式】：分析必须带有 ### 子标题。语境偏现代，深度剖析岁运交互及具体节点。" 
-    : "【直白详述模式】：完全去掉术语。必须保留 ### 子标题。将术语逻辑转化为通俗的职业与情感建议。";
+    : "【直白详述模式】：完全去掉术语。必须保留 ### 子标题。将术语逻辑转化为通俗的建议。";
 
-  const systemInstruction = `${getBaseInstruction(baZiData)}\n${modeInstruction}\n对话背景：${context}`;
+  const pragmaticSuffix = config.personality === AppPersonality.PRAGMATIC ? "必须以 ### 【实战建议】 结尾，给出具体的行动指南。" : "";
 
-  const historyPrompt = messages.map(m => `${m.role === 'assistant' ? '吾' : '阁下'}: ${m.content}`).join('\n');
+  const systemInstruction = `${getBaseInstruction(baZiData)}\n${modeInstruction}\n${pragmaticSuffix}\n对话背景：${context}`;
+
+  const historyPrompt = messages.map(m => `${m.role === 'assistant' ? '大师' : '阁下'}: ${m.content}`).join('\n');
   const prompt = `${historyPrompt}\n阁下: ${lastUserMessage.content}`;
   
   return await callAI(prompt, systemInstruction, false, onChunk);
@@ -254,10 +277,10 @@ export async function interpretLiuYao(lines: HexagramLine[], question: string, u
     "hexagramName": "卦名",
     "hexagramSymbol": "符号",
     "judgment": "极简断语（一句话直击核心，限12字内）",
-    "analysis": "请严格按照以下结构输出内容，每一项前均需 ### 子标题。要求使用浅显易懂的白话解释，将深奥的卦象转化为生活化的建议。\\n\\n### 【卦意通解】\\n### 【变爻白话】\\n### 【断事指引】\\n### 【锦囊妙计】"
+    "analysis": "请按照以下结构输出内容，每一项前均需 ### 子标题。\\n\\n### 【卦意通解】\\n### 【变爻白话】\\n### 【断事指引】\\n### 【锦囊妙计】${getActiveConfig().personality === AppPersonality.PRAGMATIC ? "\\n### 【实战建议】" : ""}"
   }
-  要求：语境必须现代且易懂。避免堆砌难懂的术语，若涉及术语需立即用白话解释。全篇加粗严禁超过 3 处。`;
+  要求：文风符合你的人格设定。全篇加粗严禁超过 3 处。`;
 
-  const response = await callAI(prompt, getBaseInstruction(baZiData) + "\n必须返回纯 JSON。确保解析易于普通人理解。", true);
+  const response = await callAI(prompt, getBaseInstruction(baZiData) + "\n必须返回纯 JSON。确保解析易于理解。", true);
   return JSON.parse(response.replace(/```json/g, '').replace(/```/g, '').trim());
 }

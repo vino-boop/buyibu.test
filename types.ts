@@ -8,6 +8,12 @@ export enum AppMode {
   HEPAN = 'HEPAN'
 }
 
+export enum AppPersonality {
+  MYSTIC = 'MYSTIC',     // 灵韵仙师 - 现有风格
+  PRAGMATIC = 'PRAGMATIC', // 实战顾问 - 现代商业实操
+  CLASSICAL = 'CLASSICAL'  // 古籍学者 - 文言文引用
+}
+
 export enum Gender {
   MALE = 'Male',
   FEMALE = 'Female'
@@ -28,6 +34,7 @@ export interface UserProfile {
   calendarType?: CalendarType;
   isLeapMonth?: boolean;
   phoneNumber?: string;
+  personality?: AppPersonality;
 }
 
 export interface Article {

@@ -1,5 +1,6 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Article } from '../types';
+import { Article, AppPersonality } from '../types';
 
 export interface AppAssets {
   logo: string | null; // 可以是 Base64 字符串、URL 或 null（使用默认 SVG）
@@ -19,6 +20,9 @@ export interface AppAssets {
   nav_icon_home: string;
   nav_icon_bazi: string;
   
+  // Personality Configuration
+  activePersonality: AppPersonality;
+
   // API Configuration
   customApiKey?: string; 
   apiProvider?: 'GEMINI' | 'DEEPSEEK';
@@ -49,7 +53,7 @@ const DEFAULT_ARTICLES: Article[] = [
     category: '仕途',
     readTime: '3分钟',
     gradient: 'from-amber-900 via-yellow-900 to-slate-900',
-    content: `分析八字中的事业上升期，需结合命盘格局、五行生克、大运流年等综合判断。以下是核心步骤及要素：\n\n一、核心观察点\n1. 官杀星（事业官）\n正官/七杀为事业星：旺而有制（印星化杀、食伤制杀）主事业突破。`,
+    content: `分析八字中的事业上升期，需结合命盘格局、五行生克、大运流年等综合判断。以下是核心步骤及要素：\n\n二、核心观察点\n1. 官杀星（事业官）\n正官/七杀为事业星：旺而有制（印星化杀、食伤制杀）主事业突破。`,
     layout: 'wide',
     images: ['https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=1000&auto=format&fit=crop']
   }
@@ -71,11 +75,12 @@ const DEFAULT_ASSETS: AppAssets = {
   nav_icon_liuyao: '☳',
   nav_icon_home: '☯️',
   nav_icon_bazi: '📅',
+
+  activePersonality: AppPersonality.MYSTIC,
   
   customApiKey: '', 
   apiProvider: 'GEMINI',
   apiBaseUrl: '',
-  // Fix: Setting default Gemini model to pro version for higher reasoning quality
   apiModel: 'gemini-3-pro-preview'
 };
 
@@ -105,7 +110,6 @@ export const AssetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const updateAsset = (key: keyof AppAssets, value: any) => {
     setAssets(prev => {
       const next = { ...prev, [key]: value };
-      // 立即同步到本地存储，确保非组件逻辑（如 aiService）能实时读取
       localStorage.setItem('dao_assets', JSON.stringify(next));
       return next;
     });
