@@ -443,7 +443,7 @@ export const BaZiView: React.FC<BaZiViewProps> = ({ defaultQuestion, isDayMode =
             <div className="max-w-4xl mx-auto">
                 {!chatLoading && (
                     <div className="flex flex-wrap gap-2 mb-3 sm:mb-4 animate-fade-in-up">
-                        {suggestions.map((s, idx) => (
+                        {suggestions.length > 0 && suggestions.map((s, idx) => (
                             <button 
                               key={idx}
                               onClick={() => handleSendMessage(s, s.includes("专业"))} 
@@ -452,23 +452,6 @@ export const BaZiView: React.FC<BaZiViewProps> = ({ defaultQuestion, isDayMode =
                               {s}
                             </button>
                         ))}
-                        {suggestions.length === 0 && !chatLoading && messages.length === 1 && (
-                            <button 
-                              onClick={() => {
-                                if (hePanData) {
-                                  handleSendMessage("开始专业合盘分析，请深度推演两人的契合度、五行互补、缘分深浅及趋吉建议。", true, true);
-                                } else {
-                                  handleSendMessage("请为我进行专业详盘分析，包含格局判定、六亲缘分、岁运关键节点推演及诗意结尾。", true, true);
-                                }
-                              }} 
-                              className={`w-full py-3 sm:py-4 rounded-2xl font-bold transition-all shadow-xl active:scale-95 flex items-center justify-center gap-2 sm:gap-3 ${isDayMode ? 'bg-mystic-gold text-white border border-mystic-gold' : 'bg-gradient-to-r from-[#c5b078] to-[#a08d55] text-black'}`}
-                            >
-                              <IconMagic className={`w-4 h-4 sm:w-5 sm:h-5 ${isDayMode ? 'brightness-200' : ''}`} />
-                              <span className="text-sm sm:text-base tracking-[0.2em]">
-                                {hePanData ? '开启专业合盘深度分析' : '开启专业详盘深度析命'}
-                              </span>
-                            </button>
-                        )}
                     </div>
                 )}
                 <div className="relative">

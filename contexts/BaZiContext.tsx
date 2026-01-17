@@ -170,8 +170,8 @@ export const BaZiProvider: React.FC<{ userProfile: UserProfile; children: ReactN
         setMessages([{ 
           id: Date.now().toString(), 
           role: 'assistant', 
-          content: `命盘已按最新生辰信息重绘。阁下若需窥探乾坤造化，请点选下方 **“专业详盘”**。`,
-          suggestions: ["请为我进行专业详盘分析"]
+          content: `命盘已依照阁下生辰之数起就。若需深入剖析格局气象、推演岁运吉凶，请点击下方「专业详盘分析」。`,
+          suggestions: ["开始专业详盘分析"]
         }]);
       }
       setViewMode('VIEW');
@@ -219,7 +219,7 @@ export const BaZiProvider: React.FC<{ userProfile: UserProfile; children: ReactN
               setMessages([{ 
                 id: Date.now().toString(), 
                 role: 'assistant', 
-                content: `合盘已定。两位缘主五行磁场已交汇。若需深度推演二人宿世因缘、性格契合度及岁运共振节点，请点选下方 **“专业合盘分析”**。`,
+                content: `合盘已毕，两位缘主之气数已然交感。若需深度推演宿世因缘、磁场契合及岁运共振，请开启「专业合盘分析」。`,
                 suggestions: ["开始专业合盘分析"]
               }]);
           }
