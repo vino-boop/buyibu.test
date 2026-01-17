@@ -4,7 +4,8 @@ export enum AppMode {
   BAZI = 'BAZI',
   LIUYAO = 'LIUYAO',
   ADMIN = 'ADMIN',
-  PROFILE = 'PROFILE'
+  PROFILE = 'PROFILE',
+  HEPAN = 'HEPAN'
 }
 
 export enum Gender {
@@ -18,6 +19,7 @@ export enum CalendarType {
 }
 
 export interface UserProfile {
+  id?: string;
   name: string;
   gender: Gender;
   birthDate: string; // YYYY-MM-DD
@@ -87,6 +89,14 @@ export interface BaZiChart {
 
 export interface BaZiResponse {
   chart: BaZiChart;
+  analysis: string;
+}
+
+export interface HePanResponse {
+  chart1: BaZiChart;
+  chart2: BaZiChart;
+  profile1: UserProfile;
+  profile2: UserProfile;
   analysis: string;
 }
 

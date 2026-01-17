@@ -1,8 +1,7 @@
 
-// Fix: Added React import to resolve 'Cannot find namespace React' when using React.FC
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { BaZiResponse, Gender, ChatMessage, UserProfile, BaZiChart, CalendarType } from '../types';
-import { analyzeBaZi, chatWithContext, formatBaZiToText, extractSuggestions } from '../services/aiService';
+import { BaZiResponse, Gender, ChatMessage, UserProfile, BaZiChart, CalendarType, HePanResponse } from '../types';
+import { analyzeBaZi, chatWithContext, formatBaZiToText, extractSuggestions, analyzeHePan } from '../services/aiService';
 import { calculateLocalBaZi } from '../services/geminiService';
 import { Lunar } from 'lunar-javascript';
 
@@ -19,8 +18,8 @@ interface BaZiContextType {
   setCalendarType: (c: CalendarType) => void;
   isLeapMonth: boolean;
   setIsLeapMonth: (l: boolean) => void;
-  viewMode: 'EDIT' | 'VIEW';
-  setViewMode: (v: 'EDIT' | 'VIEW') => void;
+  viewMode: 'EDIT' | 'VIEW' | 'HEPAN';
+  setViewMode: (v: 'EDIT' | 'VIEW' | 'HEPAN') => void;
   chartDisplayMode: 'COLLAPSED' | 'EXPANDED';
   setChartDisplayMode: (v: 'COLLAPSED' | 'EXPANDED') => void;
   showFullDetails: boolean;
@@ -32,6 +31,7 @@ interface BaZiContextType {
   selectedLiuYueIndex: number;
   setSelectedLiuYueIndex: (i: number) => void;
   chartData: BaZiResponse | null;
+  hePanData: HePanResponse | null;
   messages: ChatMessage[];
   loading: boolean;
   chatLoading: boolean;
@@ -40,6 +40,10 @@ interface BaZiContextType {
   inputMessage: string;
   setInputMessage: (m: string) => void;
   triggerDefaultQuestion: (q: string) => Promise<void>;
+  roster: UserProfile[];
+  saveToRoster: (profile: UserProfile) => void;
+  deleteFromRoster: (id: string) => void;
+  performHePan: (p1: UserProfile, p2: UserProfile, withAnalysis?: boolean) => Promise<void>;
 }
 
 const BaZiContext = createContext<BaZiContextType | undefined>(undefined);
@@ -51,7 +55,7 @@ export const BaZiProvider: React.FC<{ userProfile: UserProfile; children: ReactN
   const [birthTime, setBirthTime] = useState(userProfile.birthTime);
   const [calendarType, setCalendarType] = useState<CalendarType>(userProfile.calendarType || CalendarType.SOLAR);
   const [isLeapMonth, setIsLeapMonth] = useState<boolean>(userProfile.isLeapMonth || false);
-  const [viewMode, setViewMode] = useState<'EDIT' | 'VIEW'>('VIEW');
+  const [viewMode, setViewMode] = useState<'EDIT' | 'VIEW' | 'HEPAN'>('VIEW');
   const [chartDisplayMode, setChartDisplayMode] = useState<'COLLAPSED' | 'EXPANDED'>('EXPANDED');
   const [showFullDetails, setShowFullDetails] = useState(false);
   
@@ -60,33 +64,59 @@ export const BaZiProvider: React.FC<{ userProfile: UserProfile; children: ReactN
   const [selectedLiuYueIndex, setSelectedLiuYueIndex] = useState(0);
 
   const [chartData, setChartData] = useState<BaZiResponse | null>(null);
+  const [hePanData, setHePanData] = useState<HePanResponse | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(false);
   const [chatLoading, setChatLoading] = useState(false);
   const [inputMessage, setInputMessage] = useState('');
 
-  // 辅助函数：根据当前日期寻找最匹配的索引
+  const [roster, setRoster] = useState<UserProfile[]>([]);
+
+  useEffect(() => {
+    const saved = localStorage.getItem('bazi_roster');
+    if (saved) {
+      try { setRoster(JSON.parse(saved)); } catch (e) {}
+    } else {
+        const initial = { ...userProfile, id: Date.now().toString() };
+        setRoster([initial]);
+        localStorage.setItem('bazi_roster', JSON.stringify([initial]));
+    }
+  }, []);
+
+  const saveToRoster = (profile: UserProfile) => {
+    setRoster(prev => {
+      const exists = prev.find(p => p.name === profile.name && p.birthDate === profile.birthDate);
+      if (exists) return prev;
+      const newList = [{ ...profile, id: profile.id || Date.now().toString() }, ...prev];
+      localStorage.setItem('bazi_roster', JSON.stringify(newList));
+      return newList;
+    });
+  };
+
+  const deleteFromRoster = (id: string) => {
+      setRoster(prev => {
+          const newList = prev.filter(p => p.id !== id);
+          localStorage.setItem('bazi_roster', JSON.stringify(newList));
+          return newList;
+      });
+  };
+
   const autoLocateIndices = (chart: BaZiChart) => {
     const now = new Date();
     const currentYear = now.getFullYear();
     const currentLunar = Lunar.fromDate(now);
-    const currentLunarMonth = currentLunar.getMonth(); // 1-12，闰月为负
+    const currentLunarMonth = currentLunar.getMonth(); 
 
     let dyIdx = 0;
     let lnIdx = 0;
     let lyIdx = 0;
 
-    // 1. 寻找大运
     const foundDyIdx = chart.daYun.findIndex(dy => currentYear >= dy.startYear && currentYear <= dy.endYear);
     if (foundDyIdx !== -1) {
       dyIdx = foundDyIdx;
-      
-      // 2. 寻找流年
       const foundLnIdx = chart.daYun[foundDyIdx].liuNian.findIndex(ln => ln.year === currentYear);
       if (foundLnIdx !== -1) {
         lnIdx = foundLnIdx;
-        
-        // 3. 寻找流月
         const currentMonthName = (currentLunarMonth < 0 ? "闰" : "") + Math.abs(currentLunarMonth) + "月";
         const foundLyIdx = chart.daYun[foundDyIdx].liuNian[foundLnIdx].liuYue.findIndex(ly => ly.month === currentMonthName);
         if (foundLyIdx !== -1) {
@@ -96,7 +126,6 @@ export const BaZiProvider: React.FC<{ userProfile: UserProfile; children: ReactN
         }
       }
     }
-
     setSelectedDaYunIndex(dyIdx);
     setSelectedLiuNianIndex(lnIdx);
     setSelectedLiuYueIndex(lyIdx);
@@ -108,14 +137,14 @@ export const BaZiProvider: React.FC<{ userProfile: UserProfile; children: ReactN
 
     try {
       const chart = calculateLocalBaZi(name, birthDate, birthTime, gender, calendarType, isLeapMonth);
-      
-      // 自动定位至当前时间
       autoLocateIndices(chart);
+      
+      const profile: UserProfile = { name, gender, birthDate, birthTime, calendarType, isLeapMonth, birthPlace: '北京' };
+      saveToRoster(profile);
 
       if (withAnalysis) {
         const assistantMsgId = Date.now().toString();
         setMessages([{ id: assistantMsgId, role: 'assistant', content: "" }]);
-        
         const rawAnalysis = await analyzeBaZi(name, birthDate, birthTime, gender, '北京', (chunk) => {
             setMessages(prev => {
                 const last = prev[prev.length - 1];
@@ -126,8 +155,6 @@ export const BaZiProvider: React.FC<{ userProfile: UserProfile; children: ReactN
             });
             setChatLoading(false); 
         });
-
-        // After stream ends, extract suggestions
         setMessages(prev => {
            const last = prev[prev.length - 1];
            if (last && last.id === assistantMsgId) {
@@ -136,10 +163,10 @@ export const BaZiProvider: React.FC<{ userProfile: UserProfile; children: ReactN
            }
            return prev;
         });
-
         setChartData({ ...rawAnalysis, chart });
       } else {
         setChartData({ chart, analysis: "" });
+        setHePanData(null);
         setMessages([{ 
           id: Date.now().toString(), 
           role: 'assistant', 
@@ -147,7 +174,6 @@ export const BaZiProvider: React.FC<{ userProfile: UserProfile; children: ReactN
           suggestions: ["请为我进行专业详盘分析"]
         }]);
       }
-      // 关键修复：无论是否进行 AI 分析，计算完排盘后都切换回视图模式
       setViewMode('VIEW');
     } catch (e: any) {
       setMessages(prev => [...prev, { id: Date.now().toString(), role: 'assistant', content: `### 推演受阻\n${e.message}` }]);
@@ -157,13 +183,69 @@ export const BaZiProvider: React.FC<{ userProfile: UserProfile; children: ReactN
     }
   };
 
+  const performHePan = async (p1: UserProfile, p2: UserProfile, withAnalysis: boolean = false) => {
+      if (withAnalysis) setChatLoading(true);
+      else setLoading(true);
+      
+      try {
+          const chart1 = calculateLocalBaZi(p1.name, p1.birthDate, p1.birthTime, p1.gender, p1.calendarType, p1.isLeapMonth);
+          const chart2 = calculateLocalBaZi(p2.name, p2.birthDate, p2.birthTime, p2.gender, p2.calendarType, p2.isLeapMonth);
+
+          if (withAnalysis) {
+              const assistantMsgId = Date.now().toString();
+              setMessages([{ id: assistantMsgId, role: 'assistant', content: "" }]);
+              const res = await analyzeHePan(p1, p2, (chunk) => {
+                  setMessages(prev => {
+                      const last = prev[prev.length - 1];
+                      if (last && last.id === assistantMsgId) {
+                          return [...prev.slice(0, -1), { ...last, content: last.content + chunk }];
+                      }
+                      return prev;
+                  });
+                  setChatLoading(false);
+              });
+              setMessages(prev => {
+                const last = prev[prev.length - 1];
+                if (last && last.id === assistantMsgId) {
+                    const { content, suggestions } = extractSuggestions(last.content);
+                    return [...prev.slice(0, -1), { ...last, content, suggestions }];
+                }
+                return prev;
+              });
+              setHePanData(res);
+          } else {
+              setChartData(null);
+              setHePanData({ chart1, chart2, profile1: p1, profile2: p2, analysis: "" });
+              setMessages([{ 
+                id: Date.now().toString(), 
+                role: 'assistant', 
+                content: `合盘已定。两位缘主五行磁场已交汇。若需深度推演二人宿世因缘、性格契合度及岁运共振节点，请点选下方 **“专业合盘分析”**。`,
+                suggestions: ["开始专业合盘分析"]
+              }]);
+          }
+          setViewMode('VIEW');
+      } catch (e: any) {
+          setMessages(prev => [...prev, { id: Date.now().toString(), role: 'assistant', content: `### 合盘受阻\n${e.message}` }]);
+      } finally {
+          setLoading(false);
+          setChatLoading(false);
+      }
+  };
+
   const handleSendMessage = async (msg?: string, isPro = false, isDirect = false) => {
     const text = msg || inputMessage;
-    if (!text.trim() || !chartData) return;
+    if (!text.trim() || (!chartData && !hePanData)) return;
 
-    if (messages.length <= 1 && isPro && text.includes("专业详盘")) {
-      await handleStart(true);
-      return;
+    // Handle initial professional trigger messages
+    if (messages.length === 1 && isPro) {
+      if (text.includes("专业详盘") || text.includes("详盘分析")) {
+        await handleStart(true);
+        return;
+      }
+      if (text.includes("专业合盘") && hePanData) {
+        await performHePan(hePanData.profile1, hePanData.profile2, true);
+        return;
+      }
     }
 
     const userMsg: ChatMessage = { id: Date.now().toString(), role: 'user', content: text, isProfessional: isPro };
@@ -173,8 +255,11 @@ export const BaZiProvider: React.FC<{ userProfile: UserProfile; children: ReactN
     setChatLoading(true);
 
     try {
-      const baZiData = formatBaZiToText(chartData.chart, { dy: selectedDaYunIndex, ln: selectedLiuNianIndex });
-      const context = messages.length > 0 ? messages[0].content : chartData.analysis;
+      const baZiData = hePanData 
+          ? `合盘推演：缘主一(${hePanData.profile1.name}) 缘主二(${hePanData.profile2.name})`
+          : formatBaZiToText(chartData!.chart, { dy: selectedDaYunIndex, ln: selectedLiuNianIndex });
+      
+      const context = messages.length > 0 ? messages[0].content : (hePanData ? hePanData.analysis : chartData!.analysis);
       
       await chatWithContext([...messages, userMsg], context, baZiData, (chunk) => {
           setMessages(prev => {
@@ -187,7 +272,6 @@ export const BaZiProvider: React.FC<{ userProfile: UserProfile; children: ReactN
           setChatLoading(false);
       });
 
-      // After stream ends, extract suggestions
       setMessages(prev => {
         const last = prev[prev.length - 1];
         if (last && last.id === assistantMsgId) {
@@ -205,12 +289,12 @@ export const BaZiProvider: React.FC<{ userProfile: UserProfile; children: ReactN
   };
 
   const triggerDefaultQuestion = async (q: string) => {
-      if (!chartData) await handleStart(false);
+      if (!chartData && !hePanData) await handleStart(false);
       handleSendMessage(q);
   };
 
   useEffect(() => {
-    if (!chartData) handleStart(false);
+    if (!chartData && !hePanData) handleStart(false);
   }, []);
 
   return (
@@ -219,7 +303,8 @@ export const BaZiProvider: React.FC<{ userProfile: UserProfile; children: ReactN
       calendarType, setCalendarType, isLeapMonth, setIsLeapMonth,
       viewMode, setViewMode, chartDisplayMode, setChartDisplayMode, showFullDetails, setShowFullDetails,
       selectedDaYunIndex, setSelectedDaYunIndex, selectedLiuNianIndex, setSelectedLiuNianIndex, selectedLiuYueIndex, setSelectedLiuYueIndex,
-      chartData, messages, loading, chatLoading, handleStart, handleSendMessage, inputMessage, setInputMessage, triggerDefaultQuestion
+      chartData, hePanData, messages, loading, chatLoading, handleStart, handleSendMessage, inputMessage, setInputMessage, triggerDefaultQuestion,
+      roster, saveToRoster, deleteFromRoster, performHePan
     }}>
       {children}
     </BaZiContext.Provider>

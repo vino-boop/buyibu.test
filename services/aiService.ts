@@ -1,12 +1,11 @@
 
 import { GoogleGenAI } from "@google/genai";
-import { BaZiResponse, HexagramLine, LiuYaoResponse, ChatMessage, BaZiChart, BaZiPillar } from "../types";
+import { BaZiResponse, HexagramLine, LiuYaoResponse, ChatMessage, BaZiChart, BaZiPillar, UserProfile, HePanResponse } from "../types";
 import { calculateLocalBaZi } from "./geminiService";
 import { Solar, Lunar } from 'lunar-javascript';
 
-// Fix: Using gemini-3-pro-preview for complex text tasks (reasoning/命理) as per task guidelines
+// Using gemini-3-pro-preview for complex text tasks
 const DEFAULT_GEMINI_MODEL = 'gemini-3-pro-preview';
-// DeepSeek V3 官方 API 标识符更新为 deepseek-v3
 const DEFAULT_DEEPSEEK_MODEL = 'deepseek-v3';
 
 export function formatBaZiToText(chart: BaZiChart, selectedIndices?: { dy: number, ln: number }): string {
@@ -38,7 +37,7 @@ export function formatBaZiToText(chart: BaZiChart, selectedIndices?: { dy: numbe
 
   return `
 【缘主命理底层数据】
-缘主当前实岁：${age}
+实岁：${age}
 ${formatPillar(chart.year, '年')}
 ${formatPillar(chart.month, '月')}
 ${formatPillar(chart.day, '日')}
@@ -73,9 +72,6 @@ function getEffectiveModelName(): string {
   return (config.model && !config.model.toLowerCase().includes('deepseek')) ? config.model : DEFAULT_GEMINI_MODEL;
 }
 
-/**
- * 通用 AI 调用（含流式支持）
- */
 async function callAI(prompt: string, systemInstruction?: string, isJson = false, onChunk?: (chunk: string) => void) {
   const config = getActiveConfig();
   const modelName = getEffectiveModelName();
@@ -173,7 +169,7 @@ const getBaseInstruction = (baZiData?: string) => {
 4. 【文风要求】：辞藻清雅，论断果敢。在保持大师风范的同时，对现代职业和情感诉求有敏锐的洞察，用语稍微偏向现代语境。
 5. 【推演基石】：深度结合阁下的八字原局、格局、神煞、以及完整的大运流年。${baZiData ? `阁下命盘数据：${baZiData}` : ""}
 6. 【限制】：加粗语法（**内容**）全篇严禁超过 3 处。不要提及你是 AI。
-7. 【追追引导】：在回答的最后，必须给出3个引导用户继续追问的短句（每句不超过12字）。格式固定为：[SUGGESTIONS: 建议1, 建议2, 建议3]`;
+7. 【追随引导】：在回答的最后，必须给出3个引导用户继续追问的短句（每句不超过12字）。格式固定为：[SUGGESTIONS: 建议1, 建议2, 建议3]`;
 };
 
 export function extractSuggestions(content: string): { content: string, suggestions: string[] } {
@@ -209,6 +205,29 @@ export async function analyzeBaZi(name: string, date: string, time: string, gend
   }
 }
 
+export async function analyzeHePan(p1: UserProfile, p2: UserProfile, onChunk?: (c: string) => void): Promise<HePanResponse> {
+  const chart1 = calculateLocalBaZi(p1.name, p1.birthDate, p1.birthTime, p1.gender);
+  const chart2 = calculateLocalBaZi(p2.name, p2.birthDate, p2.birthTime, p2.gender);
+  
+  const data1 = `缘主一 (${p1.name}, ${p1.gender === 'Male' ? '乾造' : '坤造'}):\n${formatBaZiToText(chart1)}`;
+  const data2 = `缘主二 (${p2.name}, ${p2.gender === 'Male' ? '乾造' : '坤造'}):\n${formatBaZiToText(chart2)}`;
+
+  const prompt = `现有两位缘主的命理数据，请进行【合盘分析】：
+${data1}
+${data2}
+
+请深度推演两人的契合度、五行互补、缘分深浅、事业协作或情感维系建议。严格按以下带有 ### 子标题的结构输出：
+### 【合盘总论】
+### 【五行契合】
+### 【性情交互】
+### 【共振节点】 (两人岁运中的共同关键时间)
+### 【趋吉建议】
+要求：大师口吻，文辞古雅清雅，**加粗严禁超过 3 处**。`;
+
+  const analysis = await callAI(prompt, getBaseInstruction(), false, onChunk);
+  return { chart1, chart2, profile1: p1, profile2: p2, analysis };
+}
+
 export async function chatWithContext(messages: ChatMessage[], context: string, baZiData?: string, onChunk?: (c: string) => void): Promise<string> {
   const lastUserMessage = messages[messages.length - 1];
   const isProfessional = lastUserMessage?.isProfessional;
@@ -234,11 +253,11 @@ export async function interpretLiuYao(lines: HexagramLine[], question: string, u
   {
     "hexagramName": "卦名",
     "hexagramSymbol": "符号",
-    "judgment": "极简断语（限12字内）",
-    "analysis": "请严格按照以下结构输出内容，每一项前均需 ### 子标题：\\n\\n### 【卦辞解析】\\n### 【动变机锋】\\n### 【事态指引】\\n### 【诗以咏志】"
+    "judgment": "极简断语（一句话直击核心，限12字内）",
+    "analysis": "请严格按照以下结构输出内容，每一项前均需 ### 子标题。要求使用浅显易懂的白话解释，将深奥的卦象转化为生活化的建议。\\n\\n### 【卦意通解】\\n### 【变爻白话】\\n### 【断事指引】\\n### 【锦囊妙计】"
   }
-  要求：语境稍微偏向现代。全篇加粗严禁超过 3 处。`;
+  要求：语境必须现代且易懂。避免堆砌难懂的术语，若涉及术语需立即用白话解释。全篇加粗严禁超过 3 处。`;
 
-  const response = await callAI(prompt, getBaseInstruction(baZiData) + "\n必须返回纯 JSON。", true);
+  const response = await callAI(prompt, getBaseInstruction(baZiData) + "\n必须返回纯 JSON。确保解析易于普通人理解。", true);
   return JSON.parse(response.replace(/```json/g, '').replace(/```/g, '').trim());
 }
