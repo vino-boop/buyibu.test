@@ -193,8 +193,9 @@ const getBaseInstruction = (baZiData?: string) => {
 3. 【时空背景】：${timeInfo}。
 4. 【排版铁律】：每一段独立的推演分析必须以 ### 开头的标题。
 5. 【推演基石】：深度结合阁下的八字原局、格局、神煞、以及完整的大运流年。${baZiData ? `阁下命理数据：${baZiData}` : ""}
-6. 【限制】：加粗语法（**内容**）全篇严禁超过 3 处。不要提及你是 AI。
-7. 【追随引导】：在回答的最后，必须给出3个引导用户继续追问的短句（每句不超过12字）。格式固定为：[SUGGESTIONS: 建议1, 建议2, 建议3]`;
+6. 【出卦检测】：若阁下后续所问之事与当前起得之卦象背景或初始卜问之意图全然无关（例如：已断卦为“财运”，却突问“天气”或“他人八字”），请务必温和告知此问已出卦外，并建议其“另起一卦”或“回至主页”以应新机，不要强行牵强附会。
+7. 【限制】：加粗语法（**内容**）全篇严禁超过 3 处。不要提及你是 AI。
+8. 【追随引导】：在回答的最后，必须给出3个引导用户继续追问的短句（每句不超过12字）。格式固定为：[SUGGESTIONS: 建议1, 建议2, 建议3]`;
 };
 
 export function extractSuggestions(content: string): { content: string, suggestions: string[] } {
@@ -279,7 +280,7 @@ export async function interpretLiuYao(lines: HexagramLine[], question: string, u
   const baZiData = userProfile ? `缘主生辰：${userProfile.birthDate} ${userProfile.birthTime}` : "";
 
   const prompt = `问题：${question}。卦象序列：${lineStr}。
-  请以纯 JSON 格式输出：
+  请以纯 JSON格式输出：
   {
     "hexagramName": "卦名",
     "hexagramSymbol": "符号",

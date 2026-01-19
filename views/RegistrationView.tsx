@@ -79,23 +79,23 @@ export const RegistrationView: React.FC<RegistrationViewProps> = ({ onComplete, 
     { 
         type: AppPersonality.MYSTIC, 
         name: '天机道长', 
-        desc: '辞藻清雅，洞察格局。', 
+        desc: '仙风道骨，半白话推演，辞藻清雅且深度剖析格局气象。', 
         icon: <IconPersonalityMystic />,
-        tags: ['古雅', '深邃', '超脱']
+        tags: ['半白话', '深度', '优雅']
     },
     { 
         type: AppPersonality.PRAGMATIC, 
         name: '实战顾问', 
-        desc: '玄学为引，实操为本。', 
+        desc: '现代大白话，逻辑清晰，直击痛点并提供实操建议。', 
         icon: <IconPersonalityPragmatic />,
-        tags: ['商业', '落地', '认知']
+        tags: ['大白话', '实操', '干货']
     },
     { 
         type: AppPersonality.CLASSICAL, 
         name: '古籍学者', 
-        desc: '文言引经，饱读诗书。', 
+        desc: '纯正文言文，引经据典，饱含深厚命理文化底蕴。', 
         icon: <IconPersonalityClassical />,
-        tags: ['考据', '博学', '儒雅']
+        tags: ['文言文', '学术', '古风']
     }
   ];
 
@@ -221,7 +221,7 @@ export const RegistrationView: React.FC<RegistrationViewProps> = ({ onComplete, 
                                 {p.icon}
                             </div>
                             <h3 className={`text-base sm:text-lg font-bold mb-1 sm:mb-2 ${selectedPersonality === p.type ? 'text-mystic-gold' : 'text-gray-200'}`}>{p.name}</h3>
-                            <p className="text-[11px] sm:text-xs text-gray-500 mb-3 sm:mb-4 h-6 sm:h-8 flex items-center">{p.desc}</p>
+                            <p className="text-[11px] sm:text-xs text-gray-500 mb-3 sm:mb-4 h-10 sm:h-12 flex items-center">{p.desc}</p>
                             <div className="flex flex-wrap gap-1 justify-center">
                                 {p.tags.map(tag => <span key={tag} className="text-[8px] sm:text-[9px] px-1.5 py-0.5 rounded-full bg-black/40 text-gray-500">{tag}</span>)}
                             </div>

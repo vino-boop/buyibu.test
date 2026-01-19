@@ -58,7 +58,7 @@ const HEXAGRAM_DATA: Record<string, { name: string; symbol: string; judgment: st
   "011010": { name: "水风井", symbol: "䷯", judgment: "改邑不改井，无丧无得. 往来井井。" },
   "101110": { name: "泽火革", symbol: "䷰", judgment: "巳日乃孚，元亨利贞，悔亡。" },
   "011101": { name: "火风鼎", symbol: "䷱", judgment: "元吉，亨。" },
-  "100100": { name: "震为雷", symbol: "䷲", judgment: "亨. 震来虩虩，笑言哑哑. 震惊百里，不丧匕鬯。" },
+  "100100": { name: "震为雷", symbol: "䷲", judgment: "亨. 震来 v 虩虩，笑言哑哑. 震惊百里，不丧匕鬯。" },
   "001001": { name: "艮为山", symbol: "䷳", judgment: "艮其背，不获其身，行其庭，不建其人，无咎。" },
   "001011": { name: "风山渐", symbol: "䷴", judgment: "女归吉，利贞。" },
   "110100": { name: "雷泽归妹", symbol: "䷵", judgment: "征凶，无攸利。" },
@@ -213,6 +213,7 @@ const InteractiveStalksFan: React.FC<{
 };
 
 export const LiuYaoView: React.FC<{ isDayMode?: boolean }> = ({ isDayMode = false }) => {
+  // Corrected: Removed non-existent handleTTimeStart from destructuring
   const {
       mode, setMode, question, setQuestion, shakeError, setShakeError, shakeLines, setShakeLines, shakeStep, setShakeStep, coins, isFlipping, manualLines, numberStep, setNumberStep, numberResults, setNumberResults, isSplitting, setIsSplitting, messages, result, showChat, isAnalyzing, inputMessage, setInputMessage, history, showHistoryModal, setShowHistoryModal, handleToss, handleTimeStart, handleAnalyze, handleSendMessage, reset: baseReset, updateManualLine, restoreRecord, clearHistory
   } = useLiuYao();
@@ -226,6 +227,7 @@ export const LiuYaoView: React.FC<{ isDayMode?: boolean }> = ({ isDayMode = fals
   const [isNumberRitualStarted, setIsNumberRitualStarted] = useState(false);
   const [tempSplitIndex, setTempSplitIndex] = useState(24);
   const [isScrolling, setIsScrolling] = useState(false);
+  const [showQuestionInHeader, setShowQuestionInHeader] = useState(false);
 
   useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages.length]);
   
@@ -267,6 +269,7 @@ export const LiuYaoView: React.FC<{ isDayMode?: boolean }> = ({ isDayMode = fals
   const reset = () => { 
     setIsNumberRitualStarted(false); 
     setTempSplitIndex(24); 
+    setShowQuestionInHeader(false);
     baseReset(); 
   };
 
@@ -311,27 +314,43 @@ export const LiuYaoView: React.FC<{ isDayMode?: boolean }> = ({ isDayMode = fals
     return (
       <div className={`w-full h-full relative transition-colors duration-300 overflow-hidden ${isDayMode ? 'bg-[#fcfcfc]' : 'bg-mystic-dark'}`}>
         <div className="absolute top-0 left-0 w-full p-4 z-40">
-           <div className={`rounded-xl p-4 shadow-xl relative overflow-hidden flex items-center gap-5 border transition-colors backdrop-blur-md ${isDayMode ? 'bg-white/80 border-gray-100' : 'bg-[#2a2b2e]/90 border-white/5'}`}>
+           <div 
+             onClick={() => setShowQuestionInHeader(!showQuestionInHeader)}
+             className={`rounded-2xl p-4 shadow-xl relative overflow-hidden flex flex-col gap-3 border transition-all cursor-pointer backdrop-blur-md active:scale-[0.98] ${isDayMode ? 'bg-white/90 border-gray-100' : 'bg-[#2a2b2e]/90 border-white/5'}`}
+           >
               {activeHexagram ? (
                 <>
-                  <div className={`shrink-0 w-14 flex justify-center py-1 rounded-lg border transition-colors ${isDayMode ? 'bg-gray-50 border-gray-200' : 'bg-black/20 border-white/5'}`}>
-                      <HexagramVisual lines={currentLines} activeStep={6} variant="compact" />
+                  <div className="flex items-center gap-5">
+                    <div className={`shrink-0 w-14 flex justify-center py-1 rounded-lg border transition-colors ${isDayMode ? 'bg-gray-50 border-gray-200' : 'bg-black/20 border-white/5'}`}>
+                        <HexagramVisual lines={currentLines} activeStep={6} variant="compact" />
+                    </div>
+                    <div className="flex-1 min-w-0 flex flex-col justify-center">
+                       <div className="flex items-center gap-2 mb-1">
+                           <h2 className={`text-xl font-serif font-bold leading-none ${isDayMode ? 'text-gray-900' : 'text-[#e2e8f0]'}`}>{activeHexagram.hexagramName}</h2>
+                           <span className={`text-xs px-1.5 py-0.5 rounded border ${isDayMode ? 'text-gray-400 bg-gray-50 border-gray-200' : 'text-gray-500 bg-white/5 border-white/5'}`}>{activeHexagram.hexagramSymbol}</span>
+                       </div>
+                       <div className={`text-sm leading-snug line-clamp-1 ${isDayMode ? 'text-gray-500' : 'text-[#94a3b8]'}`}>{isAnalyzing && !result ? <span className="animate-pulse text-[#e8cfa1]">{activeHexagram.judgment || "正在推演..."}</span> : (activeHexagram.judgment || "卦象解盘中...")}</div>
+                    </div>
+                    <button onClick={(e) => { e.stopPropagation(); reset(); }} className={`p-2 transition-colors ${isDayMode ? 'text-gray-400 hover:text-gray-800' : 'text-gray-600 hover:text-gray-300'}`}><span className="text-lg">↺</span></button>
                   </div>
-                  <div className="flex-1 min-w-0 flex flex-col justify-center">
-                     <div className="flex items-center gap-2 mb-1">
-                         <h2 className={`text-xl font-serif font-bold leading-none ${isDayMode ? 'text-gray-900' : 'text-[#e2e8f0]'}`}>{activeHexagram.hexagramName}</h2>
-                         <span className={`text-xs px-1.5 py-0.5 rounded border ${isDayMode ? 'text-gray-400 bg-gray-50 border-gray-200' : 'text-gray-500 bg-white/5 border-white/5'}`}>{activeHexagram.hexagramSymbol}</span>
-                     </div>
-                     <div className={`text-sm leading-snug line-clamp-1 ${isDayMode ? 'text-gray-500' : 'text-[#94a3b8]'}`}>{isAnalyzing && !result ? <span className="animate-pulse text-[#e8cfa1]">{activeHexagram.judgment || "正在推演..."}</span> : (activeHexagram.judgment || "卦象解盘中...")}</div>
+                  
+                  {/* Expanded Question View */}
+                  <div className={`overflow-hidden transition-all duration-500 ease-in-out ${showQuestionInHeader ? 'max-h-40 opacity-100 mt-2 pb-1' : 'max-h-0 opacity-0'}`}>
+                      <div className={`w-full h-[0.5px] mb-3 ${isDayMode ? 'bg-gray-100' : 'bg-white/10'}`}></div>
+                      <div className="flex flex-col gap-1 px-1">
+                          <span className="text-[10px] text-mystic-gold uppercase tracking-widest font-bold opacity-60">当初卜问</span>
+                          <p className={`text-sm italic font-serif leading-relaxed ${isDayMode ? 'text-gray-600' : 'text-gray-300'}`}>“{question}”</p>
+                      </div>
                   </div>
-                  <button onClick={reset} className={`p-2 transition-colors ${isDayMode ? 'text-gray-400 hover:text-gray-800' : 'text-gray-600 hover:text-gray-300'}`}><span className="text-lg">↺</span></button>
+
+                  {!showQuestionInHeader && <div className="absolute right-12 bottom-3 animate-bounce"><span className="text-[10px] text-mystic-gold/40">▼ 点击查看卜问</span></div>}
                 </>
               ) : <div className="w-full flex items-center justify-center text-gray-500 animate-pulse py-2">卦象生成中...</div>}
            </div>
         </div>
         <div 
           onScroll={handleScroll}
-          className="h-full w-full overflow-y-auto p-4 space-y-4 scrollbar-hide pb-40 pt-28"
+          className="h-full w-full overflow-y-auto p-4 space-y-4 scrollbar-hide pb-40 pt-28 sm:pt-32"
         >
            {messages.map((msg) => (
               <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} animate-fade-in-up`}>

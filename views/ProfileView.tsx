@@ -64,9 +64,9 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ userProfile, isDayMode
               );
           case '推演人格':
               const personalities = [
-                { type: AppPersonality.MYSTIC, name: '天机道长', icon: <IconPersonalityMystic />, desc: '自称“吾”，文辞清雅，洞察格局气象。' },
-                { type: AppPersonality.PRAGMATIC, name: '实战顾问', icon: <IconPersonalityPragmatic />, desc: '口号“玄学为引，实操为本”。融合商业术语，必有实战建议。' },
-                { type: AppPersonality.CLASSICAL, name: '古籍学者', icon: <IconPersonalityClassical />, desc: '满腹经纶，引用文言古籍名句，文风儒雅。' }
+                { type: AppPersonality.MYSTIC, name: '天机道长', icon: <IconPersonalityMystic />, desc: '仙风道骨，半白话推演，辞藻清雅且深度剖析格局气象。' },
+                { type: AppPersonality.PRAGMATIC, name: '实战顾问', icon: <IconPersonalityPragmatic />, desc: '现代大白话，逻辑清晰，直击痛点并提供实操建议。' },
+                { type: AppPersonality.CLASSICAL, name: '古籍学者', icon: <IconPersonalityClassical />, desc: '纯正文言文，引经据典，饱含深厚命理文化底蕴。' }
               ];
               return (
                   <div className="space-y-4">
@@ -110,7 +110,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ userProfile, isDayMode
                             type="text" 
                             value={assets.apiModel || ''} 
                             onChange={(e) => updateAsset('apiModel', e.target.value)} 
-                            placeholder={assets.apiProvider === 'DEEPSEEK' ? 'deepseek-v3' : 'gemini-3-pro-preview'}
+                            placeholder={assets.apiProvider === 'DEEPSEEK' ? 'deepseek-chat' : 'gemini-3-pro-preview'}
                             className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-4 text-sm text-white font-mono focus:border-mystic-gold/50 outline-none" 
                         />
                     </div>
@@ -134,6 +134,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ userProfile, isDayMode
   return (
     <div className={`w-full h-full flex flex-col animate-fade-in relative z-50 transition-colors duration-300 ${isDayMode ? 'bg-[#f8f9fa]' : 'bg-[#0f1110]'}`}>
       
+      {/* Fixed: isDay: boolean={isDayMode} was incorrect syntax for prop passing */}
       {activeSubPage && (
           <SubPage title={activeSubPage === 'Account' ? '账号管理' : activeSubPage} onClose={() => setActiveSubPage(null)} isDay={isDayMode}>
               {renderSubPageContent()}

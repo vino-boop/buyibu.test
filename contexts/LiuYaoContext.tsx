@@ -167,7 +167,10 @@ export const LiuYaoProvider: React.FC<{ userProfile: UserProfile; children: Reac
     setIsAnalyzing(true);
 
     try {
-      await chatWithContext([...messages, userMsg], result.analysis, undefined, (chunk) => {
+      // 显式传入初始卜问背景，供 AI 进行“出卦”检测
+      const conversationContext = `初始卜问：${question}\n卦象原解：${result.analysis}`;
+
+      await chatWithContext([...messages, userMsg], conversationContext, undefined, (chunk) => {
           setMessages(prev => {
               const last = prev[prev.length - 1];
               if (last && last.id === assistantMsgId) {
