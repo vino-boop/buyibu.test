@@ -377,7 +377,11 @@ export const LiuYaoView: React.FC<{ isDayMode?: boolean }> = ({ isDayMode = fals
             )}
             <div className="relative">
               <input type="text" value={inputMessage} onChange={e => setInputMessage(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSendMessage()} placeholder="阁下请直言" className={`w-full pl-4 pr-12 py-3 rounded-2xl border outline-none shadow-sm transition-all ${isDayMode ? 'bg-gray-50 border-gray-200 text-gray-900 focus:bg-white' : 'bg-[#1a1b1e] text-gray-200 border-white/10 focus:border-mystic-gold/50'}`} />
-              <button onClick={() => handleSendMessage()} disabled={isAnalyzing} className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center rounded-full bg-mystic-gold/20 text-mystic-gold hover:bg-mystic-gold hover:text-white transition-colors">➤</button>
+              <button onClick={() => handleSendMessage()} disabled={isAnalyzing} className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center rounded-full bg-mystic-gold/20 text-mystic-gold hover:bg-mystic-gold hover:text-white transition-colors">
+                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+                    <path fillRule="evenodd" d="M11.47 2.47a.75.75 0 011.06 0l7.5 7.5a.75.75 0 11-1.06 1.06l-6.22-6.22V21a.75.75 0 01-1.5 0V4.81l-6.22 6.22a.75.75 0 11-1.06-1.06l7.5-7.5z" clipRule="evenodd" />
+                 </svg>
+              </button>
             </div>
         </div>
       </div>
@@ -414,7 +418,12 @@ export const LiuYaoView: React.FC<{ isDayMode?: boolean }> = ({ isDayMode = fals
         <div className="contents animate-fade-in-down">
           <div className="mt-6 mb-6 flex flex-col items-center shrink-0"><div className="w-20 h-20 rounded-2xl bg-cover bg-center shadow-lg border border-mystic-gold/30 mb-4" style={{ backgroundImage: `url(${assets.sage_avatar})` }}></div><h2 className={`text-xl font-serif tracking-widest ${isDayMode ? 'text-gray-800' : 'text-gray-200'}`}>敢问欲询何事？</h2></div>
           <div className="w-full max-w-sm mb-6 flex flex-col gap-2 px-4 shrink-0">{['阁下辞职可顺？', '近期财运如何？', '这段感情有结果吗？'].map((q) => <button key={q} onClick={() => {setQuestion(q); setShakeError(false);}} className={`w-full border rounded-lg py-3 px-4 text-sm transition-all text-left bg-mystic-paper/50 border border-white/5 text-gray-400 hover:text-white`}>{q}</button>)}</div>
-          <div className="w-full max-w-sm px-4 mb-8 relative shrink-0"><input ref={inputRef} type="text" value={question} onChange={(e) => {setQuestion(e.target.value); setShakeError(false);}} placeholder="为您解惑 (输入具体问题)" className={`w-full border rounded-xl py-3 pl-4 pr-12 outline-none shadow-sm transition-all duration-300 ${shakeError ? 'border-red-500/50 shadow-[0_0_15px_rgba(239,68,68,0.2)] animate-pulse' : 'bg-mystic-paper border-mystic-gold/20 text-white focus:border-mystic-gold'}`} /><div className="absolute right-6 top-1/2 -translate-y-1/2 w-6 h-6 flex items-center justify-center opacity-40"><IconEdit className="w-full h-full" /></div></div>
+          <div className="w-full max-w-sm px-4 mb-8 relative shrink-0">
+             <input ref={inputRef} type="text" value={question} onChange={(e) => {setQuestion(e.target.value); setShakeError(false);}} placeholder="为您解惑 (输入具体问题)" className={`w-full border rounded-xl py-3 pl-4 pr-12 outline-none shadow-sm transition-all duration-300 ${shakeError ? 'border-red-500/50 shadow-[0_0_15px_rgba(239,68,68,0.2)] animate-pulse' : 'bg-mystic-paper border-mystic-gold/20 text-white focus:border-mystic-gold'}`} />
+             <div onClick={() => inputRef.current?.focus()} className="absolute right-6 top-1/2 -translate-y-1/2 w-6 h-6 flex items-center justify-center opacity-40 cursor-pointer hover:opacity-100 transition-opacity">
+                 <IconEdit className="w-full h-full" />
+             </div>
+          </div>
           <div className="w-full max-w-sm px-4 mb-6 shrink-0"><div className={`w-full rounded-full p-1 flex border transition-colors bg-mystic-paper border-white/5`}>{(['MANUAL', 'SHAKE', 'TIME', 'NUMBER'] as InputMode[]).map((m) => <button key={m} onClick={() => {setMode(m); setShakeLines([]); setShakeStep(0); setNumberStep(0); setNumberResults([]); setIsNumberRitualStarted(false);}} className={`flex-1 py-2 rounded-full text-[10px] font-medium transition-all ${mode === m ? 'bg-mystic-gold text-black shadow-lg font-bold' : 'text-gray-500 hover:text-gray-300'}`}>{m === 'MANUAL' ? '手动' : m === 'SHAKE' ? '摇卦' : m === 'TIME' ? '时间' : '数字'}</button>)}</div></div>
         </div>
       )}
@@ -423,7 +432,13 @@ export const LiuYaoView: React.FC<{ isDayMode?: boolean }> = ({ isDayMode = fals
             <div className="flex-1 flex flex-col items-center animate-fade-in-up mt-20">
                 {shakeLines.length > 0 && <div className="mb-8 w-40 animate-fade-in"><HexagramVisual lines={shakeLines} activeStep={shakeStep} variant="default" /></div>}
                 <div className={`flex gap-3 mb-10 items-center h-20`}>{coins.map((side, idx) => <div key={idx} className={`w-16 h-16 rounded-full border-4 flex items-center justify-center text-xs font-bold shadow-xl transition-all ${isFlipping ? 'animate-[spin_0.6s_ease-in-out_infinite]' : ''} ${side === CoinSide.HEAD ? 'bg-[#c5b078] border-[#a08d55] text-black' : 'bg-slate-300 border-slate-400 text-slate-700'}`}><div className="w-6 h-6 border-2 border-current opacity-40 transform rotate-45"></div></div>)}</div>
-                <button onClick={handleToss} disabled={isFlipping || shakeStep >= 6} className={`w-full font-bold py-4 rounded-xl shadow-lg active:scale-95 transition-all ${shakeStep >= 6 ? 'bg-white/10 text-gray-500 cursor-default' : 'bg-gradient-to-r from-[#c5b078] to-[#a08d55] text-black'}`}>{shakeStep >= 6 ? '卦象已成' : isFlipping ? '摇卦中...' : (shakeStep > 0 ? '继续摇卦' : '开始摇卦')}</button>
+                <button 
+                  onClick={() => { if(!question.trim()) { setShakeError(true); inputRef.current?.focus(); return; } handleToss(); }} 
+                  disabled={isFlipping || shakeStep >= 6} 
+                  className={`w-full font-bold py-4 rounded-xl shadow-lg active:scale-95 transition-all ${shakeStep >= 6 ? 'bg-white/10 text-gray-500 cursor-default' : 'bg-gradient-to-r from-[#c5b078] to-[#a08d55] text-black'}`}
+                >
+                  {shakeStep >= 6 ? '卦象已成' : isFlipping ? '摇卦中...' : (shakeStep > 0 ? '继续摇卦' : '开始摇卦')}
+                </button>
                 {shakeStep >= 6 && <button onClick={validateAndStartAnalyze} className="mt-4 w-full border-2 border-mystic-gold text-mystic-gold py-4 rounded-xl font-bold hover:bg-mystic-gold/10 active:scale-95 transition-all animate-fade-in">开始解卦</button>}
             </div>
          )}

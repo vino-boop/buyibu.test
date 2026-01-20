@@ -187,7 +187,18 @@ export const RegistrationView: React.FC<RegistrationViewProps> = ({ onComplete, 
                 </div>
                 <div className="space-y-2 group">
                    <label className={`text-[10px] uppercase tracking-widest font-bold ml-1 transition-colors ${showError && !birthDate ? 'text-red-500' : 'text-gray-600 group-focus-within:text-mystic-gold'}`}>出生日期 *</label>
-                   <input type="date" className={`w-full bg-transparent border-b outline-none py-3 text-lg text-white transition-all ${showError && !birthDate ? 'border-red-500/50' : 'border-gray-800 focus:border-mystic-gold'}`} value={birthDate} onChange={(e) => { setBirthDate(e.target.value); setShowError(false); }} />
+                   <input 
+                      type="date" 
+                      max="9999-12-31"
+                      className={`w-full bg-transparent border-b outline-none py-3 text-lg text-white transition-all ${showError && !birthDate ? 'border-red-500/50' : 'border-gray-800 focus:border-mystic-gold'}`} 
+                      value={birthDate} 
+                      onChange={(e) => { 
+                         if (e.target.value.length <= 10) {
+                            setBirthDate(e.target.value); 
+                            setShowError(false); 
+                         }
+                      }} 
+                   />
                 </div>
                 <div className="space-y-2 group">
                    <label className="text-[10px] text-gray-600 uppercase tracking-widest font-bold ml-1 group-focus-within:text-mystic-gold transition-colors">出生时间</label>

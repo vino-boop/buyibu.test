@@ -217,7 +217,15 @@ export const BaZiView: React.FC<BaZiViewProps> = ({ defaultQuestion, isDayMode =
                   <div className={`border-b py-2 flex items-center justify-between transition-colors ${isDayMode ? 'border-gray-100' : 'border-white/10'}`}>
                       <span className={isDayMode ? 'text-gray-500 text-sm' : 'text-gray-400 text-sm'}>出生日期</span>
                       <div className="flex items-center gap-2">
-                        <input type="date" className={`bg-transparent text-right outline-none ${isDayMode ? 'text-gray-800' : 'text-gray-200'}`} value={birthDate} onChange={e => setBirthDate(e.target.value)} />
+                        <input 
+                           type="date" 
+                           max="9999-12-31"
+                           className={`bg-transparent text-right outline-none ${isDayMode ? 'text-gray-800' : 'text-gray-200'}`} 
+                           value={birthDate} 
+                           onChange={e => {
+                               if (e.target.value.length <= 10) setBirthDate(e.target.value);
+                           }} 
+                        />
                         {calendarType === CalendarType.LUNAR && (
                           <button onClick={() => setIsLeapMonth(!isLeapMonth)} className={`px-2 py-1 rounded text-[10px] border transition-colors ${isLeapMonth ? 'border-mystic-gold text-mystic-gold bg-mystic-gold/10' : 'border-gray-500 text-gray-500'}`}>闰</button>
                         )}
@@ -530,7 +538,9 @@ export const BaZiView: React.FC<BaZiViewProps> = ({ defaultQuestion, isDayMode =
                      disabled={chatLoading} 
                      className="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-xl bg-mystic-gold/20 text-mystic-gold hover:bg-mystic-gold hover:text-white transition-all"
                    >
-                     ➤
+                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+                        <path fillRule="evenodd" d="M11.47 2.47a.75.75 0 011.06 0l7.5 7.5a.75.75 0 11-1.06 1.06l-6.22-6.22V21a.75.75 0 01-1.5 0V4.81l-6.22 6.22a.75.75 0 11-1.06-1.06l7.5-7.5z" clipRule="evenodd" />
+                     </svg>
                    </button>
                 </div>
             </div>

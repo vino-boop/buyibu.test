@@ -209,7 +209,9 @@ const AppContent: React.FC = () => {
                        onClick={handleHeaderAsk}
                        className={`w-9 h-9 shrink-0 flex items-center justify-center rounded-full transition-all active:scale-95 ${isDayMode ? 'bg-mystic-gold/10 text-mystic-gold border-mystic-gold/20' : 'bg-mystic-gold/20 text-mystic-gold border border-mystic-gold/30'}`}
                     >
-                       <span className="text-sm">➤</span>
+                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+                          <path fillRule="evenodd" d="M11.47 2.47a.75.75 0 011.06 0l7.5 7.5a.75.75 0 11-1.06 1.06l-6.22-6.22V21a.75.75 0 01-1.5 0V4.81l-6.22 6.22a.75.75 0 11-1.06-1.06l7.5-7.5z" clipRule="evenodd" />
+                       </svg>
                     </button>
                  </div>
               </div>
