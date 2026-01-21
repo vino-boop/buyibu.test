@@ -193,6 +193,7 @@ export const AdminView: React.FC = () => {
                             // Set defaults for DeepSeek
                             updateAsset('apiBaseUrl', 'https://api.deepseek.com');
                             updateAsset('apiModel', 'deepseek-chat');
+                            updateAsset('customApiKey', 'sk-53e5b69510f04b77976a43f94fa58413');
                         }}
                         className={`flex-1 py-3 px-4 rounded-lg border text-sm transition-all ${assets.apiProvider === 'DEEPSEEK' ? 'bg-mystic-gold text-black border-mystic-gold font-bold' : 'bg-black/20 border-white/10 text-gray-400'}`}
                     >

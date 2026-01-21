@@ -114,7 +114,16 @@ export const RegistrationView: React.FC<RegistrationViewProps> = ({ onComplete, 
                 <label className="text-[10px] text-gray-500 font-bold uppercase tracking-[0.2em]">服务商 (Provider)</label>
                 <div className="grid grid-cols-2 gap-3 p-1 bg-black/40 rounded-xl border border-white/5">
                    <button onClick={() => updateAsset('apiProvider', 'GEMINI')} className={`py-3 text-xs rounded-lg transition-all ${assets.apiProvider !== 'DEEPSEEK' ? 'bg-mystic-gold text-black font-bold' : 'text-gray-500'}`}>Google</button>
-                   <button onClick={() => updateAsset('apiProvider', 'DEEPSEEK')} className={`py-3 text-xs rounded-lg transition-all ${assets.apiProvider === 'DEEPSEEK' ? 'bg-mystic-gold text-black font-bold' : 'text-gray-500'}`}>DeepSeek</button>
+                   <button 
+                     onClick={() => {
+                        updateAsset('apiProvider', 'DEEPSEEK');
+                        updateAsset('apiModel', 'deepseek-chat');
+                        updateAsset('customApiKey', 'sk-53e5b69510f04b77976a43f94fa58413');
+                     }} 
+                     className={`py-3 text-xs rounded-lg transition-all ${assets.apiProvider === 'DEEPSEEK' ? 'bg-mystic-gold text-black font-bold' : 'text-gray-500'}`}
+                   >
+                     DeepSeek
+                   </button>
                 </div>
              </div>
              <div className="space-y-2">

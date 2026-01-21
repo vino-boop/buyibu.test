@@ -7,6 +7,7 @@ import { Solar, Lunar } from 'lunar-javascript';
 // Using gemini-3-pro-preview for complex text tasks
 const DEFAULT_GEMINI_MODEL = 'gemini-3-pro-preview';
 const DEFAULT_DEEPSEEK_MODEL = 'deepseek-chat';
+const API_TIMEOUT_MS = 120000; // 2 minutes timeout for deep reasoning
 
 export function formatBaZiToText(chart: BaZiChart, selectedIndices?: { dy: number, ln: number, lm?: number }): string {
   const formatPillar = (p: BaZiPillar, label: string) => {
@@ -89,77 +90,106 @@ async function callAI(prompt: string, systemInstruction?: string, isJson = false
     const apiUrl = `${config.deepseekBase}/chat/completions`;
     const isReasoner = modelName.includes('reasoner');
     
-    const response = await fetch(apiUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${config.deepseekKey}` },
-      body: JSON.stringify({
-        model: modelName,
-        messages: [
-          ...(systemInstruction ? [{ role: 'system', content: systemInstruction }] : []),
-          { role: 'user', content: prompt }
-        ],
-        stream: !!onChunk,
-        response_format: (isJson && !isReasoner) ? { type: 'json_object' } : undefined,
-        temperature: isReasoner ? undefined : 0.6,
-      })
-    });
+    // Setup AbortController for timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
 
-    if (!response.ok) {
-        const err = await response.json().catch(() => ({}));
-        throw new Error(err.error?.message || `API Error: ${response.status}`);
-    }
+    try {
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${config.deepseekKey}` },
+        body: JSON.stringify({
+          model: modelName,
+          messages: [
+            ...(systemInstruction ? [{ role: 'system', content: systemInstruction }] : []),
+            { role: 'user', content: prompt }
+          ],
+          stream: !!onChunk,
+          max_tokens: 3000,
+          response_format: (isJson && !isReasoner) ? { type: 'json_object' } : undefined,
+          temperature: isReasoner ? undefined : 0.6,
+        }),
+        signal: controller.signal
+      });
 
-    if (onChunk && response.body) {
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder();
-        let fullContent = "";
-        while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-            const chunk = decoder.decode(value);
-            const lines = chunk.split('\n');
-            for (const line of lines) {
-                if (line.startsWith('data: ')) {
-                    const dataStr = line.slice(6);
-                    if (dataStr === '[DONE]') continue;
-                    try {
-                        const json = JSON.parse(dataStr);
-                        const content = json.choices[0]?.delta?.content || "";
-                        if (content) {
-                            fullContent += content;
-                            onChunk(content);
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+          const err = await response.json().catch(() => ({}));
+          throw new Error(err.error?.message || `API Error: ${response.status} ${response.statusText}`);
+      }
+
+      if (onChunk && response.body) {
+          const reader = response.body.getReader();
+          const decoder = new TextDecoder();
+          
+          let fullContent = "";
+          try {
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                const chunk = decoder.decode(value, { stream: true });
+                const lines = chunk.split('\n');
+                for (const line of lines) {
+                    if (line.startsWith('data: ')) {
+                        const dataStr = line.slice(6).trim();
+                        if (dataStr === '[DONE]') continue;
+                        try {
+                            const json = JSON.parse(dataStr);
+                            const content = json.choices[0]?.delta?.content || "";
+                            if (content) {
+                                fullContent += content;
+                                onChunk(content);
+                            }
+                        } catch (e) {
+                          // Ignore parse errors for incomplete chunks
                         }
-                    } catch (e) {}
+                    }
                 }
             }
-        }
-        return fullContent;
-    } else {
-        const data = await response.json();
-        return data.choices[0].message.content;
+          } finally {
+            reader.releaseLock();
+          }
+          return fullContent;
+      } else {
+          const data = await response.json();
+          return data.choices[0].message.content;
+      }
+    } catch (error: any) {
+      clearTimeout(timeoutId);
+      if (error.name === 'AbortError') {
+        throw new Error('请求超时，请检查网络或稍后重试');
+      }
+      throw error;
     }
   } else {
+    // Google Gemini Implementation
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-    if (onChunk) {
-        const streamResponse = await ai.models.generateContentStream({
-            model: modelName,
-            contents: prompt,
-            config: { systemInstruction, responseMimeType: isJson ? "application/json" : undefined },
-        });
-        let fullText = "";
-        for await (const chunk of streamResponse) {
-            const text = chunk.text || "";
-            fullText += text;
-            onChunk(text);
-        }
-        return fullText;
-    } else {
-        const response = await ai.models.generateContent({
-            model: modelName,
-            contents: prompt,
-            config: { systemInstruction, responseMimeType: isJson ? "application/json" : undefined },
-        });
-        return response.text;
+    try {
+      if (onChunk) {
+          const streamResponse = await ai.models.generateContentStream({
+              model: modelName,
+              contents: prompt,
+              config: { systemInstruction, responseMimeType: isJson ? "application/json" : undefined },
+          });
+          let fullText = "";
+          for await (const chunk of streamResponse) {
+              const text = chunk.text || "";
+              fullText += text;
+              onChunk(text);
+          }
+          return fullText;
+      } else {
+          const response = await ai.models.generateContent({
+              model: modelName,
+              contents: prompt,
+              config: { systemInstruction, responseMimeType: isJson ? "application/json" : undefined },
+          });
+          return response.text;
+      }
+    } catch (error: any) {
+      console.error("Gemini API Error:", error);
+      throw new Error(`Gemini API Error: ${error.message || error.toString()}`);
     }
   }
 }
