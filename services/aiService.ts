@@ -124,26 +124,34 @@ async function callAI(prompt: string, systemInstruction?: string, isJson = false
           const decoder = new TextDecoder();
           
           let fullContent = "";
+          let buffer = "";
+
           try {
             while (true) {
                 const { done, value } = await reader.read();
                 if (done) break;
-                const chunk = decoder.decode(value, { stream: true });
-                const lines = chunk.split('\n');
+                buffer += decoder.decode(value, { stream: true });
+                
+                const lines = buffer.split('\n');
+                // Keep the last part in buffer as it might be incomplete
+                buffer = lines.pop() || ""; 
+
                 for (const line of lines) {
-                    if (line.startsWith('data: ')) {
-                        const dataStr = line.slice(6).trim();
-                        if (dataStr === '[DONE]') continue;
-                        try {
-                            const json = JSON.parse(dataStr);
-                            const content = json.choices[0]?.delta?.content || "";
-                            if (content) {
-                                fullContent += content;
-                                onChunk(content);
-                            }
-                        } catch (e) {
-                          // Ignore parse errors for incomplete chunks
+                    const trimmedLine = line.trim();
+                    if (!trimmedLine || !trimmedLine.startsWith('data: ')) continue;
+                    
+                    const dataStr = trimmedLine.slice(6).trim();
+                    if (dataStr === '[DONE]') continue;
+                    
+                    try {
+                        const json = JSON.parse(dataStr);
+                        const content = json.choices[0]?.delta?.content || "";
+                        if (content) {
+                            fullContent += content;
+                            onChunk(content);
                         }
+                    } catch (e) {
+                      // Ignore parse errors for specific chunks, log if needed
                     }
                 }
             }
@@ -263,8 +271,9 @@ ${getActiveConfig().personality === AppPersonality.PRAGMATIC ? "并在最后附�
 }
 
 export async function analyzeHePan(p1: UserProfile, p2: UserProfile, onChunk?: (c: string) => void): Promise<HePanResponse> {
-  const chart1 = calculateLocalBaZi(p1.name, p1.birthDate, p1.birthTime, p1.gender);
-  const chart2 = calculateLocalBaZi(p2.name, p2.birthDate, p2.birthTime, p2.gender);
+  // Use user settings for accurate chart calculation
+  const chart1 = calculateLocalBaZi(p1.name, p1.birthDate, p1.birthTime, p1.gender, p1.calendarType, p1.isLeapMonth);
+  const chart2 = calculateLocalBaZi(p2.name, p2.birthDate, p2.birthTime, p2.gender, p2.calendarType, p2.isLeapMonth);
   
   const data1 = `缘主一 (${p1.name}, ${p1.gender === 'Male' ? '乾造' : '坤造'}):\n${formatBaZiToText(chart1)}`;
   const data2 = `缘主二 (${p2.name}, ${p2.gender === 'Male' ? '乾造' : '坤造'}):\n${formatBaZiToText(chart2)}`;
