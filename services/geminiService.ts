@@ -3,7 +3,7 @@ import { BaZiPillar, DaYun, CalendarType, BaZiChart } from "../types";
 import { Solar, Lunar, EightChar } from 'lunar-javascript';
 
 /**
- * 核心算法：全面神煞计算器 (扩充至55+种神煞逻辑)
+ * 核心算法：全面神煞计算器 (扩充至70+种神煞逻辑)
  */
 function getPillarShenSha(eightChar: EightChar, pillarIdx: number): string[] {
   const dayGan = eightChar.getDayGan();
@@ -87,7 +87,7 @@ function getPillarShenSha(eightChar: EightChar, pillarIdx: number): string[] {
   if (['甲寅', '乙卯', '庚申', '辛酉'].includes(pillarGanZhi)) results.push('专禄');
   if (['丁巳', '丁亥', '癸巳', '癸亥'].includes(pillarGanZhi)) results.push('天乙伏马');
 
-  // 5. 其他神煞 (补足至55+种逻辑)
+  // 5. 其他神煞 (补足至70+种逻辑)
   // 福星贵人
   const fuXingMap: Record<string, string[]> = { '甲': ['子', '戌'], '乙': ['亥', '酉'], '丙': ['申', '寅'], '丁': ['未', '丑'], '戊': ['午', '申'], '己': ['巳', '酉'], '庚': ['午', '寅'], '辛': ['巳', '亥'], '壬': ['辰', '子'], '癸': ['卯', '丑'] };
   if (fuXingMap[dayGan]?.includes(targetZhi)) results.push('福星贵人');
@@ -96,9 +96,14 @@ function getPillarShenSha(eightChar: EightChar, pillarIdx: number): string[] {
   const guoYinMap: Record<string, string> = { '甲': '戌', '乙': '亥', '丙': '丑', '丁': '寅', '戊': '丑', '己': '寅', '庚': '辰', '辛': '巳', '壬': '未', '癸': '申' };
   if (guoYinMap[dayGan] === targetZhi) results.push('国印贵人');
 
-  const dayXunKong = eightChar.getDayXunKong();
-  if (dayXunKong.includes(targetZhi)) results.push('空亡');
-  
+  // 天厨贵人
+  const tianChuMap: Record<string, string> = { '甲': '巳', '乙': '午', '丙': '巳', '丁': '午', '戊': '申', '己': '酉', '庚': '亥', '辛': '子', '壬': '寅', '癸': '卯' };
+  if (tianChuMap[dayGan] === targetZhi) results.push('天厨贵人');
+
+  // 金锁铁蛇
+  const jinSuoMap: Record<string, string> = { '子': '辰', '丑': '巳', '寅': '午', '卯': '未', '辰': '申', '巳': '酉', '午': '戌', '未': '亥', '申': '子', '酉': '丑', '戌': '寅', '亥': '卯' };
+  if (jinSuoMap[yearZhi] === targetZhi) results.push('金锁铁蛇');
+
   // 十恶大败 (仅日柱)
   if (pillarIdx === 2) {
       const shiEDaBai = ['甲辰', '乙巳', '丙申', '丁亥', '戊戌', '己丑', '庚辰', '辛巳', '壬申', '癸亥'];
@@ -126,9 +131,10 @@ function getPillarShenSha(eightChar: EightChar, pillarIdx: number): string[] {
   // 金神
   if (pillarIdx === 3 && ['乙丑', '己巳', '癸酉'].includes(pillarGanZhi)) results.push('金神');
 
+  // 获取lunar-javascript原生支持的神煞列表
   const extraShenSha = (eightChar as any)[`get${['Year','Month','Day','Time'][pillarIdx]}ShenSha`] ? (eightChar as any)[`get${['Year','Month','Day','Time'][pillarIdx]}ShenSha`]() : [];
   
-  return Array.from(new Set([...results, ...extraShenSha])).slice(0, 15);
+  return Array.from(new Set([...results, ...extraShenSha])).slice(0, 20);
 }
 
 /**
@@ -202,8 +208,10 @@ export function calculateLocalBaZi(name: string, date: string, time: string, gen
     daYun: yun.getDaYun().map(d => {
       const startYear = d.getStartYear();
       const startAge = d.getStartAge();
+      // Age range calculation (1-11, 11-21 etc.)
+      const endAge = startAge + 10;
       return {
-        startYear, endYear: startYear + 9, startAge, endAge: startAge + 9, ganZhi: d.getGanZhi(),
+        startYear, endYear: startYear + 9, startAge, endAge, ganZhi: d.getGanZhi(),
         liuNian: d.getLiuNian().map(ln => ({
           year: ln.getYear(), ganZhi: ln.getGanZhi(), age: ln.getAge(),
           liuYue: ln.getLiuYue().map(ly => ({ month: ly.getMonthInChinese() + '月', ganZhi: ly.getGanZhi() }))

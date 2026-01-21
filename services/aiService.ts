@@ -9,7 +9,7 @@ const DEFAULT_GEMINI_MODEL = 'gemini-3-pro-preview';
 const DEFAULT_DEEPSEEK_MODEL = 'deepseek-chat';
 const API_TIMEOUT_MS = 120000; // 2 minutes timeout for deep reasoning
 
-export function formatBaZiToText(chart: BaZiChart, selectedIndices?: { dy: number, ln: number, lm?: number }): string {
+export function formatBaZiToText(chart: BaZiChart, gender?: string, selectedIndices?: { dy: number, ln: number, lm?: number }): string {
   const formatPillar = (p: BaZiPillar, label: string) => {
     return `${label}柱：【${p.stem}${p.branch}】
 - 十神主星：${p.mainStar || '日主'}
@@ -43,6 +43,7 @@ export function formatBaZiToText(chart: BaZiChart, selectedIndices?: { dy: numbe
 
   return `
 【缘主命理底层数据】
+性别：${gender === 'Male' ? '男 (乾造)' : '女 (坤造)'}
 实岁：${age}
 ${formatPillar(chart.year, '年')}
 ${formatPillar(chart.month, '月')}
@@ -249,9 +250,9 @@ export function extractSuggestions(content: string): { content: string, suggesti
 
 export async function analyzeBaZi(name: string, date: string, time: string, gender: string, place: string, onChunk?: (c: string) => void): Promise<BaZiResponse> {
   const chart = calculateLocalBaZi(name, date, time, gender);
-  const baZiData = formatBaZiToText(chart);
+  const baZiData = formatBaZiToText(chart, gender);
 
-  const prompt = `缘主：${name}，${gender === 'Male' ? '乾造' : '坤造'}。
+  const prompt = `缘主：${name}，性别：${gender === 'Male' ? '男 (乾造)' : '女 (坤造)'}。
 请执行【最高级别专业详盘】深度推演，严格按以下带有 ### 子标题的结构输出：
 ### 【格局判定】
 ### 【时命气象】
@@ -260,7 +261,7 @@ export async function analyzeBaZi(name: string, date: string, time: string, gend
 ### 【岁运关键】
 ### 【天机总结】
 ${getActiveConfig().personality === AppPersonality.PRAGMATIC ? "并在最后附加 ### 【实战建议】" : ""}
-要求：文辞干练，每一部分都必须带标题。**加粗严禁超过 3 处**。`;
+要求：文辞干练，每一部分都必须带标题。必须严格遵守性别差异进行论断（如男看财官，女看夫子）。**加粗严禁超过 3 处**。`;
 
   try {
     const analysis = await callAI(prompt, getBaseInstruction(baZiData), false, onChunk);
@@ -275,8 +276,8 @@ export async function analyzeHePan(p1: UserProfile, p2: UserProfile, onChunk?: (
   const chart1 = calculateLocalBaZi(p1.name, p1.birthDate, p1.birthTime, p1.gender, p1.calendarType, p1.isLeapMonth);
   const chart2 = calculateLocalBaZi(p2.name, p2.birthDate, p2.birthTime, p2.gender, p2.calendarType, p2.isLeapMonth);
   
-  const data1 = `缘主一 (${p1.name}, ${p1.gender === 'Male' ? '乾造' : '坤造'}):\n${formatBaZiToText(chart1)}`;
-  const data2 = `缘主二 (${p2.name}, ${p2.gender === 'Male' ? '乾造' : '坤造'}):\n${formatBaZiToText(chart2)}`;
+  const data1 = `缘主一 (${p1.name}, ${p1.gender === 'Male' ? '乾造' : '坤造'}):\n${formatBaZiToText(chart1, p1.gender)}`;
+  const data2 = `缘主二 (${p2.name}, ${p2.gender === 'Male' ? '乾造' : '坤造'}):\n${formatBaZiToText(chart2, p2.gender)}`;
 
   const prompt = `现有两位缘主的命理数据，请进行【合盘分析】：
 ${data1}
@@ -316,7 +317,7 @@ export async function chatWithContext(messages: ChatMessage[], context: string, 
 
 export async function interpretLiuYao(lines: HexagramLine[], question: string, userProfile?: any): Promise<LiuYaoResponse> {
   const lineStr = lines.map(l => l.value).join(',');
-  const baZiData = userProfile ? `缘主生辰：${userProfile.birthDate} ${userProfile.birthTime}` : "";
+  const baZiData = userProfile ? `缘主生辰：${userProfile.birthDate} ${userProfile.birthTime}，性别：${userProfile.gender === 'Male' ? '男' : '女'}` : "";
 
   const prompt = `问题：${question}。卦象序列：${lineStr}。
   请以纯 JSON格式输出：

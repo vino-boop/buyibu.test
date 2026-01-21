@@ -258,9 +258,11 @@ export const BaZiProvider: React.FC<{ userProfile: UserProfile; children: ReactN
     setChatLoading(true);
 
     try {
+      // Fix: Argument of type '{ dy: any; ln: any; lm: any; }' is not assignable to parameter of type 'string'.
+      // Corrected call to formatBaZiToText by including gender parameter.
       const baZiData = hePanData 
           ? `合盘推演：缘主一(${hePanData.profile1.name}) 缘主二(${hePanData.profile2.name})`
-          : formatBaZiToText(chartData!.chart, { dy: selectedDaYunIndex, ln: selectedLiuNianIndex, lm: selectedLiuYueIndex });
+          : formatBaZiToText(chartData!.chart, gender, { dy: selectedDaYunIndex, ln: selectedLiuNianIndex, lm: selectedLiuYueIndex });
       
       const context = messages.length > 0 ? messages[0].content : (hePanData ? hePanData.analysis : chartData!.analysis);
       

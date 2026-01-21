@@ -129,6 +129,7 @@ export const BaZiView: React.FC<BaZiViewProps> = ({ defaultQuestion, isDayMode =
   const daYunListRef = useRef<HTMLDivElement>(null);
   const liuNianListRef = useRef<HTMLDivElement>(null);
   const liuYueListRef = useRef<HTMLDivElement>(null);
+  const inputContainerRef = useRef<HTMLDivElement>(null);
   const scrollTimeoutRef = useRef<number | null>(null);
 
   const [hePanSelection, setHePanSelection] = useState<UserProfile[]>([]);
@@ -148,6 +149,14 @@ export const BaZiView: React.FC<BaZiViewProps> = ({ defaultQuestion, isDayMode =
     scrollTimeoutRef.current = window.setTimeout(() => {
       setIsScrolling(false);
     }, 800);
+  };
+
+  const handleShenShaClick = (ssName: string) => {
+    setInputMessage(`请问我命盘里的“${ssName}”是什么意思？它对我的格局和运势有什么具体影响？`);
+    // 自动滚动到输入框并聚焦
+    if (inputContainerRef.current) {
+        inputContainerRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
   };
 
   const currentAge = birthDate ? new Date().getFullYear() - parseInt(birthDate.split('-')[0]) : 0;
@@ -429,7 +438,11 @@ export const BaZiView: React.FC<BaZiViewProps> = ({ defaultQuestion, isDayMode =
                                         {[chartData.chart.year, chartData.chart.month, chartData.chart.day, chartData.chart.hour].map((p, i) => (
                                             <div key={i} className="py-3 sm:py-4 px-1 flex flex-wrap justify-center items-center content-center gap-1 sm:gap-1.5 min-w-0 max-h-32 overflow-y-auto scrollbar-hide">
                                                 {p.shenSha.map((ss, idx) => (
-                                                    <span key={idx} className={`text-[9px] sm:text-[10px] border px-1.5 py-0.5 rounded-[4px] whitespace-nowrap leading-none transition-all hover:scale-110 cursor-default ${isDayMode ? 'text-mystic-gold border-mystic-gold/30 bg-mystic-gold/5' : 'text-mystic-gold/80 border-mystic-gold/20 bg-white/5'}`}>
+                                                    <span 
+                                                        key={idx} 
+                                                        onClick={() => handleShenShaClick(ss)}
+                                                        className={`text-[9px] sm:text-[10px] border px-1.5 py-0.5 rounded-[4px] whitespace-nowrap leading-none transition-all hover:scale-110 hover:border-mystic-gold hover:bg-mystic-gold/20 cursor-pointer ${isDayMode ? 'text-mystic-gold border-mystic-gold/30 bg-mystic-gold/5' : 'text-mystic-gold/80 border-mystic-gold/20 bg-white/5'}`}
+                                                    >
                                                       {ss}
                                                     </span>
                                                 ))}
@@ -446,7 +459,7 @@ export const BaZiView: React.FC<BaZiViewProps> = ({ defaultQuestion, isDayMode =
                                             {chartData.chart.daYun.map((yun, i) => (
                                                 <button key={i} onClick={() => { setSelectedDaYunIndex(i); setSelectedLiuNianIndex(0); setSelectedLiuYueIndex(0); }} className={`flex-shrink-0 flex flex-col items-center justify-center min-w-[3.5rem] sm:min-w-[4rem] h-14 sm:h-16 rounded-xl border transition-all ${selectedDaYunIndex === i ? 'bg-mystic-gold text-black border-mystic-gold shadow-lg scale-105 z-10' : (isDayMode ? 'bg-white border-gray-100 text-gray-500 hover:bg-gray-50' : 'bg-white/5 border-white/5 text-gray-500')}`}>
                                                     <span className="text-sm sm:text-base font-serif font-bold">{yun.ganZhi}</span>
-                                                    <span className="text-[9px] sm:text-[10px] opacity-70">{yun.startAge}岁</span>
+                                                    <span className="text-[9px] sm:text-[10px] opacity-70 whitespace-nowrap">{yun.startAge}-{yun.endAge}岁</span>
                                                 </button>
                                             ))}
                                         </div>
@@ -519,7 +532,10 @@ export const BaZiView: React.FC<BaZiViewProps> = ({ defaultQuestion, isDayMode =
           </div>
       </div>
 
-      <div className={`absolute bottom-0 left-0 w-full px-4 pt-4 sm:pt-6 pb-6 sm:pb-8 z-20 border-t shadow-[0_-10px_30px_rgba(0,0,0,0.08)] transition-all duration-500 ease-in-out ${isScrolling ? 'translate-y-full opacity-0 pointer-events-none' : 'translate-y-0 opacity-100'} ${isDayMode ? 'bg-white border-gray-100' : 'bg-mystic-dark border-white/5'}`}>
+      <div 
+        ref={inputContainerRef}
+        className={`absolute bottom-0 left-0 w-full px-4 pt-4 sm:pt-6 pb-6 sm:pb-8 z-20 border-t shadow-[0_-10px_30px_rgba(0,0,0,0.08)] transition-all duration-500 ease-in-out ${isScrolling ? 'translate-y-full opacity-0 pointer-events-none' : 'translate-y-0 opacity-100'} ${isDayMode ? 'bg-white border-gray-100' : 'bg-mystic-dark border-white/5'}`}
+      >
             <div className="max-w-4xl mx-auto">
                 {!chatLoading && (
                     <div className="flex flex-wrap gap-2 mb-3 sm:mb-4 animate-fade-in-up">
