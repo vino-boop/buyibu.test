@@ -3,7 +3,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { BaZiResponse, Gender, ChatMessage, UserProfile, BaZiChart, CalendarType, HePanResponse } from '../types';
 import { analyzeBaZi, chatWithContext, formatBaZiToText, extractSuggestions, analyzeHePan } from '../services/aiService';
 import { calculateLocalBaZi } from '../services/geminiService';
-import { Lunar } from 'lunar-javascript';
+import { Lunar, Solar } from 'lunar-javascript';
 
 interface BaZiContextType {
   name: string;
@@ -108,6 +108,8 @@ export const BaZiProvider: React.FC<{ userProfile: UserProfile; children: ReactN
     const now = new Date();
     const currentYear = now.getFullYear();
     const currentLunar = Lunar.fromDate(now);
+    // Correctly get the year's GanZhi reflecting the Solar Terms (Li Chun)
+    const currentYearGanZhi = currentLunar.getYearInGanZhi();
     const currentLunarMonth = currentLunar.getMonth(); 
 
     let dyIdx = 0;
@@ -117,7 +119,8 @@ export const BaZiProvider: React.FC<{ userProfile: UserProfile; children: ReactN
     const foundDyIdx = chart.daYun.findIndex(dy => currentYear >= dy.startYear && currentYear <= dy.endYear);
     if (foundDyIdx !== -1) {
       dyIdx = foundDyIdx;
-      const foundLnIdx = chart.daYun[foundDyIdx].liuNian.findIndex(ln => ln.year === currentYear);
+      // Precision matching using GanZhi instead of Gregorian year number
+      const foundLnIdx = chart.daYun[foundDyIdx].liuNian.findIndex(ln => ln.ganZhi === currentYearGanZhi);
       if (foundLnIdx !== -1) {
         lnIdx = foundLnIdx;
         const currentMonthName = (currentLunarMonth < 0 ? "闰" : "") + Math.abs(currentLunarMonth) + "月";
@@ -127,6 +130,10 @@ export const BaZiProvider: React.FC<{ userProfile: UserProfile; children: ReactN
         } else {
             lyIdx = Math.min(Math.abs(currentLunarMonth) - 1, chart.daYun[foundDyIdx].liuNian[foundLnIdx].liuYue.length - 1);
         }
+      } else {
+          // Fallback to year matching if GanZhi lookup fails for some reason
+          const fallbackLnIdx = chart.daYun[foundDyIdx].liuNian.findIndex(ln => ln.year === currentYear);
+          if (fallbackLnIdx !== -1) lnIdx = fallbackLnIdx;
       }
     }
     setSelectedDaYunIndex(dyIdx);
@@ -258,8 +265,6 @@ export const BaZiProvider: React.FC<{ userProfile: UserProfile; children: ReactN
     setChatLoading(true);
 
     try {
-      // Fix: Argument of type '{ dy: any; ln: any; lm: any; }' is not assignable to parameter of type 'string'.
-      // Corrected call to formatBaZiToText by including gender parameter.
       const baZiData = hePanData 
           ? `合盘推演：缘主一(${hePanData.profile1.name}) 缘主二(${hePanData.profile2.name})`
           : formatBaZiToText(chartData!.chart, gender, { dy: selectedDaYunIndex, ln: selectedLiuNianIndex, lm: selectedLiuYueIndex });

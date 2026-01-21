@@ -4,6 +4,7 @@ import { AppMode, Article, Gender, getElementStyle } from '../types';
 import { useAssets, isImageUrl } from '../contexts/AssetContext';
 import { useBaZi } from '../contexts/BaZiContext';
 import { IconMarriage, IconCareer, IconHealth, IconExam, IconFortune, IconBookmark, IconShare } from '../components/MysticIcons';
+import { Lunar } from 'lunar-javascript';
 
 interface HomeViewProps {
   onNavigate: (mode: AppMode, question?: string) => void;
@@ -47,7 +48,12 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate, isDayMode = fals
   
   const chartScrollRef = useRef<HTMLDivElement>(null);
 
-  const currentYear = new Date().getFullYear();
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  // Get accurate metaphysical year GanZhi
+  const currentLunar = Lunar.fromDate(now);
+  const currentYearGanZhi = currentLunar.getYearInGanZhi();
+  
   const userBirthYear = chartData?.chart?.solarDate ? parseInt(chartData.chart.solarDate.split('年')[0]) : 1990;
   const currentAge = currentYear - userBirthYear;
 
@@ -56,23 +62,17 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate, isDayMode = fals
     const { year, month, day, hour } = chartData.chart;
     
     // Weighted energy calculation
-    // Main Pillars (Stem/Branch) = 1.0 weight
-    // Hidden Stems (藏干) = 0.4 weight
     const counts: Record<string, number> = { '木': 0, '火': 0, '土': 0, '金': 0, '水': 0 };
     
     const processPillar = (p: any) => {
-      // Stems and Branches
       counts[getElementByChar(p.stem)] += 1.0;
       counts[getElementByChar(p.branch)] += 1.0;
-      // Hidden Stems
       (p.hiddenStems || []).forEach((hs: string) => {
         counts[getElementByChar(hs)] += 0.4;
       });
     };
 
     [year, month, day, hour].forEach(processPillar);
-    
-    // Normalize to percentage or simplified score
     return counts;
   }, [chartData]);
 
@@ -82,10 +82,9 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate, isDayMode = fals
     const selfElement = getElementByChar(day.stem);
     const { parent, sibling } = ELEMENT_RELATIONS[selfElement];
     
-    // 提升提纲（月令）的权重
     const positions = [
       { char: year.stem, weight: 8 }, { char: year.branch, weight: 8 },
-      { char: month.stem, weight: 12 }, { char: month.branch, weight: 40 }, // 月令40%
+      { char: month.stem, weight: 12 }, { char: month.branch, weight: 40 }, 
       { char: day.stem, weight: 0 }, { char: day.branch, weight: 12 },
       { char: hour.stem, weight: 10 }, { char: hour.branch, weight: 10 }
     ];
@@ -96,7 +95,6 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate, isDayMode = fals
       if (e === parent || e === sibling) totalSupport += p.weight;
     });
     
-    // 基础偏移量，避免因为没有同党就显示极低分，或者全是同党就100%
     const baseVal = 25; 
     const scaledVal = (totalSupport / 100) * 75;
     
@@ -146,7 +144,9 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate, isDayMode = fals
           d.age <= currentAge && (idx === points.length - 1 || points[idx+1].age > currentAge)
         );
       } else {
-        currentIndex = points.findIndex(d => d.year === currentYear);
+        // Precise matching using GanZhi
+        currentIndex = points.findIndex(d => d.label === currentYearGanZhi);
+        if (currentIndex === -1) currentIndex = points.findIndex(d => d.year === currentYear);
       }
 
       if (currentIndex !== -1) {
@@ -158,7 +158,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate, isDayMode = fals
         });
       }
     }
-  }, [luckKLineData, chartFilter, currentYear, currentAge]);
+  }, [luckKLineData, chartFilter, currentYear, currentAge, currentYearGanZhi]);
 
   const categories = [
     { name: '婚嫁', icon: <IconMarriage />, question: '请帮我从合盘的角度分析一下我的姻缘和婚姻运势。' },
@@ -291,7 +291,11 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate, isDayMode = fals
                         {luckKLineData.map((d, idx) => {
                             const isUp = d.close >= d.open;
                             const color = isUp ? '#10b981' : '#ef4444';
-                            const isCurrent = d.isYearly ? (d.year === currentYear) : (d.age <= currentAge && (idx === luckKLineData.length - 1 || luckKLineData[idx+1].age > currentAge));
+                            // Corrected isCurrent logic using GanZhi for yearly markers
+                            const isCurrent = d.isYearly 
+                                ? (d.label === currentYearGanZhi) 
+                                : (d.age <= currentAge && (idx === luckKLineData.length - 1 || luckKLineData[idx+1].age > currentAge));
+                            
                             return (
                                 <div key={idx} onClick={() => handleKLinePointClick(d)} className="flex-1 h-full flex flex-col items-center group/kline relative cursor-pointer active:scale-95 transition-transform">
                                     <div className="w-full h-full relative flex items-center justify-center">
@@ -337,7 +341,6 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate, isDayMode = fals
                        <div className="w-24 h-24 relative flex items-center justify-center">
                           <svg viewBox="0 0 36 36" className="w-full h-full transform -rotate-90">
                              {elementBalance && Object.entries(elementBalance).reduce((acc, [el, count], idx, arr) => {
-                                // Explicitly cast Object.values to number[] to handle 'unknown' type errors in reduce
                                 const total = (Object.values(elementBalance) as number[]).reduce((a: number, b: number) => a + b, 0);
                                 const percentage = ((count as number) / total) * 100;
                                 const strokeDashoffset = -acc.offset;
@@ -353,7 +356,6 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate, isDayMode = fals
                        </div>
                        <div className="flex-1 flex flex-col justify-center">
                           {elementBalance && (Object.entries(elementBalance) as [string, number][]).sort((a, b) => b[1] - a[1]).map(([el, count]) => {
-                             // Explicitly cast Object.values to number[] to handle 'unknown' type errors in reduce
                              const total = (Object.values(elementBalance) as number[]).reduce((a: number, b: number) => a + b, 0);
                              const percent = (count / total) * 100;
                              return (
