@@ -188,7 +188,7 @@ export const BaZiView: React.FC<BaZiViewProps> = ({ defaultQuestion, isDayMode =
   if (viewMode === 'EDIT') {
     return (
       <div className={`w-full h-full flex flex-col items-center pb-24 px-4 pt-4 animate-fade-in-up overflow-hidden ${isDayMode ? 'bg-[#fcfcfc]' : 'bg-mystic-dark'}`}>
-        <div className={`w-full max-w-lg rounded-3xl p-6 shadow-2xl border flex flex-col h-full transition-colors ${isDayMode ? 'bg-white border-gray-100' : 'bg-mystic-paper border-white/5'}`}>
+        <div className={`w-full max-w-lg rounded-3xl p-6 shadow-2xl border flex flex-col h-full transition-all duration-500 ${isDayMode ? 'bg-white border-gray-100' : 'bg-mystic-paper border-white/5'}`}>
            <div className="flex gap-2 mb-6 p-1 rounded-2xl bg-black/20">
               <button onClick={() => setEditTab('BASIC')} className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${editTab === 'BASIC' ? 'bg-mystic-gold text-black shadow-lg' : 'text-gray-500'}`}>基础资料</button>
               <button onClick={() => setEditTab('ROSTER')} className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${editTab === 'ROSTER' ? 'bg-mystic-gold text-black shadow-lg' : 'text-gray-500'}`}>名册合盘</button>
@@ -236,12 +236,21 @@ export const BaZiView: React.FC<BaZiViewProps> = ({ defaultQuestion, isDayMode =
                </div>
              ) : (
                <div className="space-y-3">
+                  {/* Selection Guidance Hint */}
+                  <div className={`p-3 rounded-2xl border mb-4 animate-fade-in transition-all ${hePanSelection.length === 2 ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-mystic-gold/5 border-mystic-gold/20'}`}>
+                    <div className="flex items-center gap-2">
+                      <span className={`text-xs ${hePanSelection.length === 2 ? 'text-emerald-500' : 'text-mystic-gold'}`}>
+                        {hePanSelection.length === 2 ? '✓ 已选满两位缘主' : '💡 请在下方名册中选择两位缘主进行合盘'}
+                      </span>
+                    </div>
+                  </div>
+
                   <div className="flex justify-between items-center mb-2">
                     <span className="text-xs text-gray-500">已选: {hePanSelection.length}/2</span>
                     {hePanSelection.length > 0 && <button onClick={() => setHePanSelection([])} className="text-[10px] text-mystic-gold">清除选择</button>}
                   </div>
                   {roster.map((p, idx) => (
-                    <div key={p.id || idx} className={`p-4 rounded-2xl border flex items-center justify-between transition-all cursor-pointer group ${hePanSelection.find(item => item.id === p.id) ? 'bg-mystic-gold/10 border-mystic-gold' : 'bg-black/20 border-white/5'}`} onClick={() => toggleSelection(p)}>
+                    <div key={p.id || idx} className={`p-4 rounded-2xl border flex items-center justify-between transition-all cursor-pointer group ${hePanSelection.find(item => item.id === p.id) ? 'bg-mystic-gold/10 border-mystic-gold shadow-[0_0_15px_rgba(197,176,120,0.1)]' : 'bg-black/20 border-white/5'}`} onClick={() => toggleSelection(p)}>
                        <div className="flex items-center gap-3">
                           <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold ${p.gender === Gender.MALE ? 'bg-blue-900/40 text-blue-200' : 'bg-rose-900/40 text-rose-200'}`}>
                               {p.name.charAt(0)}

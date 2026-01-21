@@ -54,12 +54,25 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate, isDayMode = fals
   const elementBalance = useMemo(() => {
     if (!chartData?.chart) return null;
     const { year, month, day, hour } = chartData.chart;
-    const chars = [year.stem, year.branch, month.stem, month.branch, day.stem, day.branch, hour.stem, hour.branch];
+    
+    // Weighted energy calculation
+    // Main Pillars (Stem/Branch) = 1.0 weight
+    // Hidden Stems (藏干) = 0.4 weight
     const counts: Record<string, number> = { '木': 0, '火': 0, '土': 0, '金': 0, '水': 0 };
-    chars.forEach(c => {
-      const e = getElementByChar(c);
-      counts[e] = (counts[e] || 0) + 1;
-    });
+    
+    const processPillar = (p: any) => {
+      // Stems and Branches
+      counts[getElementByChar(p.stem)] += 1.0;
+      counts[getElementByChar(p.branch)] += 1.0;
+      // Hidden Stems
+      (p.hiddenStems || []).forEach((hs: string) => {
+        counts[getElementByChar(hs)] += 0.4;
+      });
+    };
+
+    [year, month, day, hour].forEach(processPillar);
+    
+    // Normalize to percentage or simplified score
     return counts;
   }, [chartData]);
 
@@ -158,6 +171,8 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate, isDayMode = fals
       if (cat.name === '婚嫁') {
           setViewMode('EDIT');
           setEditTab('ROSTER');
+          onNavigate(AppMode.BAZI);
+          return;
       }
       onNavigate(AppMode.BAZI, cat.question);
   };
@@ -317,12 +332,13 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate, isDayMode = fals
 
              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                  <div className={`p-6 rounded-3xl border shadow-xl flex flex-col ${isDayMode ? 'bg-white border-gray-100' : 'bg-mystic-paper border-white/5'}`}>
-                    <h4 className={`text-sm font-bold mb-6 ${isDayMode ? 'text-gray-800' : 'text-gray-200'}`}>五行能量分布</h4>
+                    <h4 className={`text-sm font-bold mb-6 ${isDayMode ? 'text-gray-800' : 'text-gray-200'}`}>五行能量分布 (含藏干)</h4>
                     <div className="flex items-center gap-6">
                        <div className="w-24 h-24 relative flex items-center justify-center">
                           <svg viewBox="0 0 36 36" className="w-full h-full transform -rotate-90">
                              {elementBalance && Object.entries(elementBalance).reduce((acc, [el, count], idx, arr) => {
-                                const total = 8;
+                                // Explicitly cast Object.values to number[] to handle 'unknown' type errors in reduce
+                                const total = (Object.values(elementBalance) as number[]).reduce((a: number, b: number) => a + b, 0);
                                 const percentage = ((count as number) / total) * 100;
                                 const strokeDashoffset = -acc.offset;
                                 acc.elements.push(<circle key={el} cx="18" cy="18" r="15.915" fill="transparent" stroke={ELEMENT_COLORS[el]} strokeWidth="4" strokeDasharray={`${percentage} ${100 - percentage}`} strokeDashoffset={strokeDashoffset} />);
@@ -336,18 +352,26 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate, isDayMode = fals
                           </div>
                        </div>
                        <div className="flex-1 flex flex-col justify-center">
-                          {elementBalance && Object.entries(elementBalance).map(([el, count]) => (
-                             <div key={el} className="flex items-center gap-2 mb-2">
-                                <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: ELEMENT_COLORS[el] }}></div>
-                                <span className="text-[10px] text-gray-500 w-4">{el}</span>
-                                <div className="flex-1 h-1 bg-black/20 rounded-full overflow-hidden"><div className="h-full rounded-full" style={{ width: `${((count as number)/8)*100}%`, backgroundColor: ELEMENT_COLORS[el] }}></div></div>
-                             </div>
-                          ))}
+                          {elementBalance && (Object.entries(elementBalance) as [string, number][]).sort((a, b) => b[1] - a[1]).map(([el, count]) => {
+                             // Explicitly cast Object.values to number[] to handle 'unknown' type errors in reduce
+                             const total = (Object.values(elementBalance) as number[]).reduce((a: number, b: number) => a + b, 0);
+                             const percent = (count / total) * 100;
+                             return (
+                               <div key={el} className="flex items-center gap-2 mb-2">
+                                  <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: ELEMENT_COLORS[el] }}></div>
+                                  <span className="text-[10px] text-gray-500 w-4">{el}</span>
+                                  <div className="flex-1 h-1 bg-black/20 rounded-full overflow-hidden">
+                                     <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${percent}%`, backgroundColor: ELEMENT_COLORS[el] }}></div>
+                                  </div>
+                                  <span className="text-[8px] text-gray-600 w-6 text-right">{Math.round(percent)}%</span>
+                               </div>
+                             );
+                          })}
                        </div>
                     </div>
                  </div>
 
-                 <div className={`p-6 rounded-3xl border shadow-xl flex flex-col relative overflow-hidden group cursor-pointer active:scale-95 transition-all ${isDayMode ? 'bg-white border-gray-100' : 'bg-mystic-paper border-white/5'}`} onClick={() => onNavigate(AppMode.BAZI, `请分析一下我的命盘气象，是身强还是身弱？这种格局对我未来几年的事业发展有什么影响？`)}>
+                 <div className={`p-6 rounded-3xl border shadow-xl flex flex-col relative overflow-hidden group cursor-pointer active:scale-[0.97] transition-all ${isDayMode ? 'bg-white border-gray-100' : 'bg-mystic-paper border-white/5'}`} onClick={() => onNavigate(AppMode.BAZI, `请分析一下我的命盘气象，是身强还是身弱？这种格局对我未来几年的事业发展有什么影响？`)}>
                     <div className="absolute top-0 right-0 w-24 h-24 bg-mystic-gold/5 blur-2xl rounded-full"></div>
                     <div className="flex justify-between items-center mb-6">
                         <h4 className={`text-sm font-bold ${isDayMode ? 'text-gray-800' : 'text-gray-200'}`}>命格能量指数</h4>
