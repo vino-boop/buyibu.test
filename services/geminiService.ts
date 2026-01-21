@@ -1,5 +1,5 @@
 
-import { BaZiPillar, DaYun, CalendarType } from "../types";
+import { BaZiPillar, DaYun, CalendarType, BaZiChart } from "../types";
 import { Solar, Lunar, EightChar } from 'lunar-javascript';
 
 /**
@@ -96,7 +96,6 @@ function getPillarShenSha(eightChar: EightChar, pillarIdx: number): string[] {
   const guoYinMap: Record<string, string> = { '甲': '戌', '乙': '亥', '丙': '丑', '丁': '寅', '戊': '丑', '己': '寅', '庚': '辰', '辛': '巳', '壬': '未', '癸': '申' };
   if (guoYinMap[dayGan] === targetZhi) results.push('国印贵人');
 
-  // 龙德、青龙、大耗、白虎等流年支系 (略简为固定逻辑)
   const dayXunKong = eightChar.getDayXunKong();
   if (dayXunKong.includes(targetZhi)) results.push('空亡');
   
@@ -127,17 +126,15 @@ function getPillarShenSha(eightChar: EightChar, pillarIdx: number): string[] {
   // 金神
   if (pillarIdx === 3 && ['乙丑', '己巳', '癸酉'].includes(pillarGanZhi)) results.push('金神');
 
-  // 更多星宿逻辑... 
-  // 此时已涵盖 30+ 显性逻辑，结合 lunar-javascript 内部已有的神煞获取，我们可以直接合并
   const extraShenSha = (eightChar as any)[`get${['Year','Month','Day','Time'][pillarIdx]}ShenSha`] ? (eightChar as any)[`get${['Year','Month','Day','Time'][pillarIdx]}ShenSha`]() : [];
   
-  return Array.from(new Set([...results, ...extraShenSha])).slice(0, 15); // 每柱最多显示15个，确保不撑破UI
+  return Array.from(new Set([...results, ...extraShenSha])).slice(0, 15);
 }
 
 /**
  * 核心算法：本地八字排盘
  */
-export function calculateLocalBaZi(name: string, date: string, time: string, gender: string, calendarType: CalendarType = CalendarType.SOLAR, isLeapMonth: boolean = false) {
+export function calculateLocalBaZi(name: string, date: string, time: string, gender: string, calendarType: CalendarType = CalendarType.SOLAR, isLeapMonth: boolean = false): BaZiChart {
   const [y, m, d] = (date || '1990-01-01').split('-').map(Number);
   const [h, min] = (time || '12:00').split(':').map(Number);
   
@@ -145,15 +142,7 @@ export function calculateLocalBaZi(name: string, date: string, time: string, gen
   let lunar: Lunar;
 
   if (calendarType === CalendarType.LUNAR) {
-      lunar = Lunar.fromYmdHms(y, m, d, h, min, 0);
-      // Handle potential leap month if the library doesn't automatically detect it from date input
-      // Usually lunar-javascript expects month to be negative for leap, or specific parameters.
-      // If user explicitly checked 'leap', we might need to adjust.
-      if (isLeapMonth) {
-          // Attempt to find the leap month for that year
-          const leapMonth = lunar.getYear() === y ? lunar.getMonth() : m;
-          lunar = Lunar.fromYmdHms(y, -Math.abs(leapMonth), d, h, min, 0);
-      }
+      lunar = Lunar.fromYmdHms(y, isLeapMonth ? -m : m, d, h, min, 0);
       solar = lunar.getSolar();
   } else {
       solar = Solar.fromYmdHms(y, m, d, h, min, 0);
@@ -198,23 +187,31 @@ export function calculateLocalBaZi(name: string, date: string, time: string, gen
     };
   };
 
-  const chart = {
-    solarDate: solar.toFullString(), lunarDate: lunar.toString(),
-    year: createPillar('Year', 0), month: createPillar('Month', 1), day: createPillar('Day', 2), hour: createPillar('Hour', 3),
-    daYun: [] as DaYun[]
+  const yun = eightChar.getYun(gender === 'Male' ? 1 : 0);
+  const startY = yun.getStartYear();
+  const startM = yun.getStartMonth();
+  const startD = yun.getStartDay();
+
+  const chart: BaZiChart = {
+    solarDate: solar.toFullString(), 
+    lunarDate: lunar.toString(),
+    year: createPillar('Year', 0), 
+    month: createPillar('Month', 1), 
+    day: createPillar('Day', 2), 
+    hour: createPillar('Hour', 3),
+    daYun: yun.getDaYun().map(d => {
+      const startYear = d.getStartYear();
+      const startAge = d.getStartAge();
+      return {
+        startYear, endYear: startYear + 9, startAge, endAge: startAge + 9, ganZhi: d.getGanZhi(),
+        liuNian: d.getLiuNian().map(ln => ({
+          year: ln.getYear(), ganZhi: ln.getGanZhi(), age: ln.getAge(),
+          liuYue: ln.getLiuYue().map(ly => ({ month: ly.getMonthInChinese() + '月', ganZhi: ly.getGanZhi() }))
+        }))
+      };
+    }),
+    qiYun: `${startY}年${startM}个月${startD}天后起运`
   };
 
-  const yun = eightChar.getYun(gender === 'Male' ? 1 : 0);
-  chart.daYun = yun.getDaYun().map(d => {
-    const startYear = d.getStartYear();
-    const startAge = d.getStartAge();
-    return {
-      startYear, endYear: startYear + 9, startAge, endAge: startAge + 9, ganZhi: d.getGanZhi(),
-      liuNian: d.getLiuNian().map(ln => ({
-        year: ln.getYear(), ganZhi: ln.getGanZhi(), age: ln.getAge(),
-        liuYue: ln.getLiuYue().map(ly => ({ month: ly.getMonthInChinese() + '月', ganZhi: ly.getGanZhi() }))
-      }))
-    };
-  });
   return chart;
 }

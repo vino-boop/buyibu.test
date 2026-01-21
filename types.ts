@@ -92,6 +92,7 @@ export interface BaZiChart {
   lunarDate: string;
   solarDate: string;
   daYun: DaYun[];
+  qiYun: string; // 精确起运时间描述
 }
 
 export interface BaZiResponse {

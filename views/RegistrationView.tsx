@@ -194,20 +194,32 @@ export const RegistrationView: React.FC<RegistrationViewProps> = ({ onComplete, 
                       <button onClick={() => setGender(Gender.FEMALE)} className={`flex-1 rounded-lg text-sm transition-all ${gender === Gender.FEMALE ? 'bg-mystic-gold text-black font-bold' : 'text-gray-500'}`}>坤造 (女)</button>
                    </div>
                 </div>
+                <div className="space-y-2">
+                   <label className="text-[10px] text-gray-600 uppercase tracking-widest font-bold ml-1">历法类型</label>
+                   <div className="flex h-12 bg-white/5 rounded-xl p-1 mt-1">
+                      <button onClick={() => setCalendarType(CalendarType.SOLAR)} className={`flex-1 rounded-lg text-xs transition-all ${calendarType === CalendarType.SOLAR ? 'bg-mystic-gold text-black font-bold' : 'text-gray-500'}`}>公历 (阳历)</button>
+                      <button onClick={() => setCalendarType(CalendarType.LUNAR)} className={`flex-1 rounded-lg text-xs transition-all ${calendarType === CalendarType.LUNAR ? 'bg-mystic-gold text-black font-bold' : 'text-gray-500'}`}>农历 (阴历)</button>
+                   </div>
+                </div>
                 <div className="space-y-2 group">
                    <label className={`text-[10px] uppercase tracking-widest font-bold ml-1 transition-colors ${showError && !birthDate ? 'text-red-500' : 'text-gray-600 group-focus-within:text-mystic-gold'}`}>出生日期 *</label>
-                   <input 
-                      type="date" 
-                      max="9999-12-31"
-                      className={`w-full bg-transparent border-b outline-none py-3 text-lg text-white transition-all ${showError && !birthDate ? 'border-red-500/50' : 'border-gray-800 focus:border-mystic-gold'}`} 
-                      value={birthDate} 
-                      onChange={(e) => { 
-                         if (e.target.value.length <= 10) {
-                            setBirthDate(e.target.value); 
-                            setShowError(false); 
-                         }
-                      }} 
-                   />
+                   <div className="flex items-center gap-2">
+                    <input 
+                        type="date" 
+                        max="9999-12-31"
+                        className={`flex-1 bg-transparent border-b outline-none py-3 text-lg text-white transition-all ${showError && !birthDate ? 'border-red-500/50' : 'border-gray-800 focus:border-mystic-gold'}`} 
+                        value={birthDate} 
+                        onChange={(e) => { 
+                          if (e.target.value.length <= 10) {
+                              setBirthDate(e.target.value); 
+                              setShowError(false); 
+                          }
+                        }} 
+                    />
+                    {calendarType === CalendarType.LUNAR && (
+                      <button onClick={() => setIsLeapMonth(!isLeapMonth)} className={`px-2 py-1 rounded text-[10px] border transition-colors ${isLeapMonth ? 'border-mystic-gold text-mystic-gold bg-mystic-gold/10' : 'border-gray-500 text-gray-500'}`}>闰</button>
+                    )}
+                   </div>
                 </div>
                 <div className="space-y-2 group">
                    <label className="text-[10px] text-gray-600 uppercase tracking-widest font-bold ml-1 group-focus-within:text-mystic-gold transition-colors">出生时间</label>

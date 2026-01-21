@@ -136,14 +136,12 @@ export const BaZiView: React.FC<BaZiViewProps> = ({ defaultQuestion, isDayMode =
 
   useEffect(() => { if (defaultQuestion) triggerDefaultQuestion(defaultQuestion); }, [defaultQuestion]);
   
-  // Scroll to bottom on new messages
   useEffect(() => { 
     if (messages.length > 0 && scrollContainerRef.current) {
         scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight; 
     }
   }, [messages.length, chatLoading]); 
 
-  // Handle hiding/showing bottom bar based on scroll activity
   const handleScroll = () => {
     if (!isScrolling) setIsScrolling(true);
     if (scrollTimeoutRef.current) window.clearTimeout(scrollTimeoutRef.current);
@@ -357,8 +355,8 @@ export const BaZiView: React.FC<BaZiViewProps> = ({ defaultQuestion, isDayMode =
                       <div className="px-6 py-4 flex items-center justify-between">
                         <div className="flex items-center gap-8">
                             <div className="flex flex-col text-center sm:text-left">
-                              <span className="text-[10px] text-gray-400 font-bold uppercase tracking-tighter mb-1">日主元神</span>
-                              <span className={`text-xl font-bold font-serif ${getElementColor(chartData.chart.day.stem, isDayMode)}`}>{chartData.chart.day.stem}</span>
+                              <span className="text-[10px] text-gray-400 font-bold uppercase tracking-tighter mb-1">起运时间</span>
+                              <span className={`text-sm font-bold font-serif ${isDayMode ? 'text-gray-700' : 'text-mystic-gold'}`}>{chartData.chart.qiYun}</span>
                             </div>
                             <div className={`flex flex-col border-l pl-8 text-center sm:text-left transition-colors ${isDayMode ? 'border-gray-100' : 'border-white/10'}`}>
                               <span className="text-[10px] text-gray-400 font-bold uppercase tracking-tighter mb-1">当前大运</span>
@@ -378,7 +376,10 @@ export const BaZiView: React.FC<BaZiViewProps> = ({ defaultQuestion, isDayMode =
                                     <span className={`text-lg font-bold ${isDayMode ? 'text-gray-800' : 'text-mystic-gold'}`}>{name} ({gender === Gender.MALE ? '乾造' : '坤造'}) <span className="text-gray-500 ml-1 font-normal text-sm">{currentAge}岁</span></span>
                                     <button onClick={() => setViewMode('EDIT')} className={`text-[10px] rounded px-2 py-1 ml-2 transition-colors ${isDayMode ? 'text-mystic-gold border border-mystic-gold/40 hover:bg-mystic-gold/5' : 'text-mystic-gold/60 border border-mystic-gold/30 hover:bg-mystic-gold/10'}`}>修改资料 / 合盘</button>
                                 </div>
-                                <span className={isDayMode ? 'text-gray-500 font-medium' : 'text-gray-400'}>{chartData.chart.solarDate}</span>
+                                <div className="flex gap-4">
+                                  <span className={isDayMode ? 'text-gray-500 font-medium' : 'text-gray-400'}>{chartData.chart.solarDate}</span>
+                                  <span className="text-mystic-gold font-bold">{chartData.chart.qiYun}</span>
+                                </div>
                             </div>
                             <button onClick={() => setChartDisplayMode('COLLAPSED')} className={`text-[10px] px-3 py-1.5 rounded-full transition-colors ${isDayMode ? 'bg-white text-gray-500 border border-gray-100 shadow-sm' : 'bg-white/5 text-gray-400'}`}>点击收起 ▲</button>
                         </div>

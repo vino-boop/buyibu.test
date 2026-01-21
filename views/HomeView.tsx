@@ -68,18 +68,26 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate, isDayMode = fals
     const { year, month, day, hour } = chartData.chart;
     const selfElement = getElementByChar(day.stem);
     const { parent, sibling } = ELEMENT_RELATIONS[selfElement];
+    
+    // 提升提纲（月令）的权重
     const positions = [
-      { char: year.stem, weight: 8.57 }, { char: year.branch, weight: 8.57 },
-      { char: month.stem, weight: 8.57 }, { char: month.branch, weight: 40.0 },
-      { char: day.stem, weight: 8.57 }, { char: day.branch, weight: 8.57 },
-      { char: hour.stem, weight: 8.57 }, { char: hour.branch, weight: 8.57 }
+      { char: year.stem, weight: 8 }, { char: year.branch, weight: 8 },
+      { char: month.stem, weight: 12 }, { char: month.branch, weight: 40 }, // 月令40%
+      { char: day.stem, weight: 0 }, { char: day.branch, weight: 12 },
+      { char: hour.stem, weight: 10 }, { char: hour.branch, weight: 10 }
     ];
+    
     let totalSupport = 0;
     positions.forEach(p => {
       const e = getElementByChar(p.char);
       if (e === parent || e === sibling) totalSupport += p.weight;
     });
-    return Math.min(100, Math.max(0, totalSupport));
+    
+    // 基础偏移量，避免因为没有同党就显示极低分，或者全是同党就100%
+    const baseVal = 25; 
+    const scaledVal = (totalSupport / 100) * 75;
+    
+    return Math.min(98, Math.max(2, baseVal + scaledVal));
   }, [chartData]);
 
   const luckKLineData = useMemo(() => {
@@ -98,7 +106,6 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate, isDayMode = fals
       return raw;
     } else {
       const allYears = chartData.chart.daYun.flatMap(dy => dy.liuNian);
-      // 预留更多年份：前后 15 年，方便左右滑动查看
       const filtered = allYears.filter(ln => Math.abs(ln.year - currentYear) <= 15);
       const categorySeed = chartFilter === 'FORTUNE' ? 1000 : chartFilter === 'ROMANCE' ? 2000 : 3000;
 
@@ -115,7 +122,6 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate, isDayMode = fals
     }
   }, [chartData, chartFilter, currentYear]);
 
-  // 自动居中当前年份/大运
   useEffect(() => {
     if (chartScrollRef.current && luckKLineData.length > 0) {
       const container = chartScrollRef.current;
@@ -131,7 +137,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate, isDayMode = fals
       }
 
       if (currentIndex !== -1) {
-        const pointWidth = 42; // 每个数据点的宽度
+        const pointWidth = 42; 
         const scrollOffset = (currentIndex * pointWidth) + 32 - (container.offsetWidth / 2) + (pointWidth / 2);
         container.scrollTo({
           left: scrollOffset,
@@ -325,15 +331,15 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate, isDayMode = fals
                              }, { offset: 0, elements: [] as any[] }).elements}
                           </svg>
                           <div className="absolute inset-0 flex flex-col items-center justify-center">
-                             <span className="text-[10px] text-gray-500">主格</span>
+                             <span className="text-[10px] text-gray-500">主元</span>
                              <span className="text-sm font-serif font-bold text-mystic-gold">{chartData.chart.day.stem}{getElementByChar(chartData.chart.day.stem)}</span>
                           </div>
                        </div>
-                       <div className="flex-1 grid grid-cols-2 gap-x-2 gap-y-3">
+                       <div className="flex-1 flex flex-col justify-center">
                           {elementBalance && Object.entries(elementBalance).map(([el, count]) => (
-                             <div key={el} className="flex items-center gap-2">
+                             <div key={el} className="flex items-center gap-2 mb-2">
                                 <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: ELEMENT_COLORS[el] }}></div>
-                                <span className="text-[10px] text-gray-500">{el}</span>
+                                <span className="text-[10px] text-gray-500 w-4">{el}</span>
                                 <div className="flex-1 h-1 bg-black/20 rounded-full overflow-hidden"><div className="h-full rounded-full" style={{ width: `${((count as number)/8)*100}%`, backgroundColor: ELEMENT_COLORS[el] }}></div></div>
                              </div>
                           ))}
@@ -356,7 +362,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate, isDayMode = fals
                             </div>
                             <div className="text-right">
                                 <span className={`text-lg font-serif font-bold ${strengthPercentage > 50 ? 'text-mystic-gold' : 'text-gray-400'}`}>{strengthPercentage > 50 ? '身强' : '身弱'}</span>
-                                <p className="text-[9px] text-gray-600">中庸为贵 · 顺势而为</p>
+                                <p className="text-[9px] text-gray-600">{chartData.chart.qiYun}</p>
                             </div>
                         </div>
 
