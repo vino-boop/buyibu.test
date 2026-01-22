@@ -203,7 +203,7 @@ async function callAI(prompt: string, systemInstruction?: string, isJson = false
   }
 }
 
-const getBaseInstruction = (baZiData?: string) => {
+const getBaseInstruction = (baZiData?: string, contextType: 'BAZI' | 'LIUYAO' = 'BAZI') => {
   const config = getActiveConfig();
   const now = new Date();
   const solar = Solar.fromDate(now);
@@ -228,11 +228,18 @@ const getBaseInstruction = (baZiData?: string) => {
 3. 称谓：自称为“老朽”或“鄙人”，称呼对方为“居士”。`;
   }
 
+  let boundaryInstruction = "";
+  if (contextType === 'LIUYAO') {
+      boundaryInstruction = `6. 【出卦检测】：若阁下后续所问之事与当前起得之卦象背景或初始卜问之意图全然无关（例如：已断卦为“财运”，却突问“天气”或“他人八字”），请务必温和告知此问已出卦外，并建议其“另起一卦”或“回至主页”以应新机，不要强行牵强附会。`;
+  } else {
+      boundaryInstruction = `6. 【命理边界】：八字乃人生宏观蓝图。若阁下所问之事极其微观且随机（如“刚才丢的笔在哪”或“明天彩票号码”），请温和告知此非八字命理所长，建议其使用“起卦”功能以测具体机缘。对于流年流月之问，仍属八字范畴，应予详答。`;
+  }
+
   return `${personalityInstruction}
 3. 【时空背景】：${timeInfo}。
 4. 【排版铁律】：每一段独立的推演分析必须以 ### 开头的标题。
 5. 【推演基石】：深度结合阁下的八字原局、格局、神煞、以及完整的大运流年。${baZiData ? `阁下命理数据：${baZiData}` : ""}
-6. 【出卦检测】：若阁下后续所问之事与当前起得之卦象背景或初始卜问之意图全然无关（例如：已断卦为“财运”，却突问“天气”或“他人八字”），请务必温和告知此问已出卦外，并建议其“另起一卦”或“回至主页”以应新机，不要强行牵强附会。
+${boundaryInstruction}
 7. 【限制】：加粗语法（**内容**）全篇严禁超过 3 处。不要提及你是 AI。
 8. 【追随引导】：在回答的最后，必须给出3个引导用户继续追问的短句（每句不超过12字）。格式固定为：[SUGGESTIONS: 建议1, 建议2, 建议3]`;
 };
@@ -264,7 +271,7 @@ ${getActiveConfig().personality === AppPersonality.PRAGMATIC ? "并在最后附�
 要求：文辞干练，每一部分都必须带标题。必须严格遵守性别差异进行论断（如男看财官，女看夫子）。**加粗严禁超过 3 处**。`;
 
   try {
-    const analysis = await callAI(prompt, getBaseInstruction(baZiData), false, onChunk);
+    const analysis = await callAI(prompt, getBaseInstruction(baZiData, 'BAZI'), false, onChunk);
     return { chart, analysis: analysis || "" };
   } catch (error: any) {
     return { chart, analysis: `### 推演受阻\n${error.message}` };
@@ -292,11 +299,11 @@ ${data2}
 ${getActiveConfig().personality === AppPersonality.PRAGMATIC ? "并在最后附加 ### 【实战建议】" : ""}
 要求：大师口吻，文辞古雅清雅，**加粗严禁超过 3 处**。`;
 
-  const analysis = await callAI(prompt, getBaseInstruction(), false, onChunk);
+  const analysis = await callAI(prompt, getBaseInstruction(undefined, 'BAZI'), false, onChunk);
   return { chart1, chart2, profile1: p1, profile2: p2, analysis };
 }
 
-export async function chatWithContext(messages: ChatMessage[], context: string, baZiData?: string, onChunk?: (c: string) => void): Promise<string> {
+export async function chatWithContext(messages: ChatMessage[], context: string, baZiData?: string, onChunk?: (c: string) => void, contextType: 'BAZI' | 'LIUYAO' = 'BAZI'): Promise<string> {
   const lastUserMessage = messages[messages.length - 1];
   const isProfessional = lastUserMessage?.isProfessional;
   const config = getActiveConfig();
@@ -307,7 +314,7 @@ export async function chatWithContext(messages: ChatMessage[], context: string, 
 
   const pragmaticSuffix = config.personality === AppPersonality.PRAGMATIC ? "必须以 ### 【实战建议】 结尾，给出具体的行动指南。" : "";
 
-  const systemInstruction = `${getBaseInstruction(baZiData)}\n${modeInstruction}\n${pragmaticSuffix}\n对话背景：${context}`;
+  const systemInstruction = `${getBaseInstruction(baZiData, contextType)}\n${modeInstruction}\n${pragmaticSuffix}\n对话背景：${context}`;
 
   const historyPrompt = messages.map(m => `${m.role === 'assistant' ? '大师' : '阁下'}: ${m.content}`).join('\n');
   const prompt = `${historyPrompt}\n阁下: ${lastUserMessage.content}`;
@@ -329,6 +336,6 @@ export async function interpretLiuYao(lines: HexagramLine[], question: string, u
   }
   要求：文风符合你的人格设定。全篇加粗严禁超过 3 处。`;
 
-  const response = await callAI(prompt, getBaseInstruction(baZiData) + "\n必须返回纯 JSON。确保解析易于理解。", true);
+  const response = await callAI(prompt, getBaseInstruction(baZiData, 'LIUYAO') + "\n必须返回纯 JSON。确保解析易于理解。", true);
   return JSON.parse(response.replace(/```json/g, '').replace(/```/g, '').trim());
 }

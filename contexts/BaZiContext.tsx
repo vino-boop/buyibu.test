@@ -280,7 +280,7 @@ export const BaZiProvider: React.FC<{ userProfile: UserProfile; children: ReactN
               return prev;
           });
           setChatLoading(false);
-      });
+      }, 'BAZI');
 
       setMessages(prev => {
         const last = prev[prev.length - 1];

@@ -179,7 +179,7 @@ export const LiuYaoProvider: React.FC<{ userProfile: UserProfile; children: Reac
               return prev;
           });
           setIsAnalyzing(false);
-      });
+      }, 'LIUYAO');
 
       // After stream ends, extract suggestions
       setMessages(prev => {
