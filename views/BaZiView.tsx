@@ -1,9 +1,9 @@
 
 import React, { useEffect, useRef, useState } from 'react';
-import { Gender, ChatMessage, CalendarType, UserProfile } from '../types';
+import { Gender, ChatMessage, CalendarType, UserProfile, BaZiQuestionRecord } from '../types';
 import { useAssets } from '../contexts/AssetContext';
 import { useBaZi } from '../contexts/BaZiContext';
-import { IconMagic } from '../components/MysticIcons';
+import { IconMagic, IconHistory } from '../components/MysticIcons';
 
 interface BaZiViewProps {
   defaultQuestion?: string;
@@ -121,7 +121,7 @@ export const BaZiView: React.FC<BaZiViewProps> = ({ defaultQuestion, isDayMode =
       viewMode, setViewMode, editTab, setEditTab, chartDisplayMode, setChartDisplayMode, showFullDetails, setShowFullDetails,
       selectedDaYunIndex, setSelectedDaYunIndex, selectedLiuNianIndex, setSelectedLiuNianIndex, selectedLiuYueIndex, setSelectedLiuYueIndex,
       chartData, hePanData, messages, loading, chatLoading, handleStart, handleSendMessage, inputMessage, setInputMessage, triggerDefaultQuestion,
-      roster, saveToRoster, deleteFromRoster, performHePan
+      roster, rosterHistory, saveToRoster, deleteFromRoster, selectProfile, performHePan
   } = useBaZi();
   
   const { assets } = useAssets();
@@ -134,6 +134,7 @@ export const BaZiView: React.FC<BaZiViewProps> = ({ defaultQuestion, isDayMode =
 
   const [hePanSelection, setHePanSelection] = useState<UserProfile[]>([]);
   const [isScrolling, setIsScrolling] = useState(false);
+  const [viewHistoryProfileId, setViewHistoryProfileId] = useState<string | null>(null);
 
   useEffect(() => { if (defaultQuestion) triggerDefaultQuestion(defaultQuestion); }, [defaultQuestion]);
   
@@ -184,19 +185,49 @@ export const BaZiView: React.FC<BaZiViewProps> = ({ defaultQuestion, isDayMode =
 
   const handleViewSingleChart = () => {
     if (hePanSelection.length !== 1) return;
-    const p = hePanSelection[0];
-    setName(p.name);
-    setGender(p.gender);
-    setBirthDate(p.birthDate);
-    setBirthTime(p.birthTime);
-    setCalendarType(p.calendarType || CalendarType.SOLAR);
-    setIsLeapMonth(p.isLeapMonth || false);
+    selectProfile(hePanSelection[0]);
     handleStart(false);
+  };
+
+  // 历史记录弹窗
+  const renderHistoryModal = () => {
+      if (!viewHistoryProfileId) return null;
+      const historyList = rosterHistory[viewHistoryProfileId] || [];
+      const profile = roster.find(p => p.id === viewHistoryProfileId);
+      
+      return (
+          <div className="absolute inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm animate-fade-in">
+              <div className={`w-full sm:w-[400px] h-[80%] sm:h-[600px] rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col animate-fade-in-up ${isDayMode ? 'bg-white' : 'bg-[#1a1b1e]'}`}>
+                  <div className={`p-4 border-b flex justify-between items-center ${isDayMode ? 'border-gray-100' : 'border-white/10'}`}>
+                      <div>
+                          <h3 className={`font-bold text-lg ${isDayMode ? 'text-gray-800' : 'text-gray-200'}`}>卜问历史</h3>
+                          <p className="text-[10px] text-gray-500">{profile?.name} 的推演记录</p>
+                      </div>
+                      <button onClick={() => setViewHistoryProfileId(null)} className="w-8 h-8 rounded-full bg-gray-500/10 flex items-center justify-center text-gray-500 hover:text-white transition-colors">✕</button>
+                  </div>
+                  <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                      {historyList.length === 0 ? (
+                          <div className="text-center py-20 text-gray-500 text-xs">暂无历史提问记录</div>
+                      ) : (
+                          historyList.map(record => (
+                              <div key={record.id} className={`p-3 rounded-xl border transition-colors ${isDayMode ? 'bg-gray-50 border-gray-100' : 'bg-black/20 border-white/5'}`}>
+                                  <div className="flex justify-between items-start mb-2">
+                                      <span className="text-[10px] text-mystic-gold bg-mystic-gold/10 px-1.5 py-0.5 rounded">{record.dateStr}</span>
+                                  </div>
+                                  <p className={`text-sm ${isDayMode ? 'text-gray-700' : 'text-gray-300'}`}>{record.question}</p>
+                              </div>
+                          ))
+                      )}
+                  </div>
+              </div>
+          </div>
+      );
   };
 
   if (viewMode === 'EDIT') {
     return (
-      <div className={`w-full h-full flex flex-col items-center pb-24 px-4 pt-4 animate-fade-in-up overflow-hidden ${isDayMode ? 'bg-[#fcfcfc]' : 'bg-mystic-dark'}`}>
+      <div className={`w-full h-full flex flex-col items-center pb-24 px-4 pt-4 animate-fade-in-up overflow-hidden relative ${isDayMode ? 'bg-[#fcfcfc]' : 'bg-mystic-dark'}`}>
+        {renderHistoryModal()}
         <div className={`w-full max-w-lg rounded-3xl p-6 shadow-2xl border flex flex-col h-full transition-all duration-500 ${isDayMode ? 'bg-white border-gray-100' : 'bg-mystic-paper border-white/5'}`}>
            <div className="flex gap-2 mb-6 p-1 rounded-2xl bg-black/20">
               <button onClick={() => setEditTab('BASIC')} className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${editTab === 'BASIC' ? 'bg-mystic-gold text-black shadow-lg' : 'text-gray-500'}`}>基础资料</button>
@@ -249,7 +280,7 @@ export const BaZiView: React.FC<BaZiViewProps> = ({ defaultQuestion, isDayMode =
                   <div className={`p-3 rounded-2xl border mb-4 animate-fade-in transition-all ${hePanSelection.length === 2 ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-mystic-gold/5 border-mystic-gold/20'}`}>
                     <div className="flex items-center gap-2">
                       <span className={`text-xs ${hePanSelection.length === 2 ? 'text-emerald-500' : 'text-mystic-gold'}`}>
-                        {hePanSelection.length === 2 ? '✓ 已选满两位缘主' : '💡 请在下方名册中选择两位缘主进行合盘'}
+                        {hePanSelection.length === 2 ? '✓ 已选满两位缘主' : '💡 点击选择两位缘主合盘，或点击历史图标查看记录'}
                       </span>
                     </div>
                   </div>
@@ -259,7 +290,7 @@ export const BaZiView: React.FC<BaZiViewProps> = ({ defaultQuestion, isDayMode =
                     {hePanSelection.length > 0 && <button onClick={() => setHePanSelection([])} className="text-[10px] text-mystic-gold">清除选择</button>}
                   </div>
                   {roster.map((p, idx) => (
-                    <div key={p.id || idx} className={`p-4 rounded-2xl border flex items-center justify-between transition-all cursor-pointer group ${hePanSelection.find(item => item.id === p.id) ? 'bg-mystic-gold/10 border-mystic-gold shadow-[0_0_15px_rgba(197,176,120,0.1)]' : 'bg-black/20 border-white/5'}`} onClick={() => toggleSelection(p)}>
+                    <div key={p.id || idx} onClick={() => toggleSelection(p)} className={`p-4 rounded-2xl border flex items-center justify-between transition-all cursor-pointer group relative ${hePanSelection.find(item => item.id === p.id) ? 'bg-mystic-gold/10 border-mystic-gold shadow-[0_0_15px_rgba(197,176,120,0.1)]' : 'bg-black/20 border-white/5'}`}>
                        <div className="flex items-center gap-3">
                           <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold ${p.gender === Gender.MALE ? 'bg-blue-900/40 text-blue-200' : 'bg-rose-900/40 text-rose-200'}`}>
                               {p.name.charAt(0)}
@@ -269,8 +300,16 @@ export const BaZiView: React.FC<BaZiViewProps> = ({ defaultQuestion, isDayMode =
                              <span className="text-[10px] text-gray-500">{p.birthDate}</span>
                           </div>
                        </div>
-                       <div className="flex items-center gap-3">
-                          <button onClick={(e) => { e.stopPropagation(); if(p.id) deleteFromRoster(p.id); }} className="opacity-0 group-hover:opacity-40 hover:!opacity-100 text-red-500 text-xs p-2">✕</button>
+                       <div className="flex items-center gap-2">
+                          {p.id && (
+                              <button 
+                                onClick={(e) => { e.stopPropagation(); setViewHistoryProfileId(p.id!); }}
+                                className={`w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors ${isDayMode ? 'text-gray-400' : 'text-gray-500'}`}
+                              >
+                                  <IconHistory className="w-5 h-5" />
+                              </button>
+                          )}
+                          <button onClick={(e) => { e.stopPropagation(); if(p.id) deleteFromRoster(p.id); }} className="opacity-0 group-hover:opacity-100 text-red-500 text-xs p-2 transition-opacity">✕</button>
                           <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-all ${hePanSelection.find(item => item.id === p.id) ? 'bg-mystic-gold border-mystic-gold text-black' : 'border-white/10'}`}>
                              {hePanSelection.find(item => item.id === p.id) && '✓'}
                           </div>

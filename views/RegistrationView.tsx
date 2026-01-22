@@ -148,22 +148,22 @@ export const RegistrationView: React.FC<RegistrationViewProps> = ({ onComplete, 
     <div className="w-full h-full bg-[#0f1110] flex overflow-hidden">
       <BrandingPanel />
 
-      <div className="flex-1 h-full flex flex-col items-center justify-center p-6 sm:p-16 relative overflow-y-auto scrollbar-hide bg-[#0f1110]">
+      <div className="flex-1 h-full flex flex-col items-center justify-start sm:justify-center p-6 sm:p-16 relative overflow-y-auto scrollbar-hide bg-[#0f1110]">
         
         {step === 0 && (
-          <div className="w-full max-w-md flex flex-col items-center animate-fade-in">
-             <div className="sm:hidden mb-12">
-                <YunHeLogo size={120} />
+          <div className="w-full max-w-md flex flex-col items-center animate-fade-in mt-12 sm:mt-0">
+             <div className="sm:hidden mb-8">
+                <YunHeLogo size={100} />
              </div>
-             <div className="w-full space-y-10">
+             <div className="w-full space-y-8 sm:space-y-10">
                 <div className="space-y-4 pt-4">
-                   <button onClick={() => setStep(1)} className="w-full bg-mystic-gold text-black font-bold text-lg py-5 rounded-2xl hover:scale-[1.02] transition-all shadow-[0_10px_30px_rgba(197,176,120,0.1)] active:scale-95">立刻登录</button>
+                   <button onClick={() => setStep(1)} className="w-full bg-mystic-gold text-black font-bold text-base sm:text-lg py-4 sm:py-5 rounded-2xl hover:scale-[1.02] transition-all shadow-[0_10px_30px_rgba(197,176,120,0.1)] active:scale-95">立刻登录</button>
                    <div className="flex items-center gap-4 py-2">
                       <div className="flex-1 h-[0.5px] bg-white/5"></div>
                       <span className="text-[9px] text-gray-700 uppercase tracking-[0.3em]">Or Entry via</span>
                       <div className="flex-1 h-[0.5px] bg-white/5"></div>
                    </div>
-                   <button className="w-full bg-white/5 border border-white/5 text-gray-400 font-medium py-4 rounded-2xl hover:bg-white/10 transition-all">已有命书 · 登录</button>
+                   <button className="w-full bg-white/5 border border-white/5 text-gray-400 font-medium py-3 sm:py-4 rounded-2xl hover:bg-white/10 transition-all text-sm">已有命书 · 登录</button>
                 </div>
                 <div className="pt-8 flex justify-center sm:justify-start gap-8">
                    <button onClick={() => setShowDevMode(true)} className="text-[9px] text-gray-700 hover:text-mystic-gold transition-colors tracking-widest uppercase font-serif">引擎配置</button>
@@ -174,105 +174,121 @@ export const RegistrationView: React.FC<RegistrationViewProps> = ({ onComplete, 
         )}
 
         {step === 1 && (
-          <div className="w-full max-w-xl animate-fade-in-up">
-             <button onClick={() => setStep(0)} className="text-gray-600 text-sm w-fit mb-12 hover:text-white transition-colors flex items-center gap-2">
-                <span className="text-xl">❮</span> 返回
-             </button>
-             <div className="mb-12">
-                <h2 className="text-3xl text-white font-serif font-light tracking-widest mb-2">录入生辰</h2>
-                <p className="text-gray-500 text-sm">精确的时间有助于 AI 更准确地分析您的五行格局。</p>
+          <div className="w-full max-w-xl animate-fade-in-up flex flex-col h-full sm:h-auto">
+             <div className="flex items-center gap-2 mb-6 mt-4 sm:mt-0">
+                <button onClick={() => setStep(0)} className="text-gray-500 hover:text-white transition-colors p-2 -ml-2">
+                    <span className="text-xl">❮</span>
+                </button>
+                <span className="text-xs text-gray-600">返回</span>
              </div>
-             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-10 gap-y-10">
-                <div className="space-y-2 group">
-                   <label className="text-[10px] text-gray-600 uppercase tracking-widest font-bold ml-1 group-focus-within:text-mystic-gold transition-colors">姓名 (Name)</label>
-                   <input type="text" placeholder="如何称呼阁下" className="w-full bg-transparent border-b border-gray-800 focus:border-mystic-gold outline-none py-3 text-lg text-white transition-all" value={name} onChange={(e) => setName(e.target.value)} />
-                </div>
-                <div className="space-y-2">
-                   <label className="text-[10px] text-gray-600 uppercase tracking-widest font-bold ml-1">性别 (Gender)</label>
-                   <div className="flex h-12 bg-white/5 rounded-xl p-1 mt-1">
-                      <button onClick={() => setGender(Gender.MALE)} className={`flex-1 rounded-lg text-sm transition-all ${gender === Gender.MALE ? 'bg-mystic-gold text-black font-bold' : 'text-gray-500'}`}>乾造 (男)</button>
-                      <button onClick={() => setGender(Gender.FEMALE)} className={`flex-1 rounded-lg text-sm transition-all ${gender === Gender.FEMALE ? 'bg-mystic-gold text-black font-bold' : 'text-gray-500'}`}>坤造 (女)</button>
-                   </div>
-                </div>
-                <div className="space-y-2">
-                   <label className="text-[10px] text-gray-600 uppercase tracking-widest font-bold ml-1">历法类型</label>
-                   <div className="flex h-12 bg-white/5 rounded-xl p-1 mt-1">
-                      <button onClick={() => setCalendarType(CalendarType.SOLAR)} className={`flex-1 rounded-lg text-xs transition-all ${calendarType === CalendarType.SOLAR ? 'bg-mystic-gold text-black font-bold' : 'text-gray-500'}`}>公历 (阳历)</button>
-                      <button onClick={() => setCalendarType(CalendarType.LUNAR)} className={`flex-1 rounded-lg text-xs transition-all ${calendarType === CalendarType.LUNAR ? 'bg-mystic-gold text-black font-bold' : 'text-gray-500'}`}>农历 (阴历)</button>
-                   </div>
-                </div>
-                <div className="space-y-2 group">
-                   <label className={`text-[10px] uppercase tracking-widest font-bold ml-1 transition-colors ${showError && !birthDate ? 'text-red-500' : 'text-gray-600 group-focus-within:text-mystic-gold'}`}>出生日期 *</label>
-                   <div className="flex items-center gap-2">
-                    <input 
-                        type="date" 
-                        max="9999-12-31"
-                        className={`flex-1 bg-transparent border-b outline-none py-3 text-lg text-white transition-all ${showError && !birthDate ? 'border-red-500/50' : 'border-gray-800 focus:border-mystic-gold'}`} 
-                        value={birthDate} 
-                        onChange={(e) => { 
-                          if (e.target.value.length <= 10) {
-                              setBirthDate(e.target.value); 
-                              setShowError(false); 
-                          }
-                        }} 
-                    />
-                    {calendarType === CalendarType.LUNAR && (
-                      <button onClick={() => setIsLeapMonth(!isLeapMonth)} className={`px-2 py-1 rounded text-[10px] border transition-colors ${isLeapMonth ? 'border-mystic-gold text-mystic-gold bg-mystic-gold/10' : 'border-gray-500 text-gray-500'}`}>闰</button>
-                    )}
-                   </div>
-                </div>
-                <div className="space-y-2 group">
-                   <label className="text-[10px] text-gray-600 uppercase tracking-widest font-bold ml-1 group-focus-within:text-mystic-gold transition-colors">出生时间</label>
-                   <input type="time" className="w-full bg-transparent border-b border-gray-800 focus:border-mystic-gold outline-none py-3 text-lg text-white transition-all" value={birthTime} onChange={(e) => setBirthTime(e.target.value)} />
-                </div>
+             
+             <div className="mb-8">
+                <h2 className="text-2xl sm:text-3xl text-white font-serif font-light tracking-widest mb-2">录入生辰</h2>
+                <p className="text-gray-500 text-xs">精确的时间有助于 AI 更准确地分析您的五行格局。</p>
              </div>
-             <div className="mt-20">
-                <button onClick={() => { if (!birthDate) { setShowError(true); return; } setStep(2); }} className="w-full bg-mystic-gold text-black font-bold text-lg py-5 rounded-2xl hover:brightness-110 shadow-xl active:scale-95 transition-all">下一步</button>
+             
+             <div className="flex-1 overflow-y-auto scrollbar-hide pb-20 sm:pb-0">
+                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-10 gap-y-6 sm:gap-y-10">
+                    <div className="space-y-1 sm:space-y-2 group">
+                       <label className="text-[10px] text-gray-600 uppercase tracking-widest font-bold ml-1 group-focus-within:text-mystic-gold transition-colors">姓名 (Name)</label>
+                       <input type="text" placeholder="如何称呼阁下" className="w-full bg-transparent border-b border-gray-800 focus:border-mystic-gold outline-none py-2 sm:py-3 text-base sm:text-lg text-white transition-all" value={name} onChange={(e) => setName(e.target.value)} />
+                    </div>
+                    <div className="space-y-1 sm:space-y-2">
+                       <label className="text-[10px] text-gray-600 uppercase tracking-widest font-bold ml-1">性别 (Gender)</label>
+                       <div className="flex h-10 sm:h-12 bg-white/5 rounded-xl p-1 mt-1">
+                          <button onClick={() => setGender(Gender.MALE)} className={`flex-1 rounded-lg text-xs sm:text-sm transition-all ${gender === Gender.MALE ? 'bg-mystic-gold text-black font-bold' : 'text-gray-500'}`}>乾造 (男)</button>
+                          <button onClick={() => setGender(Gender.FEMALE)} className={`flex-1 rounded-lg text-xs sm:text-sm transition-all ${gender === Gender.FEMALE ? 'bg-mystic-gold text-black font-bold' : 'text-gray-500'}`}>坤造 (女)</button>
+                       </div>
+                    </div>
+                    <div className="space-y-1 sm:space-y-2">
+                       <label className="text-[10px] text-gray-600 uppercase tracking-widest font-bold ml-1">历法类型</label>
+                       <div className="flex h-10 sm:h-12 bg-white/5 rounded-xl p-1 mt-1">
+                          <button onClick={() => setCalendarType(CalendarType.SOLAR)} className={`flex-1 rounded-lg text-[10px] sm:text-xs transition-all ${calendarType === CalendarType.SOLAR ? 'bg-mystic-gold text-black font-bold' : 'text-gray-500'}`}>公历 (阳历)</button>
+                          <button onClick={() => setCalendarType(CalendarType.LUNAR)} className={`flex-1 rounded-lg text-[10px] sm:text-xs transition-all ${calendarType === CalendarType.LUNAR ? 'bg-mystic-gold text-black font-bold' : 'text-gray-500'}`}>农历 (阴历)</button>
+                       </div>
+                    </div>
+                    <div className="space-y-1 sm:space-y-2 group">
+                       <label className={`text-[10px] uppercase tracking-widest font-bold ml-1 transition-colors ${showError && !birthDate ? 'text-red-500' : 'text-gray-600 group-focus-within:text-mystic-gold'}`}>出生日期 *</label>
+                       <div className="flex items-center gap-2">
+                        <input 
+                            type="date" 
+                            max="9999-12-31"
+                            className={`flex-1 bg-transparent border-b outline-none py-2 sm:py-3 text-base sm:text-lg text-white transition-all ${showError && !birthDate ? 'border-red-500/50' : 'border-gray-800 focus:border-mystic-gold'}`} 
+                            value={birthDate} 
+                            onChange={(e) => { 
+                              if (e.target.value.length <= 10) {
+                                  setBirthDate(e.target.value); 
+                                  setShowError(false); 
+                              }
+                            }} 
+                        />
+                        {calendarType === CalendarType.LUNAR && (
+                          <button onClick={() => setIsLeapMonth(!isLeapMonth)} className={`px-2 py-1 rounded text-[10px] border transition-colors ${isLeapMonth ? 'border-mystic-gold text-mystic-gold bg-mystic-gold/10' : 'border-gray-500 text-gray-500'}`}>闰</button>
+                        )}
+                       </div>
+                    </div>
+                    <div className="space-y-1 sm:space-y-2 group">
+                       <label className="text-[10px] text-gray-600 uppercase tracking-widest font-bold ml-1 group-focus-within:text-mystic-gold transition-colors">出生时间</label>
+                       <input type="time" className="w-full bg-transparent border-b border-gray-800 focus:border-mystic-gold outline-none py-2 sm:py-3 text-base sm:text-lg text-white transition-all" value={birthTime} onChange={(e) => setBirthTime(e.target.value)} />
+                    </div>
+                 </div>
+                 
+                 <div className="mt-8 sm:mt-20 mb-8 sm:mb-0">
+                    <button onClick={() => { if (!birthDate) { setShowError(true); return; } setStep(2); }} className="w-full bg-mystic-gold text-black font-bold text-base sm:text-lg py-4 sm:py-5 rounded-2xl hover:brightness-110 shadow-xl active:scale-95 transition-all">下一步</button>
+                 </div>
              </div>
           </div>
         )}
 
         {step === 2 && (
-            <div className="w-full max-w-2xl animate-fade-in-up">
-                <button onClick={() => setStep(1)} className="text-gray-600 text-sm w-fit mb-8 sm:mb-12 hover:text-white transition-colors flex items-center gap-2">
-                    <span className="text-xl">❮</span> 返回
-                </button>
-                <div className="mb-6 sm:mb-10 text-center">
-                    <h2 className="text-2xl sm:text-3xl text-white font-serif font-light tracking-widest mb-3 sm:mb-4">请择一推演人格</h2>
+            <div className="w-full max-w-2xl animate-fade-in-up flex flex-col h-full sm:h-auto">
+                <div className="flex items-center gap-2 mb-6 mt-4 sm:mt-0">
+                    <button onClick={() => setStep(1)} className="text-gray-500 hover:text-white transition-colors p-2 -ml-2">
+                        <span className="text-xl">❮</span>
+                    </button>
+                    <span className="text-xs text-gray-600">返回</span>
+                </div>
+
+                <div className="mb-6 sm:mb-10 text-center shrink-0">
+                    <h2 className="text-2xl sm:text-3xl text-white font-serif font-light tracking-widest mb-2 sm:mb-4">推演人格</h2>
                     <p className="text-gray-500 text-xs sm:text-sm">不同的人格将以截然不同的视角与文风为您解惑。</p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4 mb-10 sm:mb-16">
-                    {personalities.map((p) => (
-                        <div 
-                            key={p.type}
-                            onClick={() => setSelectedPersonality(p.type)}
-                            className={`p-4 sm:p-6 rounded-2xl sm:rounded-3xl border transition-all cursor-pointer relative overflow-hidden flex flex-col items-center text-center ${selectedPersonality === p.type ? 'bg-mystic-gold/10 border-mystic-gold shadow-[0_0_20px_rgba(197,176,120,0.2)]' : 'bg-white/5 border-white/5 hover:bg-white/10'}`}
-                        >
-                            <div className="w-10 h-10 sm:w-12 sm:h-12 mb-3 sm:mb-4 flex items-center justify-center">
-                                {p.icon}
+                <div className="flex-1 overflow-y-auto scrollbar-hide pb-20 sm:pb-0">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4 mb-8 sm:mb-16">
+                        {personalities.map((p) => (
+                            <div 
+                                key={p.type}
+                                onClick={() => setSelectedPersonality(p.type)}
+                                className={`p-3 sm:p-6 rounded-2xl sm:rounded-3xl border transition-all cursor-pointer relative overflow-hidden flex flex-row sm:flex-col items-center sm:text-center gap-4 sm:gap-0 ${selectedPersonality === p.type ? 'bg-mystic-gold/10 border-mystic-gold shadow-[0_0_20px_rgba(197,176,120,0.2)]' : 'bg-white/5 border-white/5 hover:bg-white/10'}`}
+                            >
+                                <div className="w-10 h-10 sm:w-12 sm:h-12 sm:mb-4 flex items-center justify-center shrink-0">
+                                    {p.icon}
+                                </div>
+                                <div className="flex-1 text-left sm:text-center">
+                                    <h3 className={`text-sm sm:text-lg font-bold mb-1 sm:mb-2 ${selectedPersonality === p.type ? 'text-mystic-gold' : 'text-gray-200'}`}>{p.name}</h3>
+                                    <p className="text-[10px] sm:text-xs text-gray-500 mb-1 sm:mb-4 sm:h-12 flex items-center">{p.desc}</p>
+                                    <div className="flex flex-wrap gap-1 sm:justify-center">
+                                        {p.tags.map(tag => <span key={tag} className="text-[8px] sm:text-[9px] px-1.5 py-0.5 rounded-full bg-black/40 text-gray-500">{tag}</span>)}
+                                    </div>
+                                </div>
+                                {selectedPersonality === p.type && (
+                                    <div className="absolute top-2 right-2 sm:top-3 sm:right-3 text-mystic-gold text-[10px] sm:text-xs font-bold bg-mystic-gold/10 px-1.5 py-0.5 rounded-full">✓</div>
+                                )}
                             </div>
-                            <h3 className={`text-base sm:text-lg font-bold mb-1 sm:mb-2 ${selectedPersonality === p.type ? 'text-mystic-gold' : 'text-gray-200'}`}>{p.name}</h3>
-                            <p className="text-[11px] sm:text-xs text-gray-500 mb-3 sm:mb-4 h-10 sm:h-12 flex items-center">{p.desc}</p>
-                            <div className="flex flex-wrap gap-1 justify-center">
-                                {p.tags.map(tag => <span key={tag} className="text-[8px] sm:text-[9px] px-1.5 py-0.5 rounded-full bg-black/40 text-gray-500">{tag}</span>)}
-                            </div>
-                            {selectedPersonality === p.type && (
-                                <div className="absolute top-2 right-2 sm:top-3 sm:right-3 text-mystic-gold text-[10px] sm:text-xs font-bold bg-mystic-gold/10 px-1.5 py-0.5 rounded-full">✓</div>
-                            )}
-                        </div>
-                    ))}
-                </div>
+                        ))}
+                    </div>
 
-                <button 
-                    onClick={() => {
-                        updateAsset('activePersonality', selectedPersonality);
-                        onComplete({ name: name || '缘主', gender, birthDate, birthTime: birthTime || '12:00', birthPlace: '北京', calendarType, isLeapMonth, personality: selectedPersonality });
-                    }} 
-                    className="w-full bg-mystic-gold text-black font-bold text-base sm:text-lg py-4 sm:py-5 rounded-xl sm:rounded-2xl hover:brightness-110 shadow-xl active:scale-95 transition-all"
-                >
-                    开启命盘推演
-                </button>
+                    <button 
+                        onClick={() => {
+                            updateAsset('activePersonality', selectedPersonality);
+                            onComplete({ name: name || '缘主', gender, birthDate, birthTime: birthTime || '12:00', birthPlace: '北京', calendarType, isLeapMonth, personality: selectedPersonality });
+                        }} 
+                        className="w-full bg-mystic-gold text-black font-bold text-base sm:text-lg py-4 sm:py-5 rounded-xl sm:rounded-2xl hover:brightness-110 shadow-xl active:scale-95 transition-all"
+                    >
+                        开启命盘推演
+                    </button>
+                </div>
             </div>
         )}
 

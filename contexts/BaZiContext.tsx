@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { BaZiResponse, Gender, ChatMessage, UserProfile, BaZiChart, CalendarType, HePanResponse } from '../types';
+import { BaZiResponse, Gender, ChatMessage, UserProfile, BaZiChart, CalendarType, HePanResponse, BaZiQuestionRecord } from '../types';
 import { analyzeBaZi, chatWithContext, formatBaZiToText, extractSuggestions, analyzeHePan } from '../services/aiService';
 import { calculateLocalBaZi } from '../services/geminiService';
 import { Lunar, Solar } from 'lunar-javascript';
@@ -43,8 +43,10 @@ interface BaZiContextType {
   setInputMessage: (m: string) => void;
   triggerDefaultQuestion: (q: string) => Promise<void>;
   roster: UserProfile[];
+  rosterHistory: Record<string, BaZiQuestionRecord[]>;
   saveToRoster: (profile: UserProfile) => void;
   deleteFromRoster: (id: string) => void;
+  selectProfile: (profile: UserProfile) => void;
   performHePan: (p1: UserProfile, p2: UserProfile, withAnalysis?: boolean) => Promise<void>;
 }
 
@@ -74,24 +76,39 @@ export const BaZiProvider: React.FC<{ userProfile: UserProfile; children: ReactN
   const [inputMessage, setInputMessage] = useState('');
 
   const [roster, setRoster] = useState<UserProfile[]>([]);
+  const [rosterHistory, setRosterHistory] = useState<Record<string, BaZiQuestionRecord[]>>({});
+  const [currentProfileId, setCurrentProfileId] = useState<string | null>(null);
 
   useEffect(() => {
-    const saved = localStorage.getItem('bazi_roster');
-    if (saved) {
-      try { setRoster(JSON.parse(saved)); } catch (e) {}
+    // Load roster
+    const savedRoster = localStorage.getItem('bazi_roster');
+    if (savedRoster) {
+      try { setRoster(JSON.parse(savedRoster)); } catch (e) {}
     } else {
         const initial = { ...userProfile, id: Date.now().toString() };
         setRoster([initial]);
         localStorage.setItem('bazi_roster', JSON.stringify([initial]));
+        setCurrentProfileId(initial.id || null);
+    }
+
+    // Load history
+    const savedHistory = localStorage.getItem('bazi_roster_history');
+    if (savedHistory) {
+        try { setRosterHistory(JSON.parse(savedHistory)); } catch (e) {}
     }
   }, []);
 
   const saveToRoster = (profile: UserProfile) => {
     setRoster(prev => {
       const exists = prev.find(p => p.name === profile.name && p.birthDate === profile.birthDate);
-      if (exists) return prev;
-      const newList = [{ ...profile, id: profile.id || Date.now().toString() }, ...prev];
+      if (exists) {
+          setCurrentProfileId(exists.id || null);
+          return prev;
+      }
+      const newId = profile.id || Date.now().toString();
+      const newList = [{ ...profile, id: newId }, ...prev];
       localStorage.setItem('bazi_roster', JSON.stringify(newList));
+      setCurrentProfileId(newId);
       return newList;
     });
   };
@@ -102,13 +119,44 @@ export const BaZiProvider: React.FC<{ userProfile: UserProfile; children: ReactN
           localStorage.setItem('bazi_roster', JSON.stringify(newList));
           return newList;
       });
+      // Also clean up history
+      setRosterHistory(prev => {
+          const newHistory = { ...prev };
+          delete newHistory[id];
+          localStorage.setItem('bazi_roster_history', JSON.stringify(newHistory));
+          return newHistory;
+      });
+  };
+
+  const selectProfile = (p: UserProfile) => {
+      setName(p.name);
+      setGender(p.gender);
+      setBirthDate(p.birthDate);
+      setBirthTime(p.birthTime);
+      setCalendarType(p.calendarType || CalendarType.SOLAR);
+      setIsLeapMonth(p.isLeapMonth || false);
+      setCurrentProfileId(p.id || null);
+  };
+
+  const addToHistory = (pid: string, question: string) => {
+      setRosterHistory(prev => {
+          const prevList = prev[pid] || [];
+          const newRecord: BaZiQuestionRecord = {
+              id: Date.now().toString(),
+              question,
+              timestamp: Date.now(),
+              dateStr: new Date().toLocaleDateString('zh-CN')
+          };
+          const next = { ...prev, [pid]: [newRecord, ...prevList] };
+          localStorage.setItem('bazi_roster_history', JSON.stringify(next));
+          return next;
+      });
   };
 
   const autoLocateIndices = (chart: BaZiChart) => {
     const now = new Date();
     const currentYear = now.getFullYear();
     const currentLunar = Lunar.fromDate(now);
-    // Correctly get the year's GanZhi reflecting the Solar Terms (Li Chun)
     const currentYearGanZhi = currentLunar.getYearInGanZhi();
     const currentLunarMonth = currentLunar.getMonth(); 
 
@@ -119,7 +167,6 @@ export const BaZiProvider: React.FC<{ userProfile: UserProfile; children: ReactN
     const foundDyIdx = chart.daYun.findIndex(dy => currentYear >= dy.startYear && currentYear <= dy.endYear);
     if (foundDyIdx !== -1) {
       dyIdx = foundDyIdx;
-      // Precision matching using GanZhi instead of Gregorian year number
       const foundLnIdx = chart.daYun[foundDyIdx].liuNian.findIndex(ln => ln.ganZhi === currentYearGanZhi);
       if (foundLnIdx !== -1) {
         lnIdx = foundLnIdx;
@@ -131,7 +178,6 @@ export const BaZiProvider: React.FC<{ userProfile: UserProfile; children: ReactN
             lyIdx = Math.min(Math.abs(currentLunarMonth) - 1, chart.daYun[foundDyIdx].liuNian[foundLnIdx].liuYue.length - 1);
         }
       } else {
-          // Fallback to year matching if GanZhi lookup fails for some reason
           const fallbackLnIdx = chart.daYun[foundDyIdx].liuNian.findIndex(ln => ln.year === currentYear);
           if (fallbackLnIdx !== -1) lnIdx = fallbackLnIdx;
       }
@@ -246,6 +292,15 @@ export const BaZiProvider: React.FC<{ userProfile: UserProfile; children: ReactN
     const text = msg || inputMessage;
     if (!text.trim() || (!chartData && !hePanData)) return;
 
+    // Track history for current profile if applicable
+    if (currentProfileId && !hePanData) {
+        // Validate if form data still matches the ID (in case user edited name/date without saving)
+        const profile = roster.find(p => p.id === currentProfileId);
+        if (profile && profile.name === name && profile.birthDate === birthDate && profile.birthTime === birthTime) {
+            addToHistory(currentProfileId, text);
+        }
+    }
+
     // Handle initial professional trigger messages
     if (messages.length === 1 && isPro) {
       if (text.includes("专业详盘") || text.includes("详盘分析")) {
@@ -314,7 +369,7 @@ export const BaZiProvider: React.FC<{ userProfile: UserProfile; children: ReactN
       viewMode, setViewMode, editTab, setEditTab, chartDisplayMode, setChartDisplayMode, showFullDetails, setShowFullDetails,
       selectedDaYunIndex, setSelectedDaYunIndex, selectedLiuNianIndex, setSelectedLiuNianIndex, selectedLiuYueIndex, setSelectedLiuYueIndex,
       chartData, hePanData, messages, loading, chatLoading, handleStart, handleSendMessage, inputMessage, setInputMessage, triggerDefaultQuestion,
-      roster, saveToRoster, deleteFromRoster, performHePan
+      roster, rosterHistory, saveToRoster, deleteFromRoster, selectProfile, performHePan
     }}>
       {children}
     </BaZiContext.Provider>

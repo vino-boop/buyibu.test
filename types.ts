@@ -37,6 +37,13 @@ export interface UserProfile {
   personality?: AppPersonality;
 }
 
+export interface BaZiQuestionRecord {
+  id: string;
+  question: string;
+  timestamp: number;
+  dateStr: string;
+}
+
 export interface Article {
   id: string;
   title: string;

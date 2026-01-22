@@ -152,9 +152,9 @@ const InteractiveStalksFan: React.FC<{
     const endIndex = Math.min(total - 1, splitIndex + visibleRange);
 
     return (
-        <div className="relative w-full h-[380px] flex flex-col items-center justify-start mt-2 select-none touch-none overflow-hidden">
+        <div className="relative w-full h-[340px] sm:h-[380px] flex flex-col items-center justify-start mt-2 select-none touch-none overflow-hidden">
             <div 
-                className="relative w-full h-[260px] flex items-center justify-center cursor-grab active:cursor-grabbing"
+                className="relative w-full h-[240px] sm:h-[260px] flex items-center justify-center cursor-grab active:cursor-grabbing"
                 onMouseDown={(e) => handleStart(e.clientX)}
                 onMouseMove={(e) => handleMove(e.clientX)}
                 onMouseUp={handleEnd}
@@ -193,16 +193,16 @@ const InteractiveStalksFan: React.FC<{
                 })}
                 <div className="absolute bottom-6 w-[1px] h-60 bg-gradient-to-t from-transparent via-mystic-gold/25 to-transparent pointer-events-none"></div>
                 {!isSplitting && step < 3 && (
-                    <div className="absolute bottom-20 text-[10px] text-mystic-gold/20 tracking-[0.5em] animate-pulse uppercase font-serif">
+                    <div className="absolute bottom-16 sm:bottom-20 text-[10px] text-mystic-gold/20 tracking-[0.5em] animate-pulse uppercase font-serif">
                         拨草觅机
                     </div>
                 )}
             </div>
-            <div className="w-full max-w-[260px] mt-8 flex flex-col items-center">
+            <div className="w-full max-w-[260px] mt-4 sm:mt-8 flex flex-col items-center">
                 {!isSplitting && step < 3 && (
                     <button 
                         onClick={onConfirm}
-                        className="w-full py-4 rounded-2xl bg-gradient-to-b from-mystic-gold to-[#a08d55] text-black font-bold text-xs tracking-[0.4em] shadow-[0_8px_20px_rgba(0,0,0,0.3)] active:scale-95 transition-all animate-fade-in"
+                        className="w-full py-3 sm:py-4 rounded-2xl bg-gradient-to-b from-mystic-gold to-[#a08d55] text-black font-bold text-xs tracking-[0.4em] shadow-[0_8px_20px_rgba(0,0,0,0.3)] active:scale-95 transition-all animate-fade-in"
                     >
                         {step === 0 ? '定 · 上卦' : step === 1 ? '定 · 下卦' : '定 · 动爻'}
                     </button>
@@ -429,24 +429,24 @@ export const LiuYaoView: React.FC<{ isDayMode?: boolean }> = ({ isDayMode = fals
       )}
       <div className="w-full max-w-sm px-4 flex-1 flex flex-col pb-8">
          {mode === 'SHAKE' && (
-            <div className="flex-1 flex flex-col items-center animate-fade-in-up mt-20">
-                {shakeLines.length > 0 && <div className="mb-8 w-40 animate-fade-in"><HexagramVisual lines={shakeLines} activeStep={shakeStep} variant="default" /></div>}
-                <div className={`flex gap-3 mb-10 items-center h-20`}>{coins.map((side, idx) => <div key={idx} className={`w-16 h-16 rounded-full border-4 flex items-center justify-center text-xs font-bold shadow-xl transition-all ${isFlipping ? 'animate-[spin_0.6s_ease-in-out_infinite]' : ''} ${side === CoinSide.HEAD ? 'bg-[#c5b078] border-[#a08d55] text-black' : 'bg-slate-300 border-slate-400 text-slate-700'}`}><div className="w-6 h-6 border-2 border-current opacity-40 transform rotate-45"></div></div>)}</div>
+            <div className="flex-1 flex flex-col items-center justify-center animate-fade-in-up w-full">
+                {shakeLines.length > 0 && <div className="mb-4 sm:mb-8 w-32 sm:w-40 animate-fade-in"><HexagramVisual lines={shakeLines} activeStep={shakeStep} variant="default" /></div>}
+                <div className={`flex gap-3 mb-6 sm:mb-10 items-center h-16 sm:h-20`}>{coins.map((side, idx) => <div key={idx} className={`w-16 h-16 rounded-full border-4 flex items-center justify-center text-xs font-bold shadow-xl transition-all ${isFlipping ? 'animate-[spin_0.6s_ease-in-out_infinite]' : ''} ${side === CoinSide.HEAD ? 'bg-[#c5b078] border-[#a08d55] text-black' : 'bg-slate-300 border-slate-400 text-slate-700'}`}><div className="w-6 h-6 border-2 border-current opacity-40 transform rotate-45"></div></div>)}</div>
                 <button 
                   onClick={() => { if(!question.trim()) { setShakeError(true); inputRef.current?.focus(); return; } handleToss(); }} 
                   disabled={isFlipping || shakeStep >= 6} 
-                  className={`w-full font-bold py-4 rounded-xl shadow-lg active:scale-95 transition-all ${shakeStep >= 6 ? 'bg-white/10 text-gray-500 cursor-default' : 'bg-gradient-to-r from-[#c5b078] to-[#a08d55] text-black'}`}
+                  className={`w-full font-bold py-3 sm:py-4 rounded-xl shadow-lg active:scale-95 transition-all ${shakeStep >= 6 ? 'bg-white/10 text-gray-500 cursor-default' : 'bg-gradient-to-r from-[#c5b078] to-[#a08d55] text-black'}`}
                 >
                   {shakeStep >= 6 ? '卦象已成' : isFlipping ? '摇卦中...' : (shakeStep > 0 ? '继续摇卦' : '开始摇卦')}
                 </button>
-                {shakeStep >= 6 && <button onClick={validateAndStartAnalyze} className="mt-4 w-full border-2 border-mystic-gold text-mystic-gold py-4 rounded-xl font-bold hover:bg-mystic-gold/10 active:scale-95 transition-all animate-fade-in">开始解卦</button>}
+                {shakeStep >= 6 && <button onClick={validateAndStartAnalyze} className="mt-4 w-full border-2 border-mystic-gold text-mystic-gold py-3 sm:py-4 rounded-xl font-bold hover:bg-mystic-gold/10 active:scale-95 transition-all animate-fade-in">开始解卦</button>}
             </div>
          )}
          {mode === 'NUMBER' && (
-            <div className="flex-1 flex flex-col items-center animate-fade-in-up h-full">
+            <div className="flex-1 flex flex-col items-center animate-fade-in-up h-full justify-center">
                {isNumberRitualStarted ? (
-                  <div className="w-full flex flex-col items-center flex-1">
-                    <div className="text-gray-500 text-[10px] mb-6 tracking-widest opacity-60 uppercase font-serif">第 {numberStep + 1} 阶段推演</div>
+                  <div className="w-full flex flex-col items-center flex-1 justify-center">
+                    <div className="text-gray-500 text-[10px] mb-4 sm:mb-6 tracking-widest opacity-60 uppercase font-serif">第 {numberStep + 1} 阶段推演</div>
                     <InteractiveStalksFan splitIndex={tempSplitIndex} setSplitIndex={setTempSplitIndex} isSplitting={isSplitting} isDay={isDayMode} onConfirm={confirmNumberSplit} step={numberStep} />
                     {shakeLines.length > 0 && (
                         <div className="mt-2 animate-fade-in-up flex flex-col items-center">
@@ -456,31 +456,31 @@ export const LiuYaoView: React.FC<{ isDayMode?: boolean }> = ({ isDayMode = fals
                     )}
                     {numberStep >= 3 && (
                         <div className="mt-auto w-full pt-4">
-                            <button onClick={validateAndStartAnalyze} className="w-full font-bold py-4 rounded-xl shadow-xl transition-all active:scale-95 bg-gradient-to-r from-mystic-gold to-amber-600 text-black">开始解卦</button>
+                            <button onClick={validateAndStartAnalyze} className="w-full font-bold py-3 sm:py-4 rounded-xl shadow-xl transition-all active:scale-95 bg-gradient-to-r from-mystic-gold to-amber-600 text-black">开始解卦</button>
                             <button onClick={() => reset()} className="w-full text-[10px] py-3 text-gray-500 tracking-widest hover:text-gray-300">重新起卦</button>
                         </div>
                     )}
                   </div>
                ) : (
-                  <div className="flex-1 flex flex-col items-center justify-center py-10 animate-fade-in w-full h-full">
+                  <div className="flex-1 flex flex-col items-center justify-center py-6 animate-fade-in w-full h-full">
                      <p className="text-sm font-serif italic text-gray-500 tracking-widest text-center px-8 leading-loose opacity-60">大衍之数五十，其用四十有九。<br/>分而为二以象两，挂一以象三。</p>
-                     <button onClick={() => { if (!question.trim()) { setShakeError(true); return; } setIsNumberRitualStarted(true); }} className="w-full mt-12 font-bold py-4 rounded-xl shadow-lg transition-all active:scale-95 bg-gradient-to-r from-[#c5b078] to-[#a08d55] text-black">开始分蓍</button>
+                     <button onClick={() => { if (!question.trim()) { setShakeError(true); return; } setIsNumberRitualStarted(true); }} className="w-full mt-6 sm:mt-12 font-bold py-3 sm:py-4 rounded-xl shadow-lg transition-all active:scale-95 bg-gradient-to-r from-[#c5b078] to-[#a08d55] text-black">开始分蓍</button>
                   </div>
                )}
             </div>
          )}
          {mode === 'MANUAL' && (
-            <div className="flex-1 flex flex-col animate-fade-in-up space-y-3">
+            <div className="flex-1 flex flex-col animate-fade-in-up space-y-3 justify-center">
                <div className="rounded-xl p-4 border space-y-3 bg-mystic-paper/50 border-white/5">{[...manualLines].reverse().map((line, reverseIndex) => { const realIndex = 5 - reverseIndex; return <div key={line.position} className="flex items-center justify-between"><span className="text-gray-400 text-sm font-serif w-12">{YAO_LABELS[realIndex]}</span><div className="flex-1 flex rounded-lg p-1 ml-4 overflow-hidden bg-black/40">{[{ label: '--', value: 8 }, { label: '—', value: 7 }, { label: 'X', value: 6 }, { label: 'O', value: 9 }].map((opt) => <button key={opt.value} onClick={() => updateManualLine(realIndex, opt.value)} className={`flex-1 py-1.5 text-[10px] rounded transition-all ${line.value === opt.value ? 'bg-mystic-gold text-black font-bold' : 'text-gray-500'}`}>{opt.label}</button>)}</div></div>; })}</div>
-               <button onClick={validateAndStartAnalyze} className="w-full font-bold py-4 rounded-xl shadow-lg mt-4 mb-10 transition-all bg-gradient-to-r from-mystic-gold to-amber-600 text-black">开始解卦</button>
+               <button onClick={validateAndStartAnalyze} className="w-full font-bold py-3 sm:py-4 rounded-xl shadow-lg mt-4 mb-10 transition-all bg-gradient-to-r from-mystic-gold to-amber-600 text-black">开始解卦</button>
             </div>
          )}
          {mode === 'TIME' && (
-            <div className="flex-1 flex flex-col items-center animate-fade-in-up space-y-6">
-               <div className="w-full p-6 rounded-xl border text-center space-y-4 bg-mystic-paper border-white/10"><div><p className="text-gray-400 text-xs mb-1">公历时间</p><div className="text-xl font-mono tracking-wide text-gray-200">{currentTimeStr}</div></div><div className="border-t pt-4 border-white/5"><p className="text-gray-400 text-xs mb-2">农历时辰</p><div className="flex justify-center gap-4 text-mystic-gold font-serif text-lg"><span>{lunarInfo.year}</span><span>{lunarInfo.month}</span><span>{lunarInfo.day}</span><span>{lunarInfo.time}</span></div></div></div>
+            <div className="flex-1 flex flex-col items-center justify-center animate-fade-in-up space-y-4 sm:space-y-6 w-full">
+               <div className="w-full p-5 sm:p-6 rounded-xl border text-center space-y-4 bg-mystic-paper border-white/10"><div><p className="text-gray-400 text-xs mb-1">公历时间</p><div className="text-xl font-mono tracking-wide text-gray-200">{currentTimeStr}</div></div><div className="border-t pt-4 border-white/5"><p className="text-gray-400 text-xs mb-2">农历时辰</p><div className="flex justify-center gap-4 text-mystic-gold font-serif text-lg"><span>{lunarInfo.year}</span><span>{lunarInfo.month}</span><span>{lunarInfo.day}</span><span>{lunarInfo.time}</span></div></div></div>
                {shakeLines.length > 0 && <div className="mb-4 w-40 animate-fade-in"><HexagramVisual lines={shakeLines} activeStep={6} variant="default" /></div>}
-               <button onClick={() => { if(!question.trim()) { setShakeError(true); inputRef.current?.focus(); return; } handleTimeStart(); }} className={`w-full font-bold py-4 rounded-xl shadow-lg transition-all ${shakeLines.length > 0 ? 'hidden' : 'bg-gradient-to-r from-mystic-gold to-amber-600 text-black'}`}>立即起卦</button>
-               {shakeLines.length > 0 && <div className="w-full space-y-3"><button onClick={validateAndStartAnalyze} className="w-full border-2 border-mystic-gold text-mystic-gold py-4 rounded-xl font-bold hover:bg-mystic-gold/10 active:scale-95 transition-all">开始解卦</button><button onClick={() => { setShakeLines([]); setShakeStep(0); }} className="w-full text-xs text-gray-500 py-2">重新起卦</button></div>}
+               <button onClick={() => { if(!question.trim()) { setShakeError(true); inputRef.current?.focus(); return; } handleTimeStart(); }} className={`w-full font-bold py-3 sm:py-4 rounded-xl shadow-lg transition-all ${shakeLines.length > 0 ? 'hidden' : 'bg-gradient-to-r from-mystic-gold to-amber-600 text-black'}`}>立即起卦</button>
+               {shakeLines.length > 0 && <div className="w-full space-y-3"><button onClick={validateAndStartAnalyze} className="w-full border-2 border-mystic-gold text-mystic-gold py-3 sm:py-4 rounded-xl font-bold hover:bg-mystic-gold/10 active:scale-95 transition-all">开始解卦</button><button onClick={() => { setShakeLines([]); setShakeStep(0); }} className="w-full text-xs text-gray-500 py-2">重新起卦</button></div>}
             </div>
          )}
       </div>
