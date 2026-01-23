@@ -64,9 +64,9 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ userProfile, isDayMode
               );
           case '推演人格':
               const personalities = [
-                { type: AppPersonality.MYSTIC, name: '天机道长', icon: <IconPersonalityMystic />, desc: '仙风道骨，半白话推演，辞藻清雅且深度剖析格局气象。' },
-                { type: AppPersonality.PRAGMATIC, name: '实战顾问', icon: <IconPersonalityPragmatic />, desc: '现代大白话，逻辑清晰，直击痛点并提供实操建议。' },
-                { type: AppPersonality.CLASSICAL, name: '古籍学者', icon: <IconPersonalityClassical />, desc: '纯正文言文，引经据典，饱含深厚命理文化底蕴。' }
+                { type: AppPersonality.MYSTIC, name: '驾轻就熟', icon: <IconPersonalityMystic />, desc: '仙风道骨，半白话推演，辞藻清雅且深度剖析格局气象。' },
+                { type: AppPersonality.PRAGMATIC, name: '初窥门径', icon: <IconPersonalityPragmatic />, desc: '现代大白话，逻辑清晰，直击痛点并提供实操建议。' },
+                { type: AppPersonality.CLASSICAL, name: '炉火纯青', icon: <IconPersonalityClassical />, desc: '纯正文言文，引经据典，饱含深厚命理文化底蕴。' }
               ];
               return (
                   <div className="space-y-4">

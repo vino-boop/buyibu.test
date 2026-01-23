@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { AppMode, UserProfile, getElementStyle } from './types';
+import { AppMode, UserProfile, getElementStyle, Gender, CalendarType } from './types';
 import { BaZiView } from './views/BaZiView';
 import { LiuYaoView } from './views/LiuYaoView';
 import { HomeView } from './views/HomeView';
@@ -46,6 +46,15 @@ const AppContent: React.FC = () => {
   const [headerInput, setHeaderInput] = useState('');
   
   const { assets } = useAssets();
+
+  const DUMMY_PROFILE: UserProfile = {
+    name: 'Guest',
+    gender: Gender.MALE,
+    birthDate: '2000-01-01',
+    birthTime: '12:00',
+    birthPlace: 'Unknown',
+    calendarType: CalendarType.SOLAR
+  };
 
   useEffect(() => {
     if (isDayMode) {
@@ -129,8 +138,8 @@ const AppContent: React.FC = () => {
   ];
 
   return (
-    <BaZiProvider userProfile={userProfile!}>
-      <LiuYaoProvider userProfile={userProfile!}>
+    <BaZiProvider userProfile={userProfile || DUMMY_PROFILE}>
+      <LiuYaoProvider userProfile={userProfile || DUMMY_PROFILE}>
         <div className={`fixed inset-0 flex flex-col sm:flex-row transition-colors duration-500 overflow-hidden ${isDayMode ? 'bg-[#fcfcfc]' : 'bg-mystic-dark'}`}>
           
           {/* Desktop Sidebar - 只在PC显示 */}

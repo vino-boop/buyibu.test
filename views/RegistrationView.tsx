@@ -65,7 +65,7 @@ export const RegistrationView: React.FC<RegistrationViewProps> = ({ onComplete, 
             </div>
           )}
           <div className="max-w-xs text-white/30 text-[10px] font-serif leading-loose tracking-widest mt-6 uppercase">
-             {step === 0 ? "万物有序，皆有其时。窥探命运之轮，从这里开始。" : "乾坤造化，阴阳互根。阁下之命盘正在推演中。"}
+             {step === 0 ? "万物有序，皆有其时。窥探命运之河，从这里开始。" : "乾坤造化，阴阳互根。阁下之命盘正在推演中。"}
           </div>
        </div>
        <div className="absolute bottom-12 left-12 opacity-20 flex flex-col gap-1">
@@ -78,22 +78,22 @@ export const RegistrationView: React.FC<RegistrationViewProps> = ({ onComplete, 
   const personalities = [
     { 
         type: AppPersonality.MYSTIC, 
-        name: '天机道长', 
-        desc: '仙风道骨，半白话推演，辞藻清雅且深度剖析格局气象。', 
+        name: '驾轻就熟', 
+        desc: '仙风道骨，半白话推演，需有一定基础了解。', 
         icon: <IconPersonalityMystic />,
         tags: ['半白话', '深度', '优雅']
     },
     { 
         type: AppPersonality.PRAGMATIC, 
-        name: '实战顾问', 
-        desc: '现代大白话，逻辑清晰，直击痛点并提供实操建议。', 
+        name: '初窥门径', 
+        desc: '现代大白话，直击痛点，适合无经验入门。', 
         icon: <IconPersonalityPragmatic />,
         tags: ['大白话', '实操', '干货']
     },
     { 
         type: AppPersonality.CLASSICAL, 
-        name: '古籍学者', 
-        desc: '纯正文言文，引经据典，饱含深厚命理文化底蕴。', 
+        name: '炉火纯青', 
+        desc: '纯正古风，引经据典，须有一定文化底蕴。', 
         icon: <IconPersonalityClassical />,
         tags: ['文言文', '学术', '古风']
     }
@@ -157,7 +157,7 @@ export const RegistrationView: React.FC<RegistrationViewProps> = ({ onComplete, 
              </div>
              <div className="w-full space-y-8 sm:space-y-10">
                 <div className="space-y-4 pt-4">
-                   <button onClick={() => setStep(1)} className="w-full bg-mystic-gold text-black font-bold text-base sm:text-lg py-4 sm:py-5 rounded-2xl hover:scale-[1.02] transition-all shadow-[0_10px_30px_rgba(197,176,120,0.1)] active:scale-95">立刻登录</button>
+                   <button onClick={() => setStep(1)} className="w-full bg-mystic-gold text-black font-bold text-base sm:text-lg py-4 sm:py-5 rounded-2xl hover:scale-[1.02] transition-all shadow-[0_10px_30px_rgba(197,176,120,0.1)] active:scale-95">立刻注册</button>
                    <div className="flex items-center gap-4 py-2">
                       <div className="flex-1 h-[0.5px] bg-white/5"></div>
                       <span className="text-[9px] text-gray-700 uppercase tracking-[0.3em]">Or Entry via</span>
@@ -286,7 +286,7 @@ export const RegistrationView: React.FC<RegistrationViewProps> = ({ onComplete, 
                         }} 
                         className="w-full bg-mystic-gold text-black font-bold text-base sm:text-lg py-4 sm:py-5 rounded-xl sm:rounded-2xl hover:brightness-110 shadow-xl active:scale-95 transition-all"
                     >
-                        开启命盘推演
+                        开启运何
                     </button>
                 </div>
             </div>
