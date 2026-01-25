@@ -208,7 +208,17 @@ const getBaseInstruction = (baZiData?: string, contextType: 'BAZI' | 'LIUYAO' = 
   const now = new Date();
   const solar = Solar.fromDate(now);
   const lunar = Lunar.fromDate(now);
-  const timeInfo = `【推演时间】公历：${solar.toFullString()}，农历：${lunar.toString()} (${lunar.getYearInGanZhi()}年 ${lunar.getMonthInGanZhi()}月 ${lunar.getDayInGanZhi()}日 ${lunar.getTimeZhi()}时)`;
+  const ec = lunar.getEightChar();
+  
+  // Real-time pillars data from perpetual calendar
+  const flowingPillars = `【当下四柱/万年历数据】
+- 流年：${ec.getYear() || ec.getYearInGanZhi()} (纳音：${ec.getYearNaYin()})
+- 流月：${ec.getMonth() || ec.getMonthInGanZhi()} (纳音：${ec.getMonthNaYin()})
+- 流日：${ec.getDay() || ec.getDayInGanZhi()} (纳音：${ec.getDayNaYin()})
+- 流时：${ec.getTime() || ec.getTimeInGanZhi()} (纳音：${ec.getTimeNaYin()})`;
+
+  const timeInfo = `【推演时间】公历：${solar.toFullString()}，农历：${lunar.toString()}
+${flowingPillars}`;
 
   let personalityInstruction = "";
   
@@ -232,7 +242,7 @@ const getBaseInstruction = (baZiData?: string, contextType: 'BAZI' | 'LIUYAO' = 
   if (contextType === 'LIUYAO') {
       boundaryInstruction = `6. 【出卦检测】：若阁下后续所问之事与当前起得之卦象背景或初始卜问之意图全然无关（例如：已断卦为“财运”，却突问“天气”或“他人八字”），请务必温和告知此问已出卦外，并建议其“另起一卦”或“回至主页”以应新机，不要强行牵强附会。`;
   } else {
-      boundaryInstruction = `6. 【命理边界】：八字乃人生宏观蓝图。若阁下所问之事极其微观且随机（如“刚才丢的笔在哪”或“明天彩票号码”），请温和告知此非八字命理所长，建议其使用“起卦”功能以测具体机缘。对于流年流月之问，仍属八字范畴，应予详答。`;
+      boundaryInstruction = `6. 【命理边界】：八字乃人生宏观蓝图。若阁下所问之事极其微观且随机（如“刚才丢的笔在哪”或“明天彩票号码”），请温和告知此非八字命理所长，建议其使用“起卦”功能以测具体机缘。对于用户询问“今日运势”或“特定日期运势”，请务必使用上述提供的【当下四柱/万年历数据】作为外界环境（流年/流月/流日）与用户原局进行交互推演。`;
   }
 
   return `${personalityInstruction}

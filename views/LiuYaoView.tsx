@@ -213,7 +213,6 @@ const InteractiveStalksFan: React.FC<{
 };
 
 export const LiuYaoView: React.FC<{ isDayMode?: boolean }> = ({ isDayMode = false }) => {
-  // Corrected: Removed non-existent handleTTimeStart from destructuring
   const {
       mode, setMode, question, setQuestion, shakeError, setShakeError, shakeLines, setShakeLines, shakeStep, setShakeStep, coins, isFlipping, manualLines, numberStep, setNumberStep, numberResults, setNumberResults, isSplitting, setIsSplitting, messages, result, showChat, isAnalyzing, inputMessage, setInputMessage, history, showHistoryModal, setShowHistoryModal, handleToss, handleTimeStart, handleAnalyze, handleSendMessage, reset: baseReset, updateManualLine, restoreRecord, clearHistory
   } = useLiuYao();
@@ -228,9 +227,15 @@ export const LiuYaoView: React.FC<{ isDayMode?: boolean }> = ({ isDayMode = fals
   const [tempSplitIndex, setTempSplitIndex] = useState(24);
   const [isScrolling, setIsScrolling] = useState(false);
   const [showQuestionInHeader, setShowQuestionInHeader] = useState(false);
+  const [suggestionsVisible, setSuggestionsVisible] = useState(false);
 
   useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages.length]);
   
+  useEffect(() => {
+    // Reset suggestions visibility whenever messages change (e.g. new AI response)
+    setSuggestionsVisible(false);
+  }, [messages.length, isAnalyzing]);
+
   useEffect(() => {
       if (mode === 'TIME') {
           const updateTime = () => {
@@ -270,6 +275,7 @@ export const LiuYaoView: React.FC<{ isDayMode?: boolean }> = ({ isDayMode = fals
     setIsNumberRitualStarted(false); 
     setTempSplitIndex(24); 
     setShowQuestionInHeader(false);
+    setSuggestionsVisible(false);
     baseReset(); 
   };
 
@@ -334,7 +340,6 @@ export const LiuYaoView: React.FC<{ isDayMode?: boolean }> = ({ isDayMode = fals
                     <button onClick={(e) => { e.stopPropagation(); reset(); }} className={`p-2 transition-colors ${isDayMode ? 'text-gray-400 hover:text-gray-800' : 'text-gray-600 hover:text-gray-300'}`}><span className="text-lg">↺</span></button>
                   </div>
                   
-                  {/* Expanded Question View */}
                   <div className={`overflow-hidden transition-all duration-500 ease-in-out ${showQuestionInHeader ? 'max-h-40 opacity-100 mt-2 pb-1' : 'max-h-0 opacity-0'}`}>
                       <div className={`w-full h-[0.5px] mb-3 ${isDayMode ? 'bg-gray-100' : 'bg-white/10'}`}></div>
                       <div className="flex flex-col gap-1 px-1">
@@ -355,14 +360,19 @@ export const LiuYaoView: React.FC<{ isDayMode?: boolean }> = ({ isDayMode = fals
            {messages.map((msg) => (
               <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} animate-fade-in-up`}>
                  {msg.role === 'assistant' && <div className={`w-8 h-8 rounded-full border flex items-center justify-center mr-2 shrink-0 overflow-hidden ${isDayMode ? 'bg-white border-gray-100 shadow-sm' : 'bg-mystic-dark border-mystic-gold/30'}`}><img src={assets.sage_avatar} alt="Sage" className="w-full h-full object-cover" /></div>}
-                 <div className={`max-w-[88%] px-4 py-3 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap shadow-sm border ${msg.role === 'user' ? 'bg-mystic-gold/10 text-mystic-gold rounded-br-sm border-mystic-gold/10' : 'bg-mystic-paper/80 text-gray-300 rounded-bl-sm border-white/10'}`}>{renderMessageContent(msg.content, isDayMode)}</div>
+                 <div 
+                    onClick={() => msg.role === 'assistant' && setSuggestionsVisible(true)}
+                    className={`max-w-[88%] px-4 py-3 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap shadow-sm border cursor-pointer ${msg.role === 'user' ? 'bg-mystic-gold/10 text-mystic-gold rounded-br-sm border-mystic-gold/10' : 'bg-mystic-paper/80 text-gray-300 rounded-bl-sm border-white/10'}`}
+                 >
+                    {renderMessageContent(msg.content, isDayMode)}
+                 </div>
               </div>
            ))}
            {isAnalyzing && <div className="flex justify-start animate-fade-in-up"><div className={`w-8 h-8 rounded-full border flex items-center justify-center mr-2 ${isDayMode ? 'bg-white border-gray-100 shadow-sm' : 'bg-mystic-dark border-mystic-gold/30'}`}><span className="animate-spin text-mystic-gold">☯</span></div><div className={`px-4 py-3 rounded-2xl rounded-bl-sm border text-sm bg-mystic-paper/80 border-white/10 text-gray-400`}>推演中</div></div>}
            <div ref={chatEndRef} />
         </div>
         <div className={`absolute bottom-0 left-0 w-full px-4 pt-4 pb-4 z-20 border-t shadow-[0_-10px_20px_rgba(0,0,0,0.08)] transition-all duration-500 ease-in-out ${isScrolling ? 'translate-y-full opacity-0 pointer-events-none' : 'translate-y-0 opacity-100'} ${isDayMode ? 'bg-white border-gray-100' : 'bg-mystic-dark border-white/5'}`}>
-            {!isAnalyzing && suggestions.length > 0 && (
+            {!isAnalyzing && suggestionsVisible && suggestions.length > 0 && (
               <div className="flex flex-wrap gap-2 mb-3 animate-fade-in-up">
                   {suggestions.map((s, idx) => (
                     <button 
@@ -376,7 +386,15 @@ export const LiuYaoView: React.FC<{ isDayMode?: boolean }> = ({ isDayMode = fals
               </div>
             )}
             <div className="relative">
-              <input type="text" value={inputMessage} onChange={e => setInputMessage(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSendMessage()} placeholder="阁下请直言" className={`w-full pl-4 pr-12 py-3 rounded-2xl border outline-none shadow-sm transition-all ${isDayMode ? 'bg-gray-50 border-gray-200 text-gray-900 focus:bg-white' : 'bg-[#1a1b1e] text-gray-200 border-white/10 focus:border-mystic-gold/50'}`} />
+              <input 
+                type="text" 
+                value={inputMessage} 
+                onChange={e => setInputMessage(e.target.value)} 
+                onFocus={() => setSuggestionsVisible(true)}
+                onKeyDown={e => e.key === 'Enter' && handleSendMessage()} 
+                placeholder="阁下请直言" 
+                className={`w-full pl-4 pr-12 py-3 rounded-2xl border outline-none shadow-sm transition-all ${isDayMode ? 'bg-gray-50 border-gray-200 text-gray-900 focus:bg-white' : 'bg-[#1a1b1e] text-gray-200 border-white/10 focus:border-mystic-gold/50'}`} 
+              />
               <button onClick={() => handleSendMessage()} disabled={isAnalyzing} className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center rounded-full bg-mystic-gold/20 text-mystic-gold hover:bg-mystic-gold hover:text-white transition-colors">
                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
                     <path fillRule="evenodd" d="M11.47 2.47a.75.75 0 011.06 0l7.5 7.5a.75.75 0 11-1.06 1.06l-6.22-6.22V21a.75.75 0 01-1.5 0V4.81l-6.22 6.22a.75.75 0 11-1.06-1.06l7.5-7.5z" clipRule="evenodd" />
@@ -391,7 +409,6 @@ export const LiuYaoView: React.FC<{ isDayMode?: boolean }> = ({ isDayMode = fals
   return (
     <div className={`w-full h-full flex flex-col items-center pb-20 px-2 overflow-y-auto relative transition-colors duration-300 ${isDayMode ? 'bg-[#fcfcfc]' : 'bg-mystic-dark'}`}>
       
-      {/* Ritual Header (Back and Question) */}
       <div className={`w-full px-4 pt-4 flex items-center justify-between sticky top-0 z-40 transition-all ${isRitualActive ? 'animate-fade-in' : 'opacity-0 pointer-events-none'}`}>
         <button 
             onClick={reset} 

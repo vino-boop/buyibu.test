@@ -135,6 +135,7 @@ export const BaZiView: React.FC<BaZiViewProps> = ({ defaultQuestion, isDayMode =
   const [hePanSelection, setHePanSelection] = useState<UserProfile[]>([]);
   const [isScrolling, setIsScrolling] = useState(false);
   const [viewHistoryProfileId, setViewHistoryProfileId] = useState<string | null>(null);
+  const [suggestionsVisible, setSuggestionsVisible] = useState(false);
 
   useEffect(() => { if (defaultQuestion) triggerDefaultQuestion(defaultQuestion); }, [defaultQuestion]);
   
@@ -142,6 +143,8 @@ export const BaZiView: React.FC<BaZiViewProps> = ({ defaultQuestion, isDayMode =
     if (messages.length > 0 && scrollContainerRef.current) {
         scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight; 
     }
+    // Hide suggestions when new messages are added or during loading
+    setSuggestionsVisible(false);
   }, [messages.length, chatLoading]); 
 
   const handleScroll = () => {
@@ -154,7 +157,6 @@ export const BaZiView: React.FC<BaZiViewProps> = ({ defaultQuestion, isDayMode =
 
   const handleShenShaClick = (ssName: string) => {
     setInputMessage(`请问我命盘里的“${ssName}”是什么意思？它对我的格局和运势有什么具体影响？`);
-    // 自动滚动到输入框并聚焦
     if (inputContainerRef.current) {
         inputContainerRef.current.scrollIntoView({ behavior: 'smooth' });
     }
@@ -189,7 +191,6 @@ export const BaZiView: React.FC<BaZiViewProps> = ({ defaultQuestion, isDayMode =
     handleStart(false);
   };
 
-  // 历史记录弹窗
   const renderHistoryModal = () => {
       if (!viewHistoryProfileId) return null;
       const historyList = rosterHistory[viewHistoryProfileId] || [];
@@ -242,14 +243,14 @@ export const BaZiView: React.FC<BaZiViewProps> = ({ defaultQuestion, isDayMode =
                       <input type="text" className={`bg-transparent text-right outline-none w-1/2 ${isDayMode ? 'text-gray-800' : 'text-gray-200'}`} value={name} onChange={e => setName(e.target.value)} />
                   </div>
                   <div className={`flex rounded-full p-1 w-32 ml-auto transition-colors ${isDayMode ? 'bg-gray-100' : 'bg-black/30'}`}>
-                      <button onClick={() => setGender(Gender.MALE)} className={`flex-1 py-1 rounded-full text-xs transition-all ${gender === Gender.MALE ? 'bg-mystic-gold text-black font-bold shadow-sm' : 'text-gray-500'}`}>男</button>
-                      <button onClick={() => setGender(Gender.FEMALE)} className={`flex-1 py-1 rounded-full text-xs transition-all ${gender === Gender.FEMALE ? 'bg-mystic-gold text-black font-bold shadow-sm' : 'text-gray-500'}`}>女</button>
+                      <button onClick={() => setGender(Gender.MALE)} className={`flex-1 py-1 rounded-full text-xs transition-all ${gender === Gender.MALE ? 'bg-mystic-gold text-black font-bold' : 'text-gray-500'}`}>男</button>
+                      <button onClick={() => setGender(Gender.FEMALE)} className={`flex-1 py-1 rounded-full text-xs transition-all ${gender === Gender.FEMALE ? 'bg-mystic-gold text-black font-bold' : 'text-gray-500'}`}>女</button>
                   </div>
                   <div className={`border-b py-2 flex items-center justify-between transition-colors ${isDayMode ? 'border-gray-100' : 'border-white/10'}`}>
                       <span className={isDayMode ? 'text-gray-500 text-sm' : 'text-gray-400 text-sm'}>历法</span>
                       <div className={`flex rounded-full p-1 w-32 transition-colors ${isDayMode ? 'bg-gray-100' : 'bg-black/30'}`}>
-                          <button onClick={() => setCalendarType(CalendarType.SOLAR)} className={`flex-1 py-1 rounded-full text-[10px] transition-all ${calendarType === CalendarType.SOLAR ? 'bg-mystic-gold text-black font-bold shadow-sm' : 'text-gray-500'}`}>阳历</button>
-                          <button onClick={() => setCalendarType(CalendarType.LUNAR)} className={`flex-1 py-1 rounded-full text-[10px] transition-all ${calendarType === CalendarType.LUNAR ? 'bg-mystic-gold text-black font-bold shadow-sm' : 'text-gray-500'}`}>农历</button>
+                          <button onClick={() => setCalendarType(CalendarType.SOLAR)} className={`flex-1 py-1 rounded-full text-[10px] transition-all ${calendarType === CalendarType.SOLAR ? 'bg-mystic-gold text-black font-bold' : 'text-gray-500'}`}>阳历</button>
+                          <button onClick={() => setCalendarType(CalendarType.LUNAR)} className={`flex-1 py-1 rounded-full text-[10px] transition-all ${calendarType === CalendarType.LUNAR ? 'bg-mystic-gold text-black font-bold' : 'text-gray-500'}`}>农历</button>
                       </div>
                   </div>
                   <div className={`border-b py-2 flex items-center justify-between transition-colors ${isDayMode ? 'border-gray-100' : 'border-white/10'}`}>
@@ -276,7 +277,6 @@ export const BaZiView: React.FC<BaZiViewProps> = ({ defaultQuestion, isDayMode =
                </div>
              ) : (
                <div className="space-y-3">
-                  {/* Selection Guidance Hint */}
                   <div className={`p-3 rounded-2xl border mb-4 animate-fade-in transition-all ${hePanSelection.length === 2 ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-mystic-gold/5 border-mystic-gold/20'}`}>
                     <div className="flex items-center gap-2">
                       <span className={`text-xs ${hePanSelection.length === 2 ? 'text-emerald-500' : 'text-mystic-gold'}`}>
@@ -519,7 +519,6 @@ export const BaZiView: React.FC<BaZiViewProps> = ({ defaultQuestion, isDayMode =
                                     </div>
                                     <CycleSlider current={selectedLiuNianIndex} total={chartData.chart.daYun[selectedDaYunIndex]?.liuNian.length || 0} onChange={(idx) => { setSelectedLiuNianIndex(idx); setSelectedLiuYueIndex(0); }} isDay={isDayMode} />
                                   </div>
-                                  {/* NEW: LiuYue UI */}
                                   <div>
                                     <div className="flex items-center">
                                         <div className={`w-8 sm:w-10 text-[11px] sm:text-xs font-serif font-bold border-r mr-2 sm:mr-3 flex flex-col items-center shrink-0 transition-colors ${isDayMode ? 'text-gray-400 border-gray-100' : 'text-gray-500 border-white/10'}`}><span>流</span><span>月</span></div>
@@ -551,11 +550,14 @@ export const BaZiView: React.FC<BaZiViewProps> = ({ defaultQuestion, isDayMode =
                         <img src={assets.sage_avatar} className="w-full h-full object-cover" alt="Sage" />
                      </div>
                    )}
-                   <div className={`max-w-[85%] px-4 py-3 sm:px-5 sm:py-4 rounded-3xl text-sm leading-relaxed border transition-colors shadow-sm ${
-                      msg.role === 'user' 
-                        ? (isDayMode ? 'bg-mystic-gold/10 text-mystic-gold rounded-tr-none border-mystic-gold/10' : 'bg-mystic-gold/10 text-mystic-gold rounded-tr-none border-mystic-gold/20')
-                        : (isDayMode ? 'bg-white text-gray-800 rounded-tl-none border-gray-100' : 'bg-mystic-paper/80 text-gray-300 rounded-tl-none border-white/10')
-                    }`}>
+                   <div 
+                      onClick={() => msg.role === 'assistant' && setSuggestionsVisible(true)}
+                      className={`max-w-[85%] px-4 py-3 sm:px-5 sm:py-4 rounded-3xl text-sm leading-relaxed border transition-colors shadow-sm cursor-pointer ${
+                        msg.role === 'user' 
+                          ? (isDayMode ? 'bg-mystic-gold/10 text-mystic-gold rounded-tr-none border-mystic-gold/10' : 'bg-mystic-gold/10 text-mystic-gold rounded-tr-none border-mystic-gold/20')
+                          : (isDayMode ? 'bg-white text-gray-800 rounded-tl-none border-gray-100' : 'bg-mystic-paper/80 text-gray-300 rounded-tl-none border-white/10')
+                      }`}
+                   >
                       {renderMessageContent(msg, isDayMode)}
                    </div>
                 </div>
@@ -576,7 +578,7 @@ export const BaZiView: React.FC<BaZiViewProps> = ({ defaultQuestion, isDayMode =
         className={`absolute bottom-0 left-0 w-full px-4 pt-4 sm:pt-6 pb-6 sm:pb-8 z-20 border-t shadow-[0_-10px_30px_rgba(0,0,0,0.08)] transition-all duration-500 ease-in-out ${isScrolling ? 'translate-y-full opacity-0 pointer-events-none' : 'translate-y-0 opacity-100'} ${isDayMode ? 'bg-white border-gray-100' : 'bg-mystic-dark border-white/5'}`}
       >
             <div className="max-w-4xl mx-auto">
-                {!chatLoading && (
+                {!chatLoading && suggestionsVisible && (
                     <div className="flex flex-wrap gap-2 mb-3 sm:mb-4 animate-fade-in-up">
                         {suggestions.length > 0 && suggestions.map((s, idx) => (
                             <button 
@@ -595,6 +597,7 @@ export const BaZiView: React.FC<BaZiViewProps> = ({ defaultQuestion, isDayMode =
                      value={inputMessage} 
                      onChange={e => setInputMessage(e.target.value)} 
                      onKeyDown={e => e.key === 'Enter' && handleSendMessage()} 
+                     onFocus={() => setSuggestionsVisible(true)}
                      placeholder="阁下请直言..." 
                      className={`w-full pl-5 pr-14 py-3 sm:py-4 rounded-2xl border outline-none shadow-sm transition-all text-sm sm:text-base ${isDayMode ? 'bg-gray-50 border-gray-200 text-gray-900 focus:bg-white focus:border-mystic-gold/50' : 'bg-[#1a1b1e] text-gray-200 border-white/10 focus:border-mystic-gold'}`} 
                    />

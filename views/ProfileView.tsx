@@ -64,8 +64,8 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ userProfile, isDayMode
               );
           case '推演人格':
               const personalities = [
-                { type: AppPersonality.MYSTIC, name: '驾轻就熟', icon: <IconPersonalityMystic />, desc: '仙风道骨，半白话推演，辞藻清雅且深度剖析格局气象。' },
                 { type: AppPersonality.PRAGMATIC, name: '初窥门径', icon: <IconPersonalityPragmatic />, desc: '现代大白话，逻辑清晰，直击痛点并提供实操建议。' },
+                { type: AppPersonality.MYSTIC, name: '驾轻就熟', icon: <IconPersonalityMystic />, desc: '仙风道骨，半白话推演，辞藻清雅且深度剖析格局气象。' },
                 { type: AppPersonality.CLASSICAL, name: '炉火纯青', icon: <IconPersonalityClassical />, desc: '纯正文言文，引经据典，饱含深厚命理文化底蕴。' }
               ];
               return (
@@ -143,7 +143,6 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ userProfile, isDayMode
   return (
     <div className={`w-full h-full flex flex-col animate-fade-in relative z-50 transition-colors duration-300 ${isDayMode ? 'bg-[#f8f9fa]' : 'bg-[#0f1110]'}`}>
       
-      {/* Fixed: isDay: boolean={isDayMode} was incorrect syntax for prop passing */}
       {activeSubPage && (
           <SubPage title={activeSubPage === 'Account' ? '账号管理' : activeSubPage} onClose={() => setActiveSubPage(null)} isDay={isDayMode}>
               {renderSubPageContent()}

@@ -77,18 +77,18 @@ export const RegistrationView: React.FC<RegistrationViewProps> = ({ onComplete, 
 
   const personalities = [
     { 
-        type: AppPersonality.MYSTIC, 
-        name: '驾轻就熟', 
-        desc: '仙风道骨，半白话推演，需有一定基础了解。', 
-        icon: <IconPersonalityMystic />,
-        tags: ['半白话', '深度', '优雅']
-    },
-    { 
         type: AppPersonality.PRAGMATIC, 
         name: '初窥门径', 
         desc: '现代大白话，直击痛点，适合无经验入门。', 
         icon: <IconPersonalityPragmatic />,
         tags: ['大白话', '实操', '干货']
+    },
+    { 
+        type: AppPersonality.MYSTIC, 
+        name: '驾轻就熟', 
+        desc: '仙风道骨，半白话推演，需有一定基础了解。', 
+        icon: <IconPersonalityMystic />,
+        tags: ['半白话', '深度', '优雅']
     },
     { 
         type: AppPersonality.CLASSICAL, 
